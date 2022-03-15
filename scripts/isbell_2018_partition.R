@@ -58,19 +58,6 @@ Isbell_2018_part <- function(data, RYe) {
   # get the number places
   n_p <- n_unique(data$place)
   
-  if (any(!is.na(RYe)) & sum(RYe) != 1 ) {
-    
-    stop("Expected relative yield values do not sum to 1")
-    
-  } else if (n_sp != length(RYe) | any(is.na(RYe)) ) {
-    
-    warning("Expected frequencies not defined: Drawing from a Dirichlet distribution")
-    RYe <- gtools::rdirichlet(n = 1, alpha = rep(4, n_sp))
-    RYe <- round(sapply(RYe, function(x) x), 1)
-    print(paste("RYe: ", RYe, sep = ""))
-    
-  }
-  
   # sort the data.frame
   df <- 
     data %>%
@@ -122,41 +109,42 @@ Isbell_2018_part <- function(data, RYe) {
   
   # 1. Net biodiversity (E10)
   NBE <- sum(df$dRY*df$M)
-  print(paste("Net biodiversity effect:", NBE))
+  # print(paste("Net biodiversity effect:", NBE))
   
   # 2. Total complementarity (E10)
   TC <- N * mean(df$dRY) * mean(df$M)
-  print(paste("Total complementarity effect:", TC))
+  # print(paste("Total complementarity effect:", TC))
   
   # 3. Total selection effect (Fig. 1)
   TS <- NBE - TC
-  print(paste("Total selection effect:", TS))
+  # print(paste("Total selection effect:", TS))
   
   # 4. Non-random overyielding (E10)
   NO <- N * raw_cov(df$d.RYoi, df$M)
-  print(paste("Non-random overyielding:", NO) )
+  # print(paste("Non-random overyielding:", NO) )
   
   # 5. Average selection (E9)
   AS <- n_t * n_p * sum((sm_s$d.Poi.s - mean(df$d.Poi)) * (sm_s$M.s - mean(df$M)))
-  print(paste("Average selection effect:", AS))
+  # print(paste("Average selection effect:", AS))
   
   # 6. Temporal insurance (E9)
   TI_df <- merge(sm_t, sm_s)
   TI <- n_p * sum( (TI_df$d.Poi.t - TI_df$d.Poi.s)*(TI_df$M.t - TI_df$M.s) )
-  print(paste("Temporal insurance effect", TI))
+  # print(paste("Temporal insurance effect", TI))
   
   # 7. Spatial insurance (E9)
   SI_df <- merge(sm_p, sm_s)
   SI <- n_t * sum( (SI_df$d.Poi.p - SI_df$d.Poi.s)*(SI_df$M.p - SI_df$M.s) )
-  print(paste("Spatial insurance effect:", SI))
+  # print(paste("Spatial insurance effect:", SI))
   
   # 8. Spatio-temporal insurance (Fig. 1)
   ST <- NBE - TC - NO - AS - TI - SI
-  print(paste("Spatio-temporal insurance effect:", ST))
+  # print(paste("Spatio-temporal insurance effect:", ST))
   
   # 9. Total insurance effect (Fig. 1)
   IT <- AS + TI + SI + ST
-  print(paste("Total insurance effect", IT))
+  # print(paste("Total insurance effect", IT))
+  
   
   ## Output
   
@@ -166,7 +154,65 @@ Isbell_2018_part <- function(data, RYe) {
   
 }
 
+
+# Use the Isbell_2018_part and incorporate RYe uncertainty
+
+# args
+# data - data.frame in the format defined by Isbell et al. (2018)
+print(cs.1)
+# RYe - expected frequencies for each species
+# RYe_post - TRUE or FALSE deciding to calculate effects using samples from the Dirichlet distrbution
+# N - number of samples to use from the Dirichlet distribution
+# alpha_par - alpha parameter from the Dirichlet distribution
+
+Isbell_2018_sampler <- function(data, RYe, RYe_post = FALSE, N = 100, alpha_par = 4) {
+  
+  if (!RYe_post) {
+    
+    # test for RYe values
+    if (any(!is.na(RYe)) & sum(RYe) != 1 ) {
+      stop("Expected relative yield values do not sum to 1")
+    } 
+    
+    if (n_sp != length(RYe) | any(is.na(RYe))) {
+      stop("Expected relative yield values are missing")
+    }
+    
+    Isbell_2018_part(data = data, RYe = RYe)
+    
+    
+  } else if (RYe_post) {
+    
+    Beff_post <- vector("list", length = N)
+    for (i in 1:N) {
+      
+      RYe <- gtools::rdirichlet(n = 1, alpha = rep(alpha_par, n_unique(data$species)))
+      RYe <- round(sapply(RYe, function(x) x), 1)
+      
+      x <- Isbell_2018_part(data = data, RYe = RYe)
+      
+      Beff_post[[i]] <- x$Beff
+      
+    }
+    
+    Beff_post <- bind_rows(Beff_post, .id = "sample")
+    
+    return(Beff_post)
+    
+  }
+
+}
+
 # test the function
-Isbell_2018_part(data = cs.1, RYe = c(0.5, 0.5))
+df.1 <- Isbell_2018_sampler(data = cs.6, RYe = NA, RYe_post = TRUE, N = 100, alpha_par = 4)
+head(df.1)
+
+# plot the results
+library(ggplot2)
+
+ggplot(data = df.1,
+       mapping = aes(x = Beff, y = Value)) +
+  geom_boxplot() +
+  theme_classic()
 
 ### END
