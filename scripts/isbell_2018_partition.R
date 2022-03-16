@@ -21,15 +21,11 @@ raw_cov <- function(x, y) {
   sum( (c1*c2) )/length(c1)
 }
 
-# Get example data
-library(here)
-source(here("scripts/example_data.R"))
 
 # Define a function to perform Isbell et al.'s (2018) partition
 
 # args
 # data - data.frame in the format defined by Isbell et al. (2018)
-print(cs.1)
 # RYe - expected frequencies for each species
 
 # symbol descriptions
@@ -154,14 +150,10 @@ Isbell_2018_part <- function(data, RYe) {
   
 }
 
-# test the function
-Isbell_2018_part(data = t1b, RYe = c(0.5, 0.5))
-
 # Use the Isbell_2018_part and incorporate RYe uncertainty
 
 # args
 # data - data.frame in the format defined by Isbell et al. (2018)
-print(cs.1)
 # RYe - expected frequencies for each species
 # RYe_post - TRUE or FALSE deciding to calculate effects using samples from the Dirichlet distrbution
 # N - number of samples to use from the Dirichlet distribution
@@ -176,7 +168,7 @@ Isbell_2018_sampler <- function(data, RYe, RYe_post = FALSE, N = 100, alpha_par 
       stop("Expected relative yield values do not sum to 1")
     } 
     
-    if (n_sp != length(RYe) | any(is.na(RYe))) {
+    if (n_unique(data$species) != length(RYe) | any(is.na(RYe))) {
       stop("Expected relative yield values are missing")
     }
     
@@ -206,15 +198,7 @@ Isbell_2018_sampler <- function(data, RYe, RYe_post = FALSE, N = 100, alpha_par 
 }
 
 # test the function
-df.1 <- Isbell_2018_sampler(data = cs.6, RYe = NA, RYe_post = TRUE, N = 100, alpha_par = 4)
-head(df.1)
-
-# plot the results
-library(ggplot2)
-
-ggplot(data = df.1,
-       mapping = aes(x = Beff, y = Value)) +
-  geom_boxplot() +
-  theme_classic()
+# df.1 <- Isbell_2018_sampler(data = cs6, RYe = c(0.5, 0.5))
+# head(df.1)
 
 ### END
