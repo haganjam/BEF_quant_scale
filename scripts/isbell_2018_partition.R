@@ -154,6 +154,8 @@ Isbell_2018_part <- function(data, RYe) {
   
 }
 
+# test the function
+Isbell_2018_part(data = t1b, RYe = c(0.5, 0.5))
 
 # Use the Isbell_2018_part and incorporate RYe uncertainty
 

@@ -1,0 +1,31 @@
+---
+title: "Quantifying biodiversity effects across times and places"
+output: html_notebook
+---
+
+# Relative yield
+
+What is overyielding? Overyielding occurs when the production of a species in mixture exceeds the expected production of that species based on its monoculture production. This indicates that, for some reason, mixtures of species are greater than the sum of their parts (i.e. their monocultures). Therefore, we often want to quantify overyielding behaviour to determine if there are benefits to mixing multiple species together.
+
+This brings us to *relative yield*. Relative yield does not measure overyielding directly. Rather, we use relative yield as a tool to quantify overyielding. Specifically, we quantify relative yield as the mixture yield of species i divided by the monoculture yield of species i. Thus, for the observed relative yield, we quantify it as:
+
+* RYobs,i = Yobs,i/Mi 
+
+Where **RYobs,i** is the relative yield of species i, **Yobs,i** is the observed yield in mixture of species i and **Mi** is the monoculture yield of species i.
+
+If we want to know whether there is overyielding, we have to compare the observed relative yield to something. If our mixture is sown with equal proportions of two species, then the *expected yield* of species i (Yexp,i) would be half the monoculture value of species i. Therefore, the expected relative yield of species (RYexp,i) would be 0.5. This is because the expected yield of species i is half its monoculture. This can be seen mathematically as:
+
+* RYexp,i = 0.5 = Yexp,i/Mi
+* Yexp,i = 0.5*Mi
+
+In this case, if the observed relative yield (RYobs,i) exceeds the expected relative yield (RYexp,i) then species i in mixture has a higher yield than expected based on the monoculture yield (Mi) and the sown proportions (i.e. intial proportion). In experimental data, we simply use the sown proportion as our RYe. In natural systems, we will have to be a bit more clever. Probably, we will either have to assume a distribution of possible initial proportions (i.e. drawing from the Dirichlet distribution) or use multiple time-points.
+
+The 
+
+
+```{r}
+
+
+
+```
+
