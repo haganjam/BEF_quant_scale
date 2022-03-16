@@ -3,7 +3,9 @@ title: "Quantifying biodiversity effects across times and places"
 output: html_notebook
 ---
 
-# Relative yield
+# Bioversity-functioning partitions
+
+## Relative yield
 
 What is overyielding? Overyielding occurs when the production of a species in mixture exceeds the expected production of that species based on its monoculture production. This indicates that, for some reason, mixtures of species are greater than the sum of their parts (i.e. their monocultures). Therefore, we often want to quantify overyielding behaviour to determine if there are benefits to mixing multiple species together.
 
@@ -20,8 +22,27 @@ If we want to know whether there is overyielding, we have to compare the observe
 
 In this case, if the observed relative yield (RYobs,i) exceeds the expected relative yield (RYexp,i) then species i in mixture has a higher yield than expected based on the monoculture yield (Mi) and the sown proportions (i.e. intial proportion). In experimental data, we simply use the sown proportion as our RYe. In natural systems, we will have to be a bit more clever. Probably, we will either have to assume a distribution of possible initial proportions (i.e. drawing from the Dirichlet distribution) or use multiple time-points.
 
-The 
+The relative yield calculations are the bread and butter of the original Loreau and Hector (2001) partition and Isbell et al.'s (2018) extension. Specifically, we measure the net biodiversity effect NBE:
 
+* sum( delta RYi * Mi)
+
+Where delta RYi is the difference between RYobs,i and RYexp,i for species i. This NBE is then partitioned into two different terms in Loreau and Hector's (2001) partition, the complementarity effect (CE) and the selection effect (SE):
+
+* CE = N mean( delta RYi ) mean( Mi ) 
+* SE = N cov( delta RYi, Mi )
+
+The selection effect occurs when species with higher than average monoculture yields also have higher relative yields than expected. Complementarity effects occur when species yields are on average higher than expected based on their monoculture yields.
+
+
+## Isbell et al.'s (2018) biodiversity effects
+
+1. Non-random overyielding
+
+The non-random overyielding term is quite confusing because it's not exactly clear what the delta RYobs,ijk term measures. The explanation in the text says that it is the extent to which the most productive species in monoculture tend to overyield most in mixtures. They then say that overyielding is quantified relative to observed rather than initial relative abundance... The formula is:
+
+* PTN cov( delta RYobs,ijk, Mijk)
+
+My initial explanation is that if there is a high RYobs,ijk but the species is dominating in the mixture (i.e. high Pobs,ijk), then this is not non-random overyielding because we it is not overyielding necessarily more than we expect based on its proportion?
 
 ```{r}
 
