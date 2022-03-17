@@ -1,11 +1,13 @@
 
 ## Quantifying the effects of biodiversity across times and places
 
+
 # Define function for number of unique elements in a vector
 
 # args
 # x - vector
 n_unique <- function(x) length(unique(x))
+
 
 # Define function to calculate raw covariance
 
@@ -145,8 +147,8 @@ Isbell_2018_part <- function(data, RYe) {
   ## Output
   
   list(Beff = data.frame(Beff = c("NBE", "TC", "TS", "NO", "IT", "AS", "TI", "SI", "ST"),
-                         Value = c(NBE, TC, TS, NO, IT, AS, TI, SI, ST)),
-       RYe = RYe)
+                         Value = c(NBE, TC, TS, NO, IT, AS, TI, SI, ST)) ,
+                         RYe = RYe)
   
 }
 
@@ -197,8 +199,135 @@ Isbell_2018_sampler <- function(data, RYe, RYe_post = FALSE, N = 100, alpha_par 
 
 }
 
-# test the function
-# df.1 <- Isbell_2018_sampler(data = cs6, RYe = c(0.5, 0.5))
-# head(df.1)
+
+# Test the Isbell_2018_sampler() function on the data from Isbell et al. (2018, Ecology Letters)
+
+# table 1A
+t1a <- data.frame(sample = c(1,1,2,2),
+                  time = c(1,1,1,1), 
+                  place = c(1,1,2,2), 
+                  species = c(1,2,1,2), 
+                  M = c(200,200,100,100),
+                  Y = c(200,200,0,0))
+
+t1a.ans <- data.frame(Beff = c("NBE", "TC", "TS", "NO", "IT", "AS", "TI", "SI", "ST"),
+                      Value = c(100,   0,    100, NA, NA, NA, NA, NA, NA))
+
+# table 1B
+t1b <- data.frame(sample = c(1,1,2,2),
+                  time = c(1,1,1,1), 
+                  place = c(1,1,2,2), 
+                  species = c(1,2,1,2), 
+                  M = c(50,350,0.44,1),
+                  Y = c(8.15,291.7,0.88,0))
+
+t1b.ans <- data.frame(Beff = c("NBE", "TC", "TS", "NO", "IT", "AS", "TI", "SI", "ST"),
+                      Value = c(100,   100,   0, NA, NA, NA, NA, NA, NA))
+
+# case 1
+cs1 <- data.frame(sample = rep(c(1:4), each = 2),
+                  time=c(1,1,1,1,2,2,2,2), 
+                  place=c(1,1,2,2,1,1,2,2), 
+                  species=c(1,2,1,2,1,2,1,2),
+                  M=c(100,50,100,50,100,50,100,50), 
+                  Y=c(100,0,100,0,100,0,100,0))
+
+cs1.ans <- data.frame(Beff = c("NBE", "TC", "TS", "NO", "IT", "AS", "TI", "SI", "ST"),
+                      Value = c(100,   0,  100,   0,   100,   100,   0,   0,   0))
+
+# case 2
+cs2 <- data.frame(sample = rep(c(1:4), each = 2), 
+                  time=c(1,1,1,1,2,2,2,2), 
+                  place=c(1,1,2,2,1,1,2,2), 
+                  species=c(1,2,1,2,1,2,1,2),
+                  M=c(100,50,100,50,50,100,50,100), 
+                  Y=c(100,0,100,0,0,100,0,100))
+
+cs2.ans <- data.frame(Beff = c("NBE", "TC", "TS", "NO", "IT", "AS", "TI", "SI", "ST"),
+                      Value = c(100,   0,    100,   0,   100,   0,   100,   0,   0))
+
+# case 3
+cs3 <- 
+  data.frame(sample = rep(c(1:4), each = 2),
+             time=c(1,1,1,1,2,2,2,2), 
+             place=c(1,1,2,2,1,1,2,2), 
+             species=c(1,2,1,2,1,2,1,2),
+             M=c(100,50,50,100,100,50,50,100), 
+             Y=c(100,0,0,100,100,0,0,100))
+
+cs3.ans <- data.frame(Beff = c("NBE", "TC", "TS", "NO", "IT", "AS", "TI", "SI", "ST"),
+                      Value = c(100,   0,   100,   0,   100,   0,    0,   100,   0))
+
+# case 4
+cs4 <- 
+  data.frame(sample = rep(c(1:4), each = 2),
+             time=c(1,1,1,1,2,2,2,2), 
+             place=c(1,1,2,2,1,1,2,2), 
+             species=c(1,2,1,2,1,2,1,2),
+             M=c(100,50,50,100,50,100,100,50), 
+             Y=c(100,0,0,100,0,100,100,0))
+
+cs4.ans <- data.frame(Beff = c("NBE", "TC", "TS", "NO", "IT", "AS", "TI", "SI", "ST"),
+                      Value = c(100,   0,   100,   0,   100,   0,    0,     0,   100))
+
+# case 5
+cs5 <- data.frame(sample = rep(c(1:4), each = 2),
+                  time=c(1,1,1,1,2,2,2,2), 
+                  place=c(1,1,2,2,1,1,2,2), 
+                  species=c(1,2,1,2,1,2,1,2),
+                  M=c(75,75,75,75,75,75,75,75), 
+                  Y=c(50,50,50,50,50,50,50,50))
+
+cs5.ans <- data.frame(Beff = c("NBE", "TC", "TS", "NO", "IT", "AS", "TI", "SI", "ST"),
+                      Value = c(100,   100,   0,   0,    0,   0,    0,     0,    0))
+
+# case 6
+cs6 <- data.frame(sample = rep(c(1:4), each = 2),
+                  time=c(1,1,1,1,2,2,2,2), 
+                  place=c(1,1,2,2,1,1,2,2), 
+                  species=c(1,2,1,2,1,2,1,2),
+                  M=c(100,50,100,50,100,50,100,50), 
+                  Y=c(50,50,50,50,50,50,50,50))
+
+cs6.ans <- data.frame(Beff = c("NBE", "TC", "TS", "NO", "IT", "AS", "TI", "SI", "ST"),
+                      Value = c(100,   150,   -50,   -50,    0,   0,    0,     0,    0))
+
+# write the raw data into a list
+test.data <- list(t1a, t1b, cs1, cs2, cs3, cs4, cs5, cs6)
+
+# write the answer data into a list
+ans.data <- list(t1a.ans, t1b.ans, cs1.ans, cs2.ans, cs3.ans, cs4.ans, cs5.ans, cs6.ans)
+
+# run the test
+results <- vector(length = length(test.data))
+for (i in 1:length(test.data)) {
+  
+  u <- Isbell_2018_sampler(data = test.data[[i]], RYe = c(0.5, 0.5))
+  v <- u$Beff
+  
+  w <- ans.data[[i]]
+  x <- which(!is.na(w$Value))
+  
+  y <- dplyr::near(w$Value[x], v$Value[x], tol = 0.1)
+  
+  results[i] <- any(y != TRUE)
+  
+}
+
+if ( any(results) ) { 
+  
+  warning("Functions do not correctly calculate biodiversity effects of the test data") 
+  
+} else { 
+  
+  message("Functions correctly calculate biodiversity effects on the test data")
+  
+}
+
+# remove the test data objects
+rm(test.data, ans.data,
+   t1a, t1b,
+   cs1, cs2, cs3, cs4, cs5, cs6,
+   t1a.ans, t1b.ans, cs1.ans, cs2.ans, cs3.ans, cs4.ans, cs5.ans, cs6.ans)
 
 ### END
