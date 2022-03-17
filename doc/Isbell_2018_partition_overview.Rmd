@@ -5,6 +5,18 @@ output: html_notebook
 
 # Bioversity-functioning partitions
 
+```{r include = FALSE}
+# load relevant libraries
+library(here)
+library(dplyr)
+
+# load the functions for the partition
+source(here("scripts/Isbell_2018_partition.R"))
+
+# load the test data
+t.dat <- readRDS(here("test_data/Isbell_test_data.rds"))
+```
+
 ## Relative yield
 
 What is overyielding? Overyielding occurs when the production of a species in mixture exceeds the expected production of that species based on its monoculture production. This indicates that, for some reason, mixtures of species are greater than the sum of their parts (i.e. their monocultures). Therefore, we often want to quantify overyielding behaviour to determine if there are benefits to mixing multiple species together.
@@ -36,7 +48,130 @@ The selection effect occurs when species with higher than average monoculture yi
 
 ## Isbell et al.'s (2018) biodiversity effects
 
-1. Non-random overyielding
+*Local complementarity effects can become selection effects at larger scales*
+
+Local complementarity effects can become selection effects at larger scales. How does this occur? Take the example below as a test case. Basically, you have the situation where two species have equal monoculture yields in two different places. But, the monoculture yields are much greater in one place than the other. In addition, at the place where the monoculture yields are more productive, they both overyield. At the place where the monoculture yields are lower, they underyield:
+
+```{r}
+# load the test data
+df <- t.dat[[1]]
+print(df)
+```
+
+If we then calculate local complementarity effects, we get strong local complementarity at the first place but negative complementarity effects at the second place. 
+
+```{r}
+# calculate the complementarity effect
+
+# calculate change in relative yield
+df$RY_obs <- df$Y/df$M
+
+# input expected relative yield
+df$RY_exp <- rep(c(0.5, 0.5), 2)
+
+# calculate change in relative yield
+df$dRY <- df$RY_obs - df$RY_exp
+
+# calculate the complementarity effect for each sample
+CE_loc <- 
+  df %>%
+  group_by(sample) %>%
+  summarise(CE = n() * mean(dRY) * mean(M) )
+ 
+print(CE_loc)
+ 
+```
+
+If we sum these to get overall local complementarity effects, we get a positive effect i.e. a positive local complementarity effect across all places.
+
+```{r}
+print(paste("Local CE across places: ", sum(CE_loc$CE)))
+```
+At local scales, there cannot be any selection effects because the monoculture yields are equal which precludes any covariance:
+
+```{r}
+# calculate covariance within each site: always zero
+raw_cov(df[1:2,]$dRY, df[1:2,]$M)
+raw_cov(df[3:4,]$dRY, df[3:4,]$M)
+
+```
+However, if we calculate the total selection effect across times and places, we see a positive total selection effect. This is because species overyield most where they are most productive in monoculture. Specifically, there is a positive correlation between the change in relative yield and their monoculture which leads to a total selection effect across places.
+
+```{r}
+# calculate the total selection effect
+N <- n_unique(df$place) * n_unique(df$time) * n_unique(df$species)
+N * raw_cov(df$dRY, df$M)
+
+```
+
+*Local selection effects can become complementarity effects at larger scales*
+
+We have local selection effects when there is covariance between overyielding (i.e. change in relative yield) and monoculture yields. To see how these local selection effects can become complementarity effects at larger scales, consider the following example. In this example, we have two species at two environments. One species is more productive in monoculture in both environments. But, in the productive environment, the high monoculture yield species overyields most. In the low productivity environment, the low monoculture yield species overyields most. The data are:
+
+```{r}
+# load the test data
+df <- t.dat[[2]]
+print(df)
+```
+
+What happens when we calculate local complementarity effects? As we can see below, there is a weak complementarity effect at both places. Therefore, when we add them up, they cancel each other out.
+
+```{r}
+# calculate the complementarity effect
+
+# calculate change in relative yield
+df$RY_obs <- df$Y/df$M
+
+# input expected relative yield
+df$RY_exp <- rep(c(0.5, 0.5), 2)
+
+# calculate change in relative yield
+df$dRY <- df$RY_obs - df$RY_exp
+
+# calculate the complementarity effect for each sample
+CE_loc <- 
+  df %>%
+  group_by(sample) %>%
+  summarise(CE = n() * mean(dRY) * mean(M) )
+ 
+print(CE_loc)
+ 
+```
+
+Similarly, if we calculate total selection effects, they also sum to zero. Why does this occur? This occurs because, at the large scale, the fact that the low productivity species overyields most in the other place deouples the monoculture, change in relative yield correlation.
+
+```{r}
+# calculate total selection effects
+print(df)
+plot(df$M, df$dRY)
+
+N <- n_unique(df$place) * n_unique(df$time) * n_unique(df$species)
+N * raw_cov(df$dRY, df$M)
+
+```
+
+But, if we calculate local selection effects, there is a strong positive local selection effect in the productive environment. Therefore, that leads to a total complementarity effect which can be interpreted as a type of spatial niche partitioning.
+
+```{r}
+# calculate local selection effects
+n_unique(df$species) * raw_cov(df[1:2, ]$dRY, df[1:2,]$M)
+n_unique(df$species) * raw_cov(df[3:4, ]$dRY, df[3:4,]$M)
+
+```
+
+*Space-time partition: Overview*
+
+To extend this partition, they split the total selection effect into two components. 
+
+Total insurance effect: PTN * cov(dPobs,ijk, Mijk)
+
+This quantifies the extent to which the most productive speies in monoculture tend to dominate mixtures. Theory predicts that it should be positive when:
+
+* When the best competitor for a single limiting resource outcompetes all others (Tilman et al. 1997)
+
+* In spatially or temporally fluctuating environments where species tend to dominate in places (Loreau et al. 2003) and times (Yachi and Loreau 1999) where they are most productive in monoculture
+
+Non-random overyielding
 
 The non-random overyielding term is quite confusing because it's not exactly clear what the delta RYobs,ijk term measures. The explanation in the text says that it is the extent to which the most productive species in monoculture tend to overyield most in mixtures. They then say that overyielding is quantified relative to observed rather than initial relative abundance... The formula is:
 
@@ -44,9 +179,75 @@ The non-random overyielding term is quite confusing because it's not exactly cle
 
 My initial explanation is that if there is a high RYobs,ijk but the species is dominating in the mixture (i.e. high Pobs,ijk), then this is not non-random overyielding because we it is not overyielding necessarily more than we expect based on its proportion?
 
-```{r}
+Total complementarity effect
+
+This term quantifies the extent to which species overyield on average. Therefore, it quantities the extent to which niche partitioning and facilitation outweight negative effects of chemical warfare etc.
+
+
+*Six types of biodiversity effect*
+
+**Case 1: Average selection effect**
+
+This is the case of a homogeneous and temporally constant environment. In this case, there are two species and one has higher monoculture yield (species 1). Moreover, it is the best competitor so it will eventually fully dominate the mixtures and species 2 will be out-competed. Under this scenario, the mixture yield matches the yield of the dominant monoculture.
+
+In this case, the net biodiversity effect is 100 and it is completely due to the average selection effect.
+
+**Case 2: Temporal insurance effect**
+
+This case occurs when species exhibit asynchronous responses to environmental fluctuations and are able to competitively dominate at times when the conditions are most favourable to them (i.e. high monoculture yield), (Yachi and Loreau 1999).
+
+Like case 1, mixtures become monocultures of the most productive species but the identity of this most productive species changes over time. This could only occur if species change their dominance structure in response to changes in the environment. Therefore, species must compete over relevant timescales.
+
+* Timescales are another important implication of theory...
+
+This effect assumes that species can be lost at one time and then recolonise somehow. However, if it goes globally extent, then we expect a permanent loss in functioning.
+
+**Case 3: Spatial insurance effect**
+
+This case occurs when species exhibit asynchronous responses to spatial heterogeneity and are able to competitively dominate at times when the conditions are most favourable to them (i.e. high monoculture yield), (Yachi and Loreau 1999).
+
+Like the temporal insurance effects, mixtures of species become dominated by the most productive species in monoculture but the identity of that species differs from year to year.
+
+**Case 4: Spatio-temporal insurance effect**
+
+This is similar to temporal and spatial insurance effects. However, it describes cases where we cannot attribute covariation between monoculture yields and mixture relative biomass to either time or space.
+
+**Case 5: Complementarity effect**
+
+Even if you have a temporally and spatially homogeneous environment, different species can still partition the niche by, for example, using different combinations of limiting nutrients, growing at different times of the year etc.
+
+Complementarity effects can also arise via facilitation whereby the presence of one species actually improves the growth of other species.
+
+Under this scenarios, ecosystem functioning depends on both species at all times and all places.
+
+**Case 6: Complementarity with non-random overyielding**
+
+This quantifies the extent to which the most productive species in monoculture overyields most in mixture. This is more of a residual effect and doesn't have a clear theoretical interpretation yet.
+
+They expect that this effect will probably be negative although it's not very clear why...
+
+
+## Application to experimental data
+
+They use data for the BIOCON experiment. Specifically, the analyse the 64 monocultures and 24 mixtures of 16 species. In addition, they only consider the elevated and ambient N treatments. They do not consider the CO2 treatments.
+
+All biomass was harvested and sorted species (i.e. species-specific biomass values). The data span 18 years. Finally, they have RYe because all 16 species were planted in equal proportion.
 
 
 
-```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
