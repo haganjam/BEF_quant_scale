@@ -134,11 +134,24 @@ Isbell_2018_part <- function(data, RYe) {
   # 9. Total insurance effect (Fig. 1)
   IT <- AS + TI + SI + ST
   
+  # Local complementarity and local selection
+  LC_LS <- 
+    df %>%
+    group_by(sample) %>%
+    summarise(dRY_m = mean(dRY),
+              M_m = mean(M),
+              cov_m = raw_cov(dRY, M),
+              n = n()) %>%
+    mutate(LC = n*dRY_m*M_m,
+           LS = n*cov_m) %>%
+    summarise(LC = sum(LC),
+              LS = sum(LS))
+  
   # 10. Local complementarity
-  LC <- N * mean(df$dRY) * mean(df$M)
+  LC <- LC_LS$LC
   
   # 11. Local selection
-  LS <- N * raw_cov(df$dRY, df$M)
+  LS <- LC_LS$LS
   
   
   ## Output
