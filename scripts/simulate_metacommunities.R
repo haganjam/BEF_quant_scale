@@ -1,8 +1,25 @@
 
-# Simulate test data
+# Explore theoretically whether we can detect an effect of environmental heterogeneity
+# on the magnitude of different types of biodiversity effects
+
+# next steps:
+
+# quantifying biodiversity effects
+
+# replication? i.e. only have one rep per env het?
+
+# simulate some empirical data and see how to model monocultures
+# use simulations of relative yield expected
+# and incorporate all that uncertainty into our estimated biodiversity effects
+
+# adaptive tracking
+
+# simulate a dataset like this and see if we can quantify it (Rudman et al. 2021)
+
+# what other effects can we explore in this field season?
 
 # Install the Thompson et al. (2020): mcomsimr
-devtools::install_github("plthompson/mcomsimr")
+# devtools::install_github("plthompson/mcomsimr")
 library(mcomsimr)
 
 # load key functions
@@ -10,68 +27,29 @@ library(here)
 source(here("scripts/isbell_2018_partition.R"))
 source(here("scripts/mcomsimr_simulate_MC2_function.R"))
 
-# set-up some core parameters
-np <- 5
-ns <- 3
-ts <- 10
-bi <- 10
-init <- 10
-ext_prob <- 0.0001
-disp_rate <- 0.3
 
-# set-up fixed inputs
-
-# generate a random landscape
-l.1 <- landscape_generate(patches = np, plot = FALSE)
-
-# generate a random dispersal matrix
-d.1 <- dispersal_matrix(landscape = l.1,
-                        torus = TRUE,
-                        kernel_exp = 0.1, plot = FALSE)
-
-# generate species interaction matrix randomly
-si.1 <- species_int_mat(species = ns, intra = 1, min_inter = 0, max_inter = 1, 
-                        comp_scaler = 1, plot = FALSE)
-
-# or do it manually
-si.1 <- matrix(rnorm(n = ns*ns, mean = 0.5, sd = 0.25), nrow = ns, ncol = ns)
-diag(si.1) <- 1
-head(si.1)
-
-# generate a random environmental matrix
-e.1 <- env_generate(landscape = l.1, env1Scale = 500, timesteps = (ts + bi + init), plot = FALSE )
-head(e.1)
-summary(e.1)
-
-# write a function to scale a variable between any two values
-# https://stats.stackexchange.com/questions/281162/scale-a-number-between-a-range
-normalise_x <- function(x, b, a) {
-  y <- (b - a) * ((x - min(x))/(max(x) - min(e.1$env1))) + a
-  return(y)
-}
-
-# generate random species traits
-t.1 <- env_traits(species = ns, max_r = 5, 
-                  min_env = 0, max_env = 1, 
-                  env_niche_breadth = 0.5, 
-                  plot = FALSE, optima_spacing = "even")
-
-
-# choose number of runs and loop over this number
-n_runs <- 2
-n_sim_out <- vector("list", length = n_runs)
-
-for (j in 1:n_runs) {
+# put these data into the simulate_MC function and simulate the mixture
+sim_metacomm_BEF <- function(species = 5, patches = 10, 
+                              dispersal = 0.2, 
+                              timesteps = 10, burn_in = 50, initialization = 50,
+                              extirp_prob = 0.0001,
+                              landscape, 
+                              disp_mat, 
+                              env.df, 
+                              env_traits.df, 
+                              int_mat) {
   
-  # put these data into the simulate_MC function and simulate the mixture
-  sim.list <- simulate_MC2(species = ns, patches = np, dispersal = disp_rate, plot = FALSE, 
-                           timesteps = ts, burn_in = bi, initialization = init,
-                           extirp_prob = ext_prob,
-                           landscape = l.1, 
-                           disp_mat = d.1, 
-                           env.df = e.1, 
-                           env_traits.df = t.1, 
-                           int_mat = si.1)
+  sim.list <- simulate_MC2(species = species, patches = patches, 
+                           dispersal = dispersal, plot = FALSE, 
+                           timesteps = timesteps, 
+                           burn_in = burn_in, 
+                           initialization = initialization,
+                           extirp_prob = extirp_prob,
+                           landscape = landscape, 
+                           disp_mat = disp_mat, 
+                           env.df = env.df, 
+                           env_traits.df = env_traits.df, 
+                           int_mat = int_mat)
   
   # write the dynamics part of the simulation into a data.frame
   mix <- sim.list$dynamics.df
@@ -87,21 +65,25 @@ for (j in 1:n_runs) {
   
   # add a column for each unique sample
   sample <- unique(with(mix, paste(time, place)))
-  mix$sample <- rep(sort(as.integer(as.factor(sample)) ), each = ns)
+  mix$sample <- rep(sort(as.integer(as.factor(sample)) ), each = species)
   
   # simulate each monoculture over all times and places
-  mono <- vector("list", length = ns)
-  for (i in 1:ns) {
+  mono <- vector("list", length = species)
+  for (i in 1:species) {
     
     # simulate each species
-    x <- simulate_MC2(species = 1, patches = np, dispersal = disp_rate, plot = FALSE, 
-                      timesteps = ts, burn_in = bi, initialization = init,
-                      extirp_prob = ext_prob,
-                      landscape = l.1, 
-                      disp_mat = d.1, 
-                      env.df = e.1, 
-                      env_traits.df = t.1[t.1$species == i,], 
-                      int_mat = si.1[i, i])
+    x <- simulate_MC2(species = 1, patches = patches, 
+                      dispersal = dispersal, plot = FALSE, 
+                      timesteps = timesteps, 
+                      burn_in = burn_in, 
+                      initialization = initialization,
+                      extirp_prob = extirp_prob,
+                      landscape = landscape, 
+                      disp_mat = disp_mat, 
+                      env.df = env.df, 
+                      env_traits.df = env_traits.df[i,], 
+                      int_mat = int_mat[i,i])
+    
     y <- x$dynamics.df[, c("time", "patch", "species", "N")]
     y$species <- i
     
@@ -128,33 +110,8 @@ for (j in 1:n_runs) {
     arrange(sample, time, place, species)
   head(mix.mono)
   
-  # quantify environmental heterogeneity
-  env.het <- sim.list$env.df
-  env.het <- env.het[env.het$time_run >= 0, ]
-  
-  # spatial heterogeneity
-  sp.h <- mean( aggregate(env.het$env1, list(time = env.het$time_run), function(x) sd(x)/mean(x) )$x ) 
-  
-  # temporal heterogeneity
-  t.h <- aggregate(env.het$env1, list(time = env.het$time), function(x) mean(x) )
-  t.h <- sd(t.h$x)/mean(t.h$x)
-  
-  # total heterogeneity
-  tot.h <- sd(env.het$env1)/mean(env.het$env1)
-  
-  # trait variation in environmental optima
-  
-  # env.optima
-  optima.cv <- sd(sim.list$env_traits.df$optima)/mean(sim.list$env_traits.df$optima)
-  
-  # max.r
-  maxr.cv <- sd(sim.list$env_traits.df$max_r)/mean(sim.list$env_traits.df$max_r)
-  
-  # niche.breadth.cv
-  niche.cv <- sd(sim.list$env_traits.df$env_niche_breadth)/mean(sim.list$env_traits.df$env_niche_breadth)
-  
   # apply the Isbell partition to these data
-  part.df <- Isbell_2018_sampler(data = mix.mono, RYe = rep(1/ns, ns), RYe_post = FALSE)
+  part.df <- Isbell_2018_sampler(data = mix.mono, RYe = rep(1/species, species), RYe_post = FALSE)
   
   # convert to the wide format
   part.df <- 
@@ -162,62 +119,152 @@ for (j in 1:n_runs) {
                        names_from = "Beff",
                        values_from = "Value")
   
-  # create a data.frame of predictor variables
-  preds <- 
-    tibble(species = ns,
-           places = np,
-           times = ts,
-           spatial_het = sp.h,
-           temporal_het = t.h,
-           total_het = tot.h,
-           env_optima_cv = optima.cv,
-           max_r_cv = maxr.cv,
-           niche.cv = niche.cv)
-  
-  # join the part.df and preds dataframes
-  n_sim_out[[j]] <-  bind_cols(preds, part.df)
+  return(part.df)
   
 }
 
-# bind the simulated data into a data.frame
-n_sim_out <- bind_rows(n_sim_out, .id = "run_id")
-names(n_sim_out)
+# write a function to scale a variable between any two values
+# https://stats.stackexchange.com/questions/281162/scale-a-number-between-a-range
+normalise_x <- function(x, b, a) {
+  y <- (b - a) * ((x - min(x))/(max(x) - min(e.1$env1))) + a
+  return(y)
+}
 
-# plot a few comparisons
-ggplot(data = n_sim_out,
-       mapping = aes(x = spatial_het, y = SI)) +
+  
+# set-up fixed inputs
+species <- 10
+patches <- 20
+ts <- 100
+bi <- 100
+init <- 50
+
+# generate a random landscape
+l.1 <- landscape_generate(patches = patches, plot = FALSE)
+
+# generate a random dispersal matrix
+d.1 <- dispersal_matrix(landscape = l.1,
+                        torus = TRUE,
+                        kernel_exp = 0.1, plot = FALSE)
+
+# generate species interaction matrix randomly
+si.1 <- species_int_mat(species, intra = 1, min_inter = 0, 
+                        max_inter = 1.5, comp_scaler = 0.3, plot = FALSE)
+head(si.1)
+
+# generate a random environmental matrix
+e.1 <- env_generate(landscape = l.1, env1Scale = 900, timesteps = (ts + bi + init), plot = FALSE )
+hist(e.1$env1)
+
+# generate species environmental optima
+t.1 <- env_traits(species = species, max_r = 5, 
+                  min_env = 0, max_env = 1, 
+                  env_niche_breadth = 0.2, 
+                  plot = FALSE, optima_spacing = "even")
+head(t.1)
+
+# set number of replicates: 10
+n_rep <- 100
+
+# simulate a set of metacommunities with high environmental heterogeneity among patches
+high_env_var <- vector("list", length = n_rep)
+for (i in 1:n_rep) {
+  
+  x <- 
+    sim_metacomm_BEF(species = species, patches = patches, 
+                     dispersal = 0.2, 
+                     timesteps = ts, burn_in = bi, initialization = init,
+                     extirp_prob = 0.0001,
+                     landscape = l.1, 
+                     disp_mat = d.1, 
+                     env.df = e.1, 
+                     env_traits.df = t.1, 
+                     int_mat = si.1
+                     )
+  
+  x$env_het <- "high"
+  
+  high_env_var[[i]] <- x
+  
+}
+
+# simulate a set of metacommunities with low environmental heterogeneity among patches
+low_env_var <- vector("list", length = n_rep)
+for (i in 1:n_rep) {
+
+# modify the environmental parameters
+e.1.mod <- e.1
+
+# get the minimum and maximum values
+y <- runif(1, 0, 1)
+if ( (1-y) > 0.5 ) { 
+  a <- y
+  b <- y + 0.5
+}
+if ( (1-y) < 0.5 ) { 
+  a <- y - 0.5
+  b <- y
+}
+
+# squish the environmental heterogeneity
+e.1.mod$env1 <- normalise_x(x = e.1.mod$env1, a = a, b = b)
+
+x <- 
+  sim_metacomm_BEF(species = species, patches = patches, 
+                   dispersal = 0.2, 
+                   timesteps = ts, burn_in = bi, initialization = init,
+                   extirp_prob = 0.0001,
+                   landscape = l.1, 
+                   disp_mat = d.1, 
+                   env.df = e.1.mod, 
+                   env_traits.df = t.1, 
+                   int_mat = si.1
+  )
+
+x$env_het <- "low"
+
+low_env_var[[i]] <- x
+
+}
+
+# bind these data.frames together
+df <- bind_rows( bind_rows(high_env_var), bind_rows(low_env_var), .id = "run" )
+
+# plot the high versus low environmental heterogeneity comparison
+ggplot(data = df,
+       mapping = aes(x = env_het, y = NBE)) +
   geom_point() +
-  geom_smooth(method = "lm", se = FALSE) +
-  scale_colour_viridis_d() +
   theme_classic()
 
-ggplot(data = n_sim_out,
-       mapping = aes(x = temporal_het, y = TI)) +
+ggplot(data = df,
+       mapping = aes(x = env_het, y = IT)) +
   geom_point() +
-  geom_smooth(method = "lm", se = FALSE) +
-  scale_colour_viridis_d() +
   theme_classic()
 
-ggplot(data = n_sim_out,
-       mapping = aes(x = total_het, y = IT, colour = env_optima_LH)) +
+# what about the proportion of the total biodiversity effect
+df %>%
+  mutate(AS = AS/NBE) %>%
+  ggplot(data = .,
+       mapping = aes(x = env_het, y = AS)) +
   geom_point() +
-  geom_smooth(method = "lm", se = FALSE) +
-  scale_colour_viridis_d() +
   theme_classic()
 
-View(n_sim_out)
+df %>%
+  mutate(SI = SI/NBE) %>%
+  ggplot(data = .,
+         mapping = aes(x = env_het, y = SI)) +
+  geom_point() +
+  theme_classic()
 
-df <- mix.mono
-df <- t1a
+df %>%
+  mutate(TI = TI/NBE) %>%
+  ggplot(data = .,
+         mapping = aes(x = env_het, y = TI)) +
+  geom_point() +
+  theme_classic()
 
-# define expected relative yields
-df$RYe <- rep(rep(1/2, 2), n_unique(df$sample))
-
-# define observed relative yields
-df$RYo <- ifelse(df$M == 0, 0, (df$Y/df$M))
-
-df$dRY <- (df$RYo - df$RYe)
-
-sum( df$M * df$dRY )
-sum(df$dRY)
-
+df %>%
+  mutate(ST = ST/NBE) %>%
+  ggplot(data = .,
+         mapping = aes(x = env_het, y = ST)) +
+  geom_point() +
+  theme_classic()

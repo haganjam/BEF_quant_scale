@@ -66,3 +66,5 @@ simulate_MC2 <- function(patches, species, dispersal = 0.01,
   
   return(list(dynamics.df = dynamics.df, landscape = landscape, env.df = env.df, env_traits.df = env_traits.df, disp_mat = disp_mat, int_mat = int_mat))
 }
+
+### END
