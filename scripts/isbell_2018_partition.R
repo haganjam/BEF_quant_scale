@@ -65,7 +65,7 @@ Isbell_2018_part <- function(data, RYe) {
   df$RYe <- rep(RYe, n_unique(df$sample))
   
   # define observed relative yields
-  df$RYo <- (df$Y/df$M)
+  df$RYo <- ifelse(df$M == 0, 0, (df$Y/df$M))
   
   # define the change in relative yield
   df$dRY <- (df$RYo - df$RYe)
