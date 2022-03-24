@@ -44,7 +44,7 @@ simulate_MC2 <- function(patches, species, dispersal = 0.01,
     setTxtProgressBar(pb, i)
   }
   close(pb)
-  dynamics.df <- dplyr::left_join(dynamics.df, env_traits.df)
+  dynamics.df <- dplyr::left_join(dynamics.df, env_traits.df, by = "species")
   env.df$time_run <- env.df$time - burn_in
   
   env.df_init <- data.frame(env1 = env.df$env1[env.df$time == 1], patch = 1:patches, time = NA, time_run = rep(seq(-(burn_in + initialization), -burn_in, by = 1), each = patches))
