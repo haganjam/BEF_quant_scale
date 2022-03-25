@@ -28,44 +28,42 @@ source(here("scripts/isbell_2018_partition.R"))
 source(here("scripts/mcomsimr_simulate_MC2_function.R"))
 
 
-# put these data into the simulate_MC function and simulate the mixture
+# simulate monocultures and mixtures in identical environmental conditions
 sim_metacomm_BEF <- function(species = 5, patches = 10, 
-                              dispersal = 0.2, 
-                              timesteps = 10, burn_in = 50, initialization = 50,
-                              extirp_prob = 0.0001,
-                              landscape, 
-                              disp_mat, 
-                              env.df, 
-                              env_traits.df, 
-                              int_mat) {
+                             start_abun = 150,
+                             dispersal = 0.2, 
+                             timesteps = 10, burn_in = 50, initialization = 50,
+                             extirp_prob = 0.0001,
+                             landscape, 
+                             disp_mat, 
+                             env.df, 
+                             env_traits.df, 
+                             int_mat
+                             ) {
   
-  sim.list <- simulate_MC2(species = species, patches = patches, 
-                           dispersal = dispersal, plot = FALSE, 
-                           timesteps = timesteps, 
-                           burn_in = burn_in, 
-                           initialization = initialization,
-                           extirp_prob = extirp_prob,
-                           landscape = landscape, 
-                           disp_mat = disp_mat, 
-                           env.df = env.df, 
-                           env_traits.df = env_traits.df, 
-                           int_mat = int_mat)
+  # simulate the mixture of species
+  mix <- simulate_MC2(species = species, 
+                      patches = patches, 
+                      dispersal = dispersal, 
+                      start_abun = start_abun,
+                      timesteps = timesteps,
+                      extirp_prob = extirp_prob,
+                      landscape = landscape, 
+                      disp_mat = disp_mat, 
+                      env.df = env.df, 
+                      env_traits.df = env_traits.df, 
+                      int_mat = int_mat
+                      )
   
-  # write the dynamics part of the simulation into a data.frame
-  mix <- sim.list$dynamics.df
-  
-  # reorganise this data.frame
-  mix <- mix[, c("time", "patch", "species", "N")]
-  mix <- mix[mix$time >= 0, ]
-  mix <- mix[mix$time %in% seq(0, ts, 10),]
-  mix <- 
-    mix %>%
-    arrange(time, patch, species) %>%
-    rename(place = patch, Y = N)
+  # add a mixture column
+  mix$mono_mix <- "mixture"
   
   # add a column for each unique sample
-  sample <- unique(with(mix, paste(time, place)))
+  sample <- unique(with(mix, paste(time, patch)))
   mix$sample <- rep(sort(as.integer(as.factor(sample)) ), each = species)
+  
+  # reorder the columns
+  mix <- mix[, c("mono_mix", "sample", "time", "patch", "env", "species", "N")]
   
   # simulate each monoculture over all times and places
   mono <- vector("list", length = species)
@@ -73,10 +71,8 @@ sim_metacomm_BEF <- function(species = 5, patches = 10,
     
     # simulate each species
     x <- simulate_MC2(species = 1, patches = patches, 
-                      dispersal = dispersal, plot = FALSE, 
-                      timesteps = timesteps, 
-                      burn_in = burn_in, 
-                      initialization = initialization,
+                      dispersal = dispersal, start_abun = start_abun,
+                      timesteps = timesteps,
                       extirp_prob = extirp_prob,
                       landscape = landscape, 
                       disp_mat = disp_mat, 
@@ -84,102 +80,75 @@ sim_metacomm_BEF <- function(species = 5, patches = 10,
                       env_traits.df = env_traits.df[i,], 
                       int_mat = int_mat[i,i])
     
-    y <- x$dynamics.df[, c("time", "patch", "species", "N")]
-    y$species <- i
+    # rename the species column
+    x$species <- i
+    
+    # add a mono_mix variable
+    x$mono_mix <- "monoculture"
+    
+    # add a column for each unique sample
+    sample <- unique(with(x, paste(time, patch)))
+    x$sample <- sort(as.integer(as.factor(sample)) )
     
     # write the dynamics data.frame into a list
-    y <- y[y$time >= 0, ]
-    y <- y[y$time %in% seq(0, ts, 10),]
-    mono[[i]] <- y
+    mono[[i]] <- x
     
   }
   
   # bind the monocultures into a data.frame
   mono <- bind_rows(mono)
   
-  # arrange and rename the relevant columns
-  mono <- 
-    mono %>%
-    arrange(time, patch, species) %>%
-    rename(place = patch, M = N)
+  # reorder the columns
+  # reorder the columns
+  mono <- mono[, c("mono_mix", "sample", "time", "patch", "env", "species", "N")]
   
-  # join the mixture and monoculture data to match the partition format
-  mix.mono <- 
-    full_join(mono, mix, by = c("time", "place", "species")) %>%
-    select(sample, time, place, species, M, Y) %>%
-    arrange(sample, time, place, species)
-  head(mix.mono)
-  
-  # apply the Isbell partition to these data
-  part.df <- Isbell_2018_sampler(data = mix.mono, RYe = rep(1/species, species), RYe_post = FALSE)
-  
-  # convert to the wide format
-  part.df <- 
-    tidyr::pivot_wider(bind_rows(part.df$Beff, select(part.df$L.Beff, Beff = L.Beff, Value)),
-                       names_from = "Beff",
-                       values_from = "Value")
-  
-  return(part.df)
+  # return the list with the mixture and monoculture data
+  return(list("mixture" = mix, "monoculture" = mono))
   
 }
 
-# write a function to scale a variable between any two values
-# https://stats.stackexchange.com/questions/281162/scale-a-number-between-a-range
-normalise_x <- function(x, b, a) {
-  y <- (b - a) * ((x - min(x))/(max(x) - min(x))) + a
-  return(y)
-}
-
+# Set-up simulations
 
 # set-up fixed inputs
-species <- 3
-patches <- 3
+species <- 5
+patches <- 5
 ts <- 100
-bi <- 100
-init <- 100
 
-# generate a random landscape
+# Generate a random landscape
 l.1 <- landscape_generate(patches = patches, plot = FALSE)
 
-# generate a random dispersal matrix
+# Generate a random dispersal matrix
 d.1 <- dispersal_matrix(landscape = l.1,
                         torus = TRUE,
                         kernel_exp = 0.1, plot = FALSE)
 
-# generate species environmental optima
+# Generate species environmental optima
 t.1 <- env_traits(species = species, max_r = 0.5, 
                   min_env = 0, max_env = 1, 
                   env_niche_breadth = 0.2, 
-                  plot = FALSE, optima_spacing = "even")
+                  plot = FALSE, optima_spacing = "random")
 t.1$K_max <- 150
 head(t.1)
-
 
 ## Competition matrices
 
 # generate species interaction matrix randomly
-si.1 <- species_int_mat(species, intra = 1, min_inter = 0, 
-                        max_inter = 0.8, comp_scaler = 1, plot = FALSE)
+si.1 <- species_int_mat(species = 5, intra = 1, min_inter = 0, 
+                        max_inter = 0.75, comp_scaler = 1, plot = FALSE)
 head(si.1)
 
-# generate neutral competition matrix
-si.n <- species_int_mat(species, intra = 1, min_inter = 1, 
-                        max_inter = 1, comp_scaler = 1, plot = FALSE)
-head(si.n)
-
-
-## environmental matrices
+## Environmental matrices
 
 # generate a random environmental matrix
-e.1 <- env_generate(landscape = l.1, env1Scale = 900, timesteps = (ts + bi + init), plot = FALSE )
+e.1 <- env_generate(landscape = l.1, env1Scale = 900, timesteps = (ts), plot = FALSE )
 head(e.1)
 hist(e.1$env1)
 
 # environment space
 env.1 <- runif(n = patches, min = 0, max = 1)
-env.1 <- c(0.1, 0.5, 0.9)
-e.s <- expand.grid(1:patches, 1:(ts + bi + init))
-e.s$env1 <- rep(env.1,(ts + bi + init) ) 
+# env.1 <- c(0.1, 0.5, 0.9)
+e.s <- expand.grid(1:patches, 1:(ts))
+e.s$env1 <- rep(env.1,(ts) ) 
 names(e.s) <- c("patch", "time", "env1")
 e.s <- e.s[,c("env1", "patch", "time")] 
 head(e.s)
@@ -193,35 +162,62 @@ e.t <- e.t[,c("env1", "patch", "time")]
 
 # test the new metacommunity simulation function
 x <- 
-  simulate_MC2(patches = patches, species = species, dispersal = 0.1, 
-               timesteps = ts, start_abun = 150,
-               extirp_prob = 0.0001,
-               landscape = l.1, disp_mat = d.1, env.df = e.s, 
-               env_traits.df = t.1, int_mat = si.1)
+  sim_metacomm_BEF(patches = patches, species = species, dispersal = 0.5, 
+                   timesteps = ts, start_abun = 150,
+                   extirp_prob = 0.001,
+                   landscape = l.1, disp_mat = d.1, env.df = e.s, 
+                   env_traits.df = t.1, int_mat = si.1)
 head(x)
 
-ggplot(data = x %>% mutate(species = as.character(species)),
+ggplot(data = x$mixture %>% mutate(species = as.character(species)),
        mapping = aes(x = time, y = N, colour = species)) +
   geom_line() +
   facet_wrap(~patch, scales = "free") +
   theme_classic()
 
 
-## Run examples to test if the outputs from the function make sense
-sim_metacomm_BEF(species = species, 
-                 patches = patches, 
-                 dispersal = 0.2, 
-                 timesteps = ts, burn_in = bi, initialization = init,
-                 extirp_prob = 0.0001,
-                 landscape = l.1, 
-                 disp_mat = d.1, 
-                 env.df = e.s, 
-                 env_traits.df = t.1, 
-                 int_mat = si.1)
 
 
 
 
+
+# transform the monoculture and mixture data and run the Isbell et al. (2018) partition
+
+# arrange and rename the relevant columns
+mono <- 
+  mono %>%
+  arrange(time, patch, species) %>%
+  rename(place = patch, M = N)
+
+# join the mixture and monoculture data to match the partition format
+mix.mono <- 
+  full_join(mono, mix, by = c("time", "place", "species")) %>%
+  select(sample, time, place, species, M, Y) %>%
+  arrange(sample, time, place, species)
+head(mix.mono)
+
+# apply the Isbell partition to these data
+part.df <- Isbell_2018_sampler(data = mix.mono, RYe = rep(1/species, species), RYe_post = FALSE)
+
+# convert to the wide format
+part.df <- 
+  tidyr::pivot_wider(bind_rows(part.df$Beff, select(part.df$L.Beff, Beff = L.Beff, Value)),
+                     names_from = "Beff",
+                     values_from = "Value")
+
+
+
+
+
+
+### Environmental heterogeneity experiment
+
+# write a function to scale a variable between any two values
+# https://stats.stackexchange.com/questions/281162/scale-a-number-between-a-range
+normalise_x <- function(x, b, a) {
+  y <- (b - a) * ((x - min(x))/(max(x) - min(x))) + a
+  return(y)
+}
 
 # set number of replicates: 10
 n_rep <- 100

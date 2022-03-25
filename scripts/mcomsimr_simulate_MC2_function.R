@@ -1,13 +1,33 @@
 
-# Modified version of the simulate_MC function
+#' Modified version of the simulate_MC function from the mcomsimr package (Thompson et al. 2020, Ecology Letters)
+# https://github.com/plthompson/mcomsimr
+
+# args
+
+#' @param patches number of patches to simulate
+#' @param species number of species to simulate
+#' @param dispersal dispersal probability between 0 and 1
+#' @param timesteps number of time-steps to run the model for
+#' @param start_abun starting abundance of the community (each species starts with start_abun/species in each patch)
+#' @param extirp_prob probability of local extirpation for each population in each time step (should be small e.g. 0.001)
+#' @param landscape dataframe with x and y coordinates for each patch
+#' @param disp_mat matrix with each column specifying the probability that an individual disperses to each other patch (row)
+#' @param env.df optional dataframe with environmental conditions with columns: env1, patch, time
+#' @param env_optima optional values of environmental optima, should be a vector of length species
+#' @param int_mat optional externally generated competition matrix
 
 simulate_MC2 <- function(patches, species, dispersal = 0.01, timesteps = 1200,
-                         start_abun = 500,
+                         start_abun = 150,
                          extirp_prob = 0,
                          landscape, disp_mat, env.df, env_traits.df, int_mat){
   
+  # load the dplyr library
   library(dplyr)
-  library(ggplot2)
+  
+  # check if starting abundance is reasonable
+  if (any(env_traits.df$K_max > start_abun)) {
+    stop("Starting abundance cannot exceed the maximum carrying capacity, K")
+  }
   
   dynamics.df <- data.frame()
   N <- matrix(rep(round(start_abun/species, 0), species*patches), nrow = patches, ncol = species)
@@ -49,7 +69,11 @@ simulate_MC2 <- function(patches, species, dispersal = 0.01, timesteps = 1200,
     setTxtProgressBar(pb, i)
   }
   close(pb)
+  
+  # join the environmental traits to the dynamics
   dynamics.df <- dplyr::left_join(dynamics.df, env_traits.df, by = "species")
+  
+  # reorganise the dynamics.df
   dynamics.df <- 
     dynamics.df %>%
     filter(time >= 0) %>%
