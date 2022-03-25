@@ -1,4 +1,14 @@
 
+# Function to simulate BEF experiments using metacommunity models
+
+# load the mcomsimr package
+library(mcomsimr)
+
+# load key functions
+library(here)
+source(here("scripts/isbell_2018_partition.R"))
+
+
 #' Modified version of the simulate_MC function from the mcomsimr package (Thompson et al. 2020, Ecology Letters)
 # https://github.com/plthompson/mcomsimr
 
@@ -77,9 +87,161 @@ simulate_MC2 <- function(patches, species, dispersal = 0.01, timesteps = 1200,
   dynamics.df <- 
     dynamics.df %>%
     filter(time >= 0) %>%
-    select(time, patch, env, species, N)
+    select(time, patch, env, species, N) %>%
+    arrange(time, patch, species)
   
   return(dynamics.df)
+  
+}
+
+
+#' Function to use the simulate_MC2 function to simulate BEF experiments
+
+# args
+
+#' @param patches number of patches to simulate
+#' @param species number of species to simulate
+#' @param dispersal dispersal probability between 0 and 1
+#' @param timesteps number of time-steps to run the model for
+#' @param start_abun starting abundance of the community (each species starts with start_abun/species in each patch)
+#' @param extirp_prob probability of local extirpation for each population in each time step (should be small e.g. 0.001)
+#' @param landscape dataframe with x and y coordinates for each patch
+#' @param disp_mat matrix with each column specifying the probability that an individual disperses to each other patch (row)
+#' @param env.df optional dataframe with environmental conditions with columns: env1, patch, time
+#' @param env_optima optional values of environmental optima, should be a vector of length species
+#' @param int_mat optional externally generated competition matrix
+
+# simulate monocultures and mixtures in identical environmental conditions
+sim_metacomm_BEF <- function(species = 5, patches = 10,
+                             dispersal = 0.2,
+                             timesteps = 10, 
+                             start_abun = 150,
+                             extirp_prob = 0.0001,
+                             landscape, 
+                             disp_mat, 
+                             env.df, 
+                             env_traits.df, 
+                             int_mat
+                             ) {
+  
+  # simulate the mixture of species
+  mix <- simulate_MC2(species = species, 
+                      patches = patches, 
+                      dispersal = dispersal, 
+                      start_abun = start_abun,
+                      timesteps = timesteps,
+                      extirp_prob = extirp_prob,
+                      landscape = landscape, 
+                      disp_mat = disp_mat, 
+                      env.df = env.df, 
+                      env_traits.df = env_traits.df, 
+                      int_mat = int_mat
+  )
+  
+  # add a mixture column
+  mix$mono_mix <- "mixture"
+  
+  # add a column for each unique sample
+  sample <- unique(with(mix, paste(time, patch)))
+  mix$sample <- rep(sort(as.integer(as.factor(sample)) ), each = species)
+  
+  # reorder the columns
+  mix <- mix[, c("mono_mix", "sample", "time", "patch", "env", "species", "N")]
+  
+  # simulate each monoculture over all times and places
+  mono <- vector("list", length = species)
+  for (i in 1:species) {
+    
+    # simulate each species
+    x <- simulate_MC2(species = 1, patches = patches, 
+                      dispersal = dispersal, start_abun = start_abun,
+                      timesteps = timesteps,
+                      extirp_prob = extirp_prob,
+                      landscape = landscape, 
+                      disp_mat = disp_mat, 
+                      env.df = env.df, 
+                      env_traits.df = env_traits.df[i,], 
+                      int_mat = int_mat[i,i])
+    
+    # rename the species column
+    x$species <- i
+    
+    # add a mono_mix variable
+    x$mono_mix <- "monoculture"
+    
+    # add a column for each unique sample
+    sample <- unique(with(x, paste(time, patch)))
+    x$sample <- sort(as.integer(as.factor(sample)) )
+    
+    # write the dynamics data.frame into a list
+    mono[[i]] <- x
+    
+  }
+  
+  # bind the monocultures into a data.frame
+  mono <- bind_rows(mono)
+  
+  # reorder the columns
+  mono <- mono[, c("mono_mix", "sample", "time", "patch", "env", "species", "N")]
+  mono <- 
+    mono %>%
+    arrange(mono_mix, time, patch, species)
+  
+  # return the list with the mixture and monoculture data
+  return(list("mixture" = mix, "monoculture" = mono))
+  
+}
+
+
+# Function to process mixture and monoculture data from the simulations and calculate Isbell et al.'s (2018, Ecology Letters) partition
+
+# args
+
+#' @param mix mixture data from the sim_metacomm_BEF function
+#' @param mono monoculture data from the sim_metacomm_BEF function
+#' @param from_last how many time points from the last one to include
+
+Isbell_2018_cleaner <- function(mix, mono, from_last) {
+  
+  library(dplyr)
+  
+  # get the last x time-points
+  t_sel <- unique(mix$time)
+  t_sel <- (last(t_sel) - from_last):last(t_sel)
+  
+  # process the mixture data
+  mix <- 
+    mix %>%
+    filter( time %in% t_sel ) %>%
+    select(-mono_mix, -env) %>%
+    rename(place = patch, Y = N) %>%
+    mutate(sample = as.integer(as.factor(sample)))
+  
+  # process the monoculture data
+  mono <- 
+    mono %>%
+    filter( time %in% t_sel ) %>%
+    select(-mono_mix, -env, -sample) %>%
+    rename(place = patch, M = N)
+  
+  # join the mixture and monoculture data to match the partition format
+  mix.mono <- 
+    full_join(mono, mix, by = c("time", "place", "species")) %>%
+    select(sample, time, place, species, M, Y) %>%
+    arrange(sample, time, place, species)
+  head(mix.mono)
+  
+  # apply the Isbell partition to these data
+  n_species <- length(unique(mix.mono$species))
+  part.df <- Isbell_2018_sampler(data = mix.mono, RYe = rep(1/n_species, n_species), RYe_post = FALSE)
+  
+  # convert to the wide format
+  part.df <- 
+    tidyr::pivot_wider(bind_rows(part.df$Beff, select(part.df$L.Beff, Beff = L.Beff, Value)),
+                       names_from = "Beff",
+                       values_from = "Value")
+  
+  return(part.df)
   
 }
 
