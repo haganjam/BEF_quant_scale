@@ -227,26 +227,249 @@ This quantifies the extent to which the most productive species in monoculture o
 They expect that this effect will probably be negative although it's not very clear why...
 
 
-## Application to experimental data
+## Does the partition behave as expected given inputs from a simple metacommunity model?
+
+I've implemented a modified version of the model presented in Thompson et al. (2020, Ecology Letters). The modification was to implement proper Lotka-Volterra competition rather than the Beverton-Holt competition. This means that species have K-values for a given patch as well as r-values for a given patch. I use the same function to generate the K-values as the r-values which means that species that have high grow rates in a patch in some place at some time also have high K-values. This is probably a realistic assumption but it can be modified if necessary.
+
+This modification makes it easier to create interpretable competition coefficient matrices unlike the Thompson et al. (2020) model which has to use a scaling factor to increase equilibrium abundances.
+
+I then use this model to set-up simulations of BEF-experiments at metacommunity scales. Specifically, I've used **five species** in **five patches**. The species have different environmental optima and narrow niche widths. Specifially, I have created the idealised situation where species niches are distributed as shown below. Notes that the environment in this model can only vary between 0 and 1.
+
+```{r echo = FALSE}
+# calculate total selection effects
+print( data.frame(species = 1:5,
+                  env_optimum = c(0.1, 0.3, 0.5, 0.7, 0.9), 
+                  env_niche_width = c(0.2)) 
+       )
+
+```
 
 
+All species are seeded at equal abundance into each patch in the "mixture" treatment. In addition, I create all possible monocultures of the five species at the metacommunity scale. Therefore, in the species 1 monoculture, species 1 is seeded into all five patches and no new species can enter the system.
+
+To test whether the partition performs as expected, I created different scenarios that I implement and then I quantify biodiversity effects as per Isbell et al. (2018).
+
+**Environmental variation**
+
+I consider three types of environmental variation:
+
+* 1. Pure spatial variation: Each patch has a different environmental value but the patches do not vary in time
+
+* 2. Pure temporal variation: All patches have the same environmental value but this varies perfectly synchronously in time in all patches
+
+* 3. Combined spatial and temporal variation: Patches vary in both space and time in their environmental value
+
+**Competition**
+
+I consider two types of competition:
+
+* 1. Neutral competition: All competition coefficients are one which means that, in the absence of dispersal and possible mass effects, there should be zero or very little local complementarity among species.
+
+* 2. Stabilising competition: Competition coefficients vary between zero and one which means that local complementarity can arise. Competition is assumed to be symmetric and intraspecific competition is assumed to be one.
+
+I use combinations of these effects on a common landscape template and with equal connectivity to explore whether Isbell et al.'s (2018) partition makes intuitive sense given the assumptions implemented in the model.
 
 
+```{r include = FALSE}
+
+# Load the functions and packages
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+library(here)
+source(here("scripts/mcomsimr_simulate_MC2_function.R"))
+
+# set the seed
+set.seed(5489485)
 
 
+## Set-up fixed inputs
+species <- 5
+patches <- 5
+ts <- 100
 
 
+## Landscape parameters
+
+# generate a random landscape
+l.1 <- 
+  data.frame(x = c(50, 25, 25, 75, 75),
+             y = c(50, 25, 75, 25, 75))
+plot(l.1)
+
+# generate a random dispersal matrix
+d.1 <- dispersal_matrix(landscape = l.1, torus = TRUE, kernel_exp = 0.1, plot = FALSE)
 
 
+## Species traits
+
+# generate species environmental optima
+t.1 <- 
+  data.frame(species = 1:species,
+             optima = c(0.1, 0.3, 0.5, 0.7, 0.9),
+             env_niche_breadth = 0.2,
+             max_r = 0.5,
+             K_max = 150)
+head(t.1)
 
 
+## Competition matrices
+
+# generate species interaction matrix randomly
+
+# matrix 1: Intraspecific > interspecific competition
+si.1 <- matrix(runif(n = species*species, min = 0.1, max = 1), 
+                  nrow = species, ncol = species)
+si.1[lower.tri(si.1)] = t(si.1)[lower.tri(si.1)]
+diag(si.1) <- 1
+head(si.1)
+
+# matrix 2: Neutral competition
+si.2 <- species_int_mat(species = species, intra = 1, min_inter = 1, 
+                        max_inter = 1, comp_scaler = 1, plot = FALSE)
+head(si.2)
 
 
+## Environmental matrices
+
+# generate a random environmental matrix
+e.1 <- env_generate(landscape = l.1, env1Scale = 900, timesteps = (ts), plot = FALSE )
+
+# only spatial variation
+e.2 <- expand.grid(1:patches, 1:(ts))
+e.2$env1 <- rep(c(0.1, 0.3, 0.5, 0.7, 0.9), ts ) 
+names(e.2) <- c("patch", "time", "env1")
+e.2 <- e.2[,c("env1", "patch", "time")] 
+head(e.2)
+
+# only temporal variation
+e.3 <- expand.grid(1:patches, 1:ts)
+e.3$env1 <- rep(sample(x = seq(0.1, 0.9, 0.1), size = ts, replace = TRUE), 
+                each = patches ) 
+names(e.3) <- c("patch", "time", "env1")
+e.3 <- e.3[,c("env1", "patch", "time")] 
 
 
+# set-up a function to explore thesee biodiversity effects under different assumptions
+Isbell_explorer <- function(env, comp, n_runs, disp_rate, time_back) {
+
+x_out <- vector("list", length = n_runs)
+BEF_out <- vector("list", length = n_runs)
+for (i in 1:n_runs) {
+  x <- 
+    sim_metacomm_BEF(patches = patches, species = species, dispersal = disp_rate, 
+                     timesteps = ts, start_abun = 150,
+                     extirp_prob = 0.001,
+                     landscape = l.1, disp_mat = d.1, env.df = env, 
+                     env_traits.df = t.1, int_mat = comp)
+  
+  x_out[[i]] <- x
+  BEF_out[[i]] <- Isbell_2018_cleaner(mix = x$mixture, mono = x$monoculture, from_last  = time_back)
+  
+}
+
+# plot the results
+bind_rows(BEF_out, .id = "run") %>%
+  pivot_longer(cols = c("NBE", "TC", "TS", "AS", "TI", "SI", "ST", "LC"),
+               names_to = "BEF_effect",
+               values_to = "value") %>%
+  ggplot(data = ., 
+         mapping = aes(x = BEF_effect, y = value)) +
+  geom_jitter(width = 0.1) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  theme_classic()
+  
+}
+
+```
 
 
+*Pure spatial variation*
 
+First, we simulate the case of pure spatial variation, neutral competition and no dispersal. In this case, we expect that all biodiversity effects would be due to spatial insurance. There is no local complementarity due to species interactions (neutral competition) and no mass effects because dispersal is zero.
+
+
+```{r echo = FALSE}
+
+# spatial variation only: e.2
+# neutral competition: si.2
+# no dispersal: disp_rate = 0
+
+Isbell_explorer(env = e.2, comp = si.2, n_runs = 10, disp_rate = 0, time_back = 5)
+  
+```
+
+
+Next, we simulate the same situation but with some dispersal. This means that there can be some mass effects which leads to some limited local complementarity.
+
+```{r echo = FALSE}
+
+# spatial variation only: e.2
+# neutral competition: si.2
+# some dispersal: disp_rate = 0.05
+
+Isbell_explorer(env = e.2, comp = si.2, n_runs = 10, disp_rate = 0.05, time_back = 5)
+  
+```
+
+
+Finally, we simulated pure spatial variation and local complementarity by using a competition coefficient matrix that, for interspecific competition, is less than one.
+
+```{r echo = FALSE}
+
+# spatial variation only: e.2
+# stabilising competition: si.1
+# dispersal: disp_rate = 0.05
+
+Isbell_explorer(env = e.2, comp = si.1, n_runs = 10, disp_rate = 0.05, time_back = 5)
+  
+```
+
+
+*Pure temporal variation*
+
+Now, we look at cases of pure temporal variation. This means that all patches have the same environmental conditions in space but vary in time. We start with the case of neutral competition and some dispersal.
+
+```{r echo = FALSE}
+
+# temporal variation only: e.3
+# neutral competition: si.2
+# no dispersal: disp_rate = 0.05
+
+Isbell_explorer(env = e.3, comp = si.2, n_runs = 10, disp_rate = 0, time_back = 5)
+  
+```
+
+Next, we examine the same situation but with stabilising competition. Therefore, the local complementarity effects should get stronger.
+
+
+```{r echo = FALSE}
+
+# temporal variation only: e.3
+# stabilising competition: si.1
+# no dispersal: disp_rate = 0.05
+
+Isbell_explorer(env = e.3, comp = si.1, n_runs = 10, disp_rate = 0.05, time_back = 5)
+  
+```
+
+
+*Mixed environmental variation*
+
+Now we look at cases where the environment varies in both space and time and there is neutral competition. Here, we expect there to be both spatial and temporal insurance effects but limited local complementarity because competition is neutral. We use some dispersal here.
+
+```{r echo = FALSE}
+
+# spatial and temporal variation: e.1
+# neutral competition: si.2
+# no dispersal: disp_rate = 0.05
+
+Isbell_explorer(env = e.1, comp = si.2, n_runs = 10, disp_rate = 0.05, time_back = 5)
+  
+```
+
+
+In all cases, there are no temporal insurance effects. This seems to happen because the time-scales that we are looking at are so short. Let's try to look at time-points that are more spread out so that there is more opportunity for communities to adjust.
 
 
 
