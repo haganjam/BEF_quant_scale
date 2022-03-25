@@ -229,9 +229,9 @@ They expect that this effect will probably be negative although it's not very cl
 
 ## Application to experimental data
 
-They use data for the BIOCON experiment. Specifically, the analyse the 64 monocultures and 24 mixtures of 16 species. In addition, they only consider the elevated and ambient N treatments. They do not consider the CO2 treatments.
 
-All biomass was harvested and sorted species (i.e. species-specific biomass values). The data span 18 years. Finally, they have RYe because all 16 species were planted in equal proportion.
+
+
 
 
 

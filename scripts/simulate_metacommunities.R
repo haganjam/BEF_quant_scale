@@ -1,16 +1,18 @@
 
-## Calculate Isbell et al.'s (2018) effect on simulated data
+# Test if Isbell et al.'s (2018, Ecology Letters) partition behaves as expected
 
-# Load the functions
+# Load the functions and packages
+library(ggplot2)
+library(tidyr)
+library(dplyr)
 library(here)
 source(here("scripts/mcomsimr_simulate_MC2_function.R"))
 
 # set the seed
 set.seed(5489485)
 
-## Set-up simulation inputs
 
-## set-up fixed inputs
+## Set-up fixed inputs
 species <- 5
 patches <- 5
 ts <- 100
@@ -45,8 +47,10 @@ head(t.1)
 # generate species interaction matrix randomly
 
 # matrix 1: Intraspecific > interspecific competition
-si.1 <- species_int_mat(species = species, intra = 1, min_inter = 0, 
-                        max_inter = 0.75, comp_scaler = 1, plot = FALSE)
+si.1 <- matrix(runif(n = species*species, min = 0.1, max = 1), 
+                  nrow = species, ncol = species)
+si.1[lower.tri(si.1)] = t(si.1)[lower.tri(si.1)]
+diag(si.1) <- 1
 head(si.1)
 
 # matrix 2: Neutral competition
@@ -75,23 +79,196 @@ names(e.3) <- c("patch", "time", "env1")
 e.3 <- e.3[,c("env1", "patch", "time")] 
 
 
-## Test the metacommunity simulation function
-x <- 
-  sim_metacomm_BEF(patches = patches, species = species, dispersal = 0.1, 
-                   timesteps = ts, start_abun = 150,
-                   extirp_prob = 0.001,
-                   landscape = l.1, disp_mat = d.1, env.df = e.2, 
-                   env_traits.df = t.1, int_mat = si.2)
+## Pure spatial variation and neutral competition: No dispersal
 
-ggplot(data = x$mixture %>% mutate(species = as.character(species)),
-       mapping = aes(x = time, y = N, colour = species)) +
-  geom_line() +
-  facet_wrap(~patch, scales = "free") +
+# set-up the number of runs
+n_runs <- 10
+
+x_out <- vector("list", length = n_runs)
+BEF_out <- vector("list", length = n_runs)
+for (i in 1:n_runs) {
+  x <- 
+    sim_metacomm_BEF(patches = patches, species = species, dispersal = 0, 
+                     timesteps = ts, start_abun = 150,
+                     extirp_prob = 0.001,
+                     landscape = l.1, disp_mat = d.1, env.df = e.2, 
+                     env_traits.df = t.1, int_mat = si.2)
+  
+  x_out[[i]] <- x
+  BEF_out[[i]] <- Isbell_2018_cleaner(mix = x$mixture, mono = x$monoculture, from_last = 5)
+  
+}
+
+# plot the results
+bind_rows(BEF_out, .id = "run") %>%
+  pivot_longer(cols = c("NBE", "TC", "TS", "AS", "TI", "SI", "ST"),
+               names_to = "BEF_effect",
+               values_to = "value") %>%
+  ggplot(data = ., 
+         mapping = aes(x = BEF_effect, y = value)) +
+  geom_jitter(width = 0.1) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
   theme_classic()
 
-Isbell_2018_cleaner(mix = x$mixture, mono = x$monoculture, from_last = 10)
+
+## Pure spatial variation and neutral competition
+
+# set-up the number of runs
+n_runs <- 10
+
+x_out <- vector("list", length = n_runs)
+BEF_out <- vector("list", length = n_runs)
+for (i in 1:n_runs) {
+  x <- 
+    sim_metacomm_BEF(patches = patches, species = species, dispersal = 0.05, 
+                     timesteps = ts, start_abun = 150,
+                     extirp_prob = 0.001,
+                     landscape = l.1, disp_mat = d.1, env.df = e.2, 
+                     env_traits.df = t.1, int_mat = si.2)
+  
+  x_out[[i]] <- x
+  BEF_out[[i]] <- Isbell_2018_cleaner(mix = x$mixture, mono = x$monoculture, from_last = 5)
+  
+}
+
+# plot the results
+bind_rows(BEF_out, .id = "run") %>%
+  pivot_longer(cols = c("NBE", "TC", "TS", "AS", "TI", "SI", "ST"),
+               names_to = "BEF_effect",
+               values_to = "value") %>%
+  ggplot(data = ., 
+       mapping = aes(x = BEF_effect, y = value)) +
+  geom_jitter(width = 0.1) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  theme_classic()
 
 
+## Pure spatial variation and local complementarity
+
+# set-up the number of runs
+n_runs <- 10
+
+x_out <- vector("list", length = n_runs)
+BEF_out <- vector("list", length = n_runs)
+for (i in 1:n_runs) {
+  x <- 
+    sim_metacomm_BEF(patches = patches, species = species, dispersal = 0.05, 
+                     timesteps = ts, start_abun = 150,
+                     extirp_prob = 0.001,
+                     landscape = l.1, disp_mat = d.1, env.df = e.2, 
+                     env_traits.df = t.1, int_mat = si.1)
+  
+  x_out[[i]] <- x
+  BEF_out[[i]] <- Isbell_2018_cleaner(mix = x$mixture, mono = x$monoculture, from_last = 5)
+  
+}
+
+# plot the results
+bind_rows(BEF_out, .id = "run") %>%
+  pivot_longer(cols = c("NBE", "TC", "LC", "TS", "AS", "TI", "SI", "ST"),
+               names_to = "BEF_effect",
+               values_to = "value") %>%
+  ggplot(data = ., 
+         mapping = aes(x = BEF_effect, y = value)) +
+  geom_jitter(width = 0.1) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  theme_classic()
+
+
+## Pure temporal variation and neutral competition: No dispersal
+
+# set-up the number of runs
+n_runs <- 10
+
+x_out <- vector("list", length = n_runs)
+BEF_out <- vector("list", length = n_runs)
+for (i in 1:n_runs) {
+  x <- 
+    sim_metacomm_BEF(patches = patches, species = species, dispersal = 0, 
+                     timesteps = ts, start_abun = 150,
+                     extirp_prob = 0.001,
+                     landscape = l.1, disp_mat = d.1, env.df = e.3, 
+                     env_traits.df = t.1, int_mat = si.2)
+  
+  x_out[[i]] <- x
+  BEF_out[[i]] <- Isbell_2018_cleaner(mix = x$mixture, mono = x$monoculture, from_last = 5)
+  
+}
+
+# plot the results
+bind_rows(BEF_out, .id = "run") %>%
+  pivot_longer(cols = c("NBE", "TC", "TS", "AS", "TI", "SI", "ST"),
+               names_to = "BEF_effect",
+               values_to = "value") %>%
+  ggplot(data = ., 
+         mapping = aes(x = BEF_effect, y = value)) +
+  geom_jitter(width = 0.1) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  theme_classic()
+
+
+## Pure temporal variation and neutral competition: High dispersal
+
+# set-up the number of runs
+n_runs <- 10
+
+x_out <- vector("list", length = n_runs)
+BEF_out <- vector("list", length = n_runs)
+for (i in 1:n_runs) {
+  x <- 
+    sim_metacomm_BEF(patches = patches, species = species, dispersal = 0.3, 
+                     timesteps = ts, start_abun = 150,
+                     extirp_prob = 0.001,
+                     landscape = l.1, disp_mat = d.1, env.df = e.3, 
+                     env_traits.df = t.1, int_mat = si.2)
+  
+  x_out[[i]] <- x
+  BEF_out[[i]] <- Isbell_2018_cleaner(mix = x$mixture, mono = x$monoculture, from_last = 5)
+  
+}
+
+# plot the results
+bind_rows(BEF_out, .id = "run") %>%
+  pivot_longer(cols = c("NBE", "TC", "TS", "AS", "TI", "SI", "ST"),
+               names_to = "BEF_effect",
+               values_to = "value") %>%
+  ggplot(data = ., 
+         mapping = aes(x = BEF_effect, y = value)) +
+  geom_jitter(width = 0.1) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  theme_classic()
+
+
+## Mixed environmental variation and neutral competition
+
+# set-up the number of runs
+n_runs <- 10
+
+x_out <- vector("list", length = n_runs)
+BEF_out <- vector("list", length = n_runs)
+for (i in 1:n_runs) {
+  x <- 
+    sim_metacomm_BEF(patches = patches, species = species, dispersal = 0.05, 
+                     timesteps = ts, start_abun = 150,
+                     extirp_prob = 0.001,
+                     landscape = l.1, disp_mat = d.1, env.df = e.1, 
+                     env_traits.df = t.1, int_mat = si.2)
+  
+  x_out[[i]] <- x
+  BEF_out[[i]] <- Isbell_2018_cleaner(mix = x$mixture, mono = x$monoculture, from_last = 5)
+  
+}
+
+# plot the results
+bind_rows(BEF_out, .id = "run") %>%
+  pivot_longer(cols = c("NBE", "TC", "TS", "AS", "TI", "SI", "ST"),
+               names_to = "BEF_effect",
+               values_to = "value") %>%
+  ggplot(data = ., 
+         mapping = aes(x = BEF_effect, y = value)) +
+  geom_jitter(width = 0.1) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  theme_classic()
 
 
 
