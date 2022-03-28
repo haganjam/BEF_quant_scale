@@ -201,13 +201,15 @@ sim_metacomm_BEF <- function(species = 5, patches = 10,
 #' @param mono monoculture data from the sim_metacomm_BEF function
 #' @param from_last how many time points from the last one to include
 
-Isbell_2018_cleaner <- function(mix, mono, from_last) {
+Isbell_2018_cleaner <- function(mix, mono, t_sel) {
   
   library(dplyr)
   
-  # get the last x time-points
-  t_sel <- unique(mix$time)
-  t_sel <- (last(t_sel) - from_last):last(t_sel)
+  # if no time-points are provided, then use the five in the simulation
+  if(any(is.na(t_sel)) | missing(t_sel)) {
+    nt <- length(unique(mix$time))
+    t_sel <- (nt-5):nt
+  }
   
   # process the mixture data
   mix <- 

@@ -284,8 +284,8 @@ set.seed(5489485)
 
 
 ## Set-up fixed inputs
-species <- 5
-patches <- 5
+species <- 3
+patches <- 3
 ts <- 100
 
 
@@ -295,7 +295,6 @@ ts <- 100
 l.1 <- 
   data.frame(x = c(50, 25, 25, 75, 75),
              y = c(50, 25, 75, 25, 75))
-plot(l.1)
 
 # generate a random dispersal matrix
 d.1 <- dispersal_matrix(landscape = l.1, torus = TRUE, kernel_exp = 0.1, plot = FALSE)
@@ -350,8 +349,16 @@ names(e.3) <- c("patch", "time", "env1")
 e.3 <- e.3[,c("env1", "patch", "time")] 
 
 
+v <- sim_metacomm_BEF(patches = patches, species = species, dispersal = 0.1, 
+                     timesteps = 10, start_abun = 150,
+                     extirp_prob = 0.001,
+                     landscape = l.1, disp_mat = d.1, env.df = e.1, 
+                     env_traits.df = t.1, int_mat = si.1)
+
+View(v$mixture)
+
 # set-up a function to explore thesee biodiversity effects under different assumptions
-Isbell_explorer <- function(env, comp, n_runs, disp_rate, time_back) {
+Isbell_explorer <- function(env, comp, n_runs, disp_rate, t_sel) {
 
 x_out <- vector("list", length = n_runs)
 BEF_out <- vector("list", length = n_runs)
@@ -364,22 +371,41 @@ for (i in 1:n_runs) {
                      env_traits.df = t.1, int_mat = comp)
   
   x_out[[i]] <- x
-  BEF_out[[i]] <- Isbell_2018_cleaner(mix = x$mixture, mono = x$monoculture, from_last  = time_back)
+  
+  BEF_out[[i]] <- Isbell_2018_cleaner(mix = x$mixture, mono = x$monoculture, t_sel  = t_sel)
   
 }
 
 # plot the results
-bind_rows(BEF_out, .id = "run") %>%
+
+p1 <- 
+  x_out[[sample(1:length(x_out), 1)]]$mixture %>%
+  mutate(species = as.character(species)) %>%
+  ggplot(data = .,
+         mapping = aes(x = time, y = N, colour = species)) +
+  geom_line(size = 1) +
+  scale_colour_viridis_d() +
+  facet_wrap(~patch, scales = "free") +
+  theme_classic()
+  
+p2 <- 
+  bind_rows(BEF_out, .id = "run") %>%
   pivot_longer(cols = c("NBE", "TC", "TS", "AS", "TI", "SI", "ST", "LC"),
                names_to = "BEF_effect",
                values_to = "value") %>%
   ggplot(data = ., 
          mapping = aes(x = BEF_effect, y = value)) +
-  geom_jitter(width = 0.1) +
+  geom_jitter(alpha = 0.1, width = 0.1) +
+  geom_boxplot(width = 0.1) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   theme_classic()
   
+plot(p1)
+plot(p2)
+
 }
+
+
 
 ```
 
@@ -395,7 +421,7 @@ First, we simulate the case of pure spatial variation, neutral competition and n
 # neutral competition: si.2
 # no dispersal: disp_rate = 0
 
-Isbell_explorer(env = e.2, comp = si.2, n_runs = 10, disp_rate = 0, time_back = 5)
+Isbell_explorer(env = e.2, comp = si.2, n_runs = 10, disp_rate = 0, t_sel = (ts-5):ts )
   
 ```
 
@@ -408,7 +434,7 @@ Next, we simulate the same situation but with some dispersal. This means that th
 # neutral competition: si.2
 # some dispersal: disp_rate = 0.05
 
-Isbell_explorer(env = e.2, comp = si.2, n_runs = 10, disp_rate = 0.05, time_back = 5)
+Isbell_explorer(env = e.2, comp = si.2, n_runs = 10, disp_rate = 0.05, t_sel = (ts-5):ts)
   
 ```
 
@@ -421,7 +447,7 @@ Finally, we simulated pure spatial variation and local complementarity by using 
 # stabilising competition: si.1
 # dispersal: disp_rate = 0.05
 
-Isbell_explorer(env = e.2, comp = si.1, n_runs = 10, disp_rate = 0.05, time_back = 5)
+Isbell_explorer(env = e.2, comp = si.1, n_runs = 10, disp_rate = 0.05, t_sel = (ts-5):ts)
   
 ```
 
@@ -436,7 +462,7 @@ Now, we look at cases of pure temporal variation. This means that all patches ha
 # neutral competition: si.2
 # no dispersal: disp_rate = 0.05
 
-Isbell_explorer(env = e.3, comp = si.2, n_runs = 10, disp_rate = 0, time_back = 5)
+Isbell_explorer(env = e.3, comp = si.2, n_runs = 10, disp_rate = 0, t_sel = seq(10, ts, 20))
   
 ```
 
@@ -447,9 +473,19 @@ Next, we examine the same situation but with stabilising competition. Therefore,
 
 # temporal variation only: e.3
 # stabilising competition: si.1
-# no dispersal: disp_rate = 0.05
+# no dispersal: disp_rate = 0.1
 
-Isbell_explorer(env = e.3, comp = si.1, n_runs = 10, disp_rate = 0.05, time_back = 5)
+Isbell_explorer(env = e.3, comp = si.1, n_runs = 10, disp_rate = 0.1, t_sel = seq(10, ts, 20))
+  
+```
+
+```{r echo = FALSE}
+
+# temporal variation only: e.3
+# neutral competition: si.1
+# no dispersal: disp_rate = 0.1
+
+Isbell_explorer(env = e.3, comp = si.2, n_runs = 10, disp_rate = 0.3, t_sel = seq(10, ts, 20))
   
 ```
 
@@ -464,7 +500,7 @@ Now we look at cases where the environment varies in both space and time and the
 # neutral competition: si.2
 # no dispersal: disp_rate = 0.05
 
-Isbell_explorer(env = e.1, comp = si.2, n_runs = 10, disp_rate = 0.05, time_back = 5)
+Isbell_explorer(env = e.1, comp = si.2, n_runs = 10, disp_rate = 0.05, t_sel = seq(10, ts, 20))
   
 ```
 
