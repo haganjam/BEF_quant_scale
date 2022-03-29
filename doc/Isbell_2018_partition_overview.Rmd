@@ -293,8 +293,9 @@ ts <- 100
 
 # generate a random landscape
 l.1 <- 
-  data.frame(x = c(50, 25, 25, 75, 75),
-             y = c(50, 25, 75, 25, 75))
+  data.frame(x = c(50, 25, 25),
+             y = c(50, 25, 75))
+plot(l.1)
 
 # generate a random dispersal matrix
 d.1 <- dispersal_matrix(landscape = l.1, torus = TRUE, kernel_exp = 0.1, plot = FALSE)
@@ -305,7 +306,7 @@ d.1 <- dispersal_matrix(landscape = l.1, torus = TRUE, kernel_exp = 0.1, plot = 
 # generate species environmental optima
 t.1 <- 
   data.frame(species = 1:species,
-             optima = c(0.1, 0.3, 0.5, 0.7, 0.9),
+             optima = seq(0.1, 0.9, length.out = species),
              env_niche_breadth = 0.2,
              max_r = 0.5,
              K_max = 150)
@@ -336,28 +337,29 @@ e.1 <- env_generate(landscape = l.1, env1Scale = 900, timesteps = (ts), plot = F
 
 # only spatial variation
 e.2 <- expand.grid(1:patches, 1:(ts))
-e.2$env1 <- rep(c(0.1, 0.3, 0.5, 0.7, 0.9), ts ) 
+e.2$env1 <- rep(seq(0.1, 0.9, length.out = species), ts ) 
 names(e.2) <- c("patch", "time", "env1")
 e.2 <- e.2[,c("env1", "patch", "time")] 
 head(e.2)
 
-# only temporal variation
+
+# autocorrelated temporal variation only: Temporal insurance effect
+x <- env_generate(landscape = landscape_generate(patches = 2, plot = FALSE), 
+                  env1Scale = 5, timesteps = (ts), plot = FALSE )
 e.3 <- expand.grid(1:patches, 1:ts)
-e.3$env1 <- rep(sample(x = seq(0.1, 0.9, 0.1), size = ts, replace = TRUE), 
-                each = patches ) 
+e.3$env1 <- rep(x[x$patch == 1, ][1:ts, ]$env1, each = patches)
 names(e.3) <- c("patch", "time", "env1")
 e.3 <- e.3[,c("env1", "patch", "time")] 
 
+# only random temporal variation i.e. strong average selection effect
+e.4 <- expand.grid(1:patches, 1:ts)
+e.4$env1 <- rep(sample(x = seq(0.1, 0.9, 0.1), size = ts, replace = TRUE), 
+                each = patches ) 
+names(e.4) <- c("patch", "time", "env1")
+e.4 <- e.3[,c("env1", "patch", "time")] 
 
-v <- sim_metacomm_BEF(patches = patches, species = species, dispersal = 0.1, 
-                     timesteps = 10, start_abun = 150,
-                     extirp_prob = 0.001,
-                     landscape = l.1, disp_mat = d.1, env.df = e.1, 
-                     env_traits.df = t.1, int_mat = si.1)
 
-View(v$mixture)
-
-# set-up a function to explore thesee biodiversity effects under different assumptions
+# set-up a function to explore these biodiversity effects under different assumptions
 Isbell_explorer <- function(env, comp, n_runs, disp_rate, t_sel) {
 
 x_out <- vector("list", length = n_runs)
@@ -410,9 +412,24 @@ plot(p2)
 ```
 
 
+*Average selection effect*
+
+First, we simulate the effect of the most productive species in monoculture dominating the mixture.
+
+```{r echo = FALSE, fig.height = 2, fig.width = 6}
+
+# temporal variation only: e.4
+# neutral competition: si.2
+# no dispersal: disp_rate = 0.05
+
+Isbell_explorer(env = e.4, comp = si.2, n_runs = 10, disp_rate = 0, t_sel = seq(10, ts, 20))
+  
+```
+
+
 *Pure spatial variation*
 
-First, we simulate the case of pure spatial variation, neutral competition and no dispersal. In this case, we expect that all biodiversity effects would be due to spatial insurance. There is no local complementarity due to species interactions (neutral competition) and no mass effects because dispersal is zero.
+Next, we simulate the case of pure spatial variation, neutral competition and no dispersal. In this case, we expect that all biodiversity effects would be due to spatial insurance. There is no local complementarity due to species interactions (neutral competition) and no mass effects because dispersal is zero.
 
 
 ```{r echo = FALSE}
