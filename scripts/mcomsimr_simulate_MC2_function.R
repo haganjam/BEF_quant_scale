@@ -35,7 +35,7 @@ simulate_MC2 <- function(patches, species, dispersal = 0.01, timesteps = 1200,
   library(dplyr)
   
   # check if starting abundance is reasonable
-  if (any(env_traits.df$K_max > start_abun)) {
+  if (any(env_traits.df$K_max < start_abun)) {
     stop("Starting abundance cannot exceed the maximum carrying capacity, K")
   }
   
@@ -154,7 +154,7 @@ sim_metacomm_BEF <- function(species = 5, patches = 10,
     
     # simulate each species
     x <- simulate_MC2(species = 1, patches = patches, 
-                      dispersal = dispersal, start_abun = start_abun,
+                      dispersal = 0, start_abun = start_abun,
                       timesteps = timesteps,
                       extirp_prob = extirp_prob,
                       landscape = landscape, 

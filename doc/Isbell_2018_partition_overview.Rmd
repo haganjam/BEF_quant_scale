@@ -367,8 +367,8 @@ BEF_out <- vector("list", length = n_runs)
 for (i in 1:n_runs) {
   x <- 
     sim_metacomm_BEF(patches = patches, species = species, dispersal = disp_rate, 
-                     timesteps = ts, start_abun = 150,
-                     extirp_prob = 0.001,
+                     timesteps = ts, start_abun = 100,
+                     extirp_prob = 0.00001,
                      landscape = l.1, disp_mat = d.1, env.df = env, 
                      env_traits.df = t.1, int_mat = comp)
   
@@ -379,6 +379,16 @@ for (i in 1:n_runs) {
 }
 
 # plot the results
+
+p0 <- 
+  x_out[[sample(1:length(x_out), 1)]]$monoculture %>%
+  mutate(species = as.character(species)) %>%
+  ggplot(data = .,
+         mapping = aes(x = time, y = N, colour = species)) +
+  geom_line(size = 1) +
+  scale_colour_viridis_d() +
+  facet_wrap(~patch, scales = "free") +
+  theme_classic()
 
 p1 <- 
   x_out[[sample(1:length(x_out), 1)]]$mixture %>%
@@ -401,7 +411,8 @@ p2 <-
   geom_boxplot(width = 0.1) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   theme_classic()
-  
+
+plot(p0)  
 plot(p1)
 plot(p2)
 
@@ -415,6 +426,8 @@ plot(p2)
 *Average selection effect*
 
 First, we simulate the effect of the most productive species in monoculture dominating the mixture.
+
+This works quite well where the species that has the highest growth rate and carrying capacity in the middle of the environmental range dominates in all patches.
 
 ```{r echo = FALSE, fig.height = 2, fig.width = 6}
 
@@ -432,7 +445,7 @@ Isbell_explorer(env = e.4, comp = si.2, n_runs = 10, disp_rate = 0, t_sel = seq(
 Next, we simulate the case of pure spatial variation, neutral competition and no dispersal. In this case, we expect that all biodiversity effects would be due to spatial insurance. There is no local complementarity due to species interactions (neutral competition) and no mass effects because dispersal is zero.
 
 
-```{r echo = FALSE}
+```{r echo = FALSE, fig.height = 2, fig.width = 6}
 
 # spatial variation only: e.2
 # neutral competition: si.2
@@ -445,7 +458,7 @@ Isbell_explorer(env = e.2, comp = si.2, n_runs = 10, disp_rate = 0, t_sel = (ts-
 
 Next, we simulate the same situation but with some dispersal. This means that there can be some mass effects which leads to some limited local complementarity.
 
-```{r echo = FALSE}
+```{r echo = FALSE, fig.height = 2, fig.width = 6}
 
 # spatial variation only: e.2
 # neutral competition: si.2
@@ -458,7 +471,7 @@ Isbell_explorer(env = e.2, comp = si.2, n_runs = 10, disp_rate = 0.05, t_sel = (
 
 Finally, we simulated pure spatial variation and local complementarity by using a competition coefficient matrix that, for interspecific competition, is less than one.
 
-```{r echo = FALSE}
+```{r echo = FALSE, fig.height = 2, fig.width = 6}
 
 # spatial variation only: e.2
 # stabilising competition: si.1
@@ -473,11 +486,11 @@ Isbell_explorer(env = e.2, comp = si.1, n_runs = 10, disp_rate = 0.05, t_sel = (
 
 Now, we look at cases of pure temporal variation. This means that all patches have the same environmental conditions in space but vary in time. We start with the case of neutral competition and some dispersal.
 
-```{r echo = FALSE}
+```{r echo = FALSE, fig.height = 2, fig.width = 6}
 
 # temporal variation only: e.3
 # neutral competition: si.2
-# no dispersal: disp_rate = 0.05
+# no dispersal: 0
 
 Isbell_explorer(env = e.3, comp = si.2, n_runs = 10, disp_rate = 0, t_sel = seq(10, ts, 20))
   
@@ -486,7 +499,7 @@ Isbell_explorer(env = e.3, comp = si.2, n_runs = 10, disp_rate = 0, t_sel = seq(
 Next, we examine the same situation but with stabilising competition. Therefore, the local complementarity effects should get stronger.
 
 
-```{r echo = FALSE}
+```{r echo = FALSE, fig.height = 2, fig.width = 6}
 
 # temporal variation only: e.3
 # stabilising competition: si.1
@@ -496,7 +509,7 @@ Isbell_explorer(env = e.3, comp = si.1, n_runs = 10, disp_rate = 0.1, t_sel = se
   
 ```
 
-```{r echo = FALSE}
+```{r echo = FALSE, fig.height = 2, fig.width = 6}
 
 # temporal variation only: e.3
 # neutral competition: si.1
@@ -511,13 +524,13 @@ Isbell_explorer(env = e.3, comp = si.2, n_runs = 10, disp_rate = 0.3, t_sel = se
 
 Now we look at cases where the environment varies in both space and time and there is neutral competition. Here, we expect there to be both spatial and temporal insurance effects but limited local complementarity because competition is neutral. We use some dispersal here.
 
-```{r echo = FALSE}
+```{r echo = FALSE, fig.height = 2, fig.width = 6}
 
 # spatial and temporal variation: e.1
-# neutral competition: si.2
+# stabilising competition: si.1
 # no dispersal: disp_rate = 0.05
 
-Isbell_explorer(env = e.1, comp = si.2, n_runs = 10, disp_rate = 0.05, t_sel = seq(10, ts, 20))
+Isbell_explorer(env = e.1, comp = si.1, n_runs = 10, disp_rate = 0.05, t_sel = seq(10, ts, 20))
   
 ```
 
