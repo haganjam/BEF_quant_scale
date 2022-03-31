@@ -13,8 +13,8 @@ source(here("scripts/mcomsimr_simulate_MC2_function.R"))
 ## initialise outputs
 
 ## Set-up fixed inputs
-species <- 5
-patches <- 5
+species <- 3
+patches <- 3
 ts <- 50
 
 
@@ -22,8 +22,8 @@ ts <- 50
 
 # generate a random landscape
 l.1 <- 
-  data.frame(x = c(50, 25, 25, 75, 75),
-             y = c(50, 25, 75, 25, 75))
+  data.frame(x = c(25, 50, 75),
+             y = c(50, 50, 50))
 plot(l.1)
 
 # generate a random dispersal matrix
@@ -35,8 +35,8 @@ d.1 <- dispersal_matrix(landscape = l.1, torus = TRUE, kernel_exp = 0.1, plot = 
 # generate species environmental optima
 t.1 <- 
   data.frame(species = 1:species,
-             optima = seq(0.1, 0.9, length.out = species),
-             env_niche_breadth = 0.2,
+             optima = seq(0.25, 0.75, length.out = species),
+             env_niche_breadth = 0.3,
              max_r = 0.5,
              K_max = 150)
 head(t.1)
@@ -47,7 +47,7 @@ head(t.1)
 # generate species interaction matrix randomly
 
 # matrix 1: Intraspecific > interspecific competition
-si.1 <- matrix(runif(n = species*species, min = 0.1, max = 1), 
+si.1 <- matrix(runif(n = species*species, min = 0.1, max = 0.75), 
                nrow = species, ncol = species)
 si.1[lower.tri(si.1)] = t(si.1)[lower.tri(si.1)]
 diag(si.1) <- 1
@@ -58,63 +58,30 @@ si.2 <- species_int_mat(species = species, intra = 1, min_inter = 1,
                         max_inter = 1, comp_scaler = 1, plot = FALSE)
 head(si.2)
 
-
-## Environmental matrices
-
-# generate a random environmental matrix
-e.1 <- env_generate(landscape = l.1, env1Scale = 500, timesteps = (ts), plot = FALSE )
-
-# start with some environmental heterogeneity in each patch and fluctuate around this
-
-# simulate high environmental heterogeneity
-env1.high <- 
-  sapply(seq(0.1, 0.9, length.out = patches), function(x) {
-  z <- 
-    sapply(runif(n = ts-1, min = 0, 0.05), function(y) {
-    y*sample(x = c(-1,1), size = 1)
-  })
-  u <- cumsum(c(x, z))
-  ifelse( (u < 0), 0, ifelse( (u > 1), 1, u))
-})
-
-e.1 <- data.frame(env1 = unlist(apply(env1.high, 1, function(x) list(x) ) ),
-                  patch = rep(1:patches, ts),
-                  time = rep(1:ts, each = patches))
-
-# simulate low heterogeneity
-e.2 <- 
-  lapply(seq(0.1, 0.9, length.out =patches), function(y) {
-    
-    a <- sapply(rep(y, patches), function(x) {
-      z <- 
-        sapply(runif(n = ts-1, min = 0, 0.025), function(y) {
-          y*sample(x = c(-1,1), size = 1)
-        })
-      u <- cumsum(c(x, z))
-      ifelse( (u < 0), 0, ifelse( (u > 1), 1, u))
-    })
-    
-    data.frame(env1 = unlist(apply(a, 1, function(u) list(u) ) ),
-               patch = rep(1:patches, ts),
-               time = rep(1:ts, each = patches))
-    
-  }  )
-
+# simulate a practice environmental matrix
+e.test <- env_generate(landscape = l.1, timesteps = ts, plot = FALSE)
+e.test <- e.1
+e.test <- e.2
 
 ### Explore the behaviour of the model a bit
 x <- 
   sim_metacomm_BEF(patches = patches, species = species, dispersal = 0.05, 
-                   timesteps = ts, start_abun = 150,
+                   timesteps = ts, start_abun = 200,
                    extirp_prob = 0,
                    landscape = l.1, disp_mat = d.1, env.df = e.1, 
-                   env_traits.df = t.1, int_mat = si.1)
+                   env_traits.df = t.1, int_mat = si.2)
 
-ggplot(data = e.1,
+# what does the environmental variation look like?
+ggplot(data = e.test,
        mapping = aes(x = time, y = env1)) +
   geom_line() +
+  scale_y_continuous(limits = c(0.2, 1)) +
   facet_wrap(~patch) +
   theme_classic()
 
+t.1
+
+# mixtures?
 x$mixture %>%
   ggplot(data = .,
          mapping = aes(x = time, y = N, colour = as.character(species))) +
@@ -122,6 +89,7 @@ x$mixture %>%
   facet_wrap(~patch, scales = "free") +
   theme_classic()
 
+# monocultures?
 x$monoculture %>%
   ggplot(data = .,
          mapping = aes(x = time, y = N, colour = as.character(species))) +
@@ -129,41 +97,91 @@ x$monoculture %>%
   facet_wrap(~patch, scales = "free") +
   theme_classic()
 
-
+# do different species dominate in different patches?
 x$monoculture %>%
-  group_by(patch, species) %>%
+  group_by(time, patch) %>%
   summarise(mean_N = mean(N))
 
-x$monoculture %>%
-  group_by(patch) %>%
-  summarise(env = range(env))
+x$mixture %>%
+  group_by(time, patch) %>%
+  summarise(sum_N = sum(N))
 
 
+# looks like spatial insurance and local complementarity should be present
+mix <- x$mixture
+mono <- x$monoculture
 
+t_sel <- round(seq(5, ts, length.out = 5), 0)
 
+# process the mixture data
+mix <- 
+  mix %>%
+  filter( time %in% t_sel ) %>%
+  select(-mono_mix, -env) %>%
+  rename(place = patch, Y = N) %>%
+  mutate(sample = as.integer(as.factor(sample)))
+head(mix)
 
+# process the monoculture data
+mono <- 
+  mono %>%
+  filter( time %in% t_sel ) %>%
+  select(-mono_mix, -env, -sample) %>%
+  rename(place = patch, M = N)
+head(mono)
+
+# join the mixture and monoculture data to match the partition format
+mix.mono <- 
+  full_join(mono, mix, by = c("time", "place", "species")) %>%
+  select(sample, time, place, species, M, Y) %>%
+  arrange(sample, time, place, species)
+head(mix.mono)
+
+# apply the Isbell partition to these data
+n_species <- length(unique(mix.mono$species))
+part.df <- Isbell_2018_sampler(data = mix.mono, RYe = rep(1/n_species, n_species), RYe_post = FALSE)
+
+ggplot(data = part.df$Beff,
+       mapping = aes(x = Beff, y = Value)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  theme_classic()
+
+ggplot(data = part.df$L.Beff,
+       mapping = aes(x = L.Beff, y = Value)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  theme_classic()
 
 
 ### Environmental heterogeneity experiment
 
-# write a function to scale a variable between any two values
-# https://stats.stackexchange.com/questions/281162/scale-a-number-between-a-range
-normalise_x <- function(x, b, a) {
-  y <- (b - a) * ((x - min(x))/(max(x) - min(x))) + a
-  return(y)
-}
-
 # set number of replicates
-n_rep <- 30
+n_rep <- 1000
 
 # simulate a set of metacommunities with high environmental heterogeneity among patches
 high_out <- vector("list", n_rep)
 high_env_var <- vector("list", length = n_rep)
 for (i in 1:n_rep) {
   
+  # simulate an environment with high heterogeneity
+  env1.high <- 
+    sapply(seq(0.2, 0.8, length.out = patches), function(x) {
+      z <- 
+        sapply(runif(n = ts-1, min = 0, 0.025), function(y) {
+          y*sample(x = c(-1,1), size = 1)
+        })
+      u <- cumsum(c(x, z))
+      ifelse( (u < 0), 0, ifelse( (u > 1), 1, u))
+    })
+  
+  e.1 <- data.frame(env1 = unlist(apply(env1.high, 1, function(x) list(x) ) ),
+                    patch = rep(1:patches, ts),
+                    time = rep(1:ts, each = patches))
+  
   x <- 
     sim_metacomm_BEF(patches = patches, species = species, dispersal = 0.05, 
-                     timesteps = ts, start_abun = 150,
+                     timesteps = ts, start_abun = 200,
                      extirp_prob = 0,
                      landscape = l.1, disp_mat = d.1, env.df = e.1, 
                      env_traits.df = t.1, int_mat = si.2)
@@ -171,7 +189,7 @@ for (i in 1:n_rep) {
   high_out[[i]] <- x
   
   x <- Isbell_2018_cleaner(mix = x$mixture, mono = x$monoculture, 
-                           t_sel  = c(50, 100))
+                           t_sel  = round(seq(5, ts, length.out = 5), 0))
   
   x$env_het <- "high"
   
@@ -182,22 +200,39 @@ for (i in 1:n_rep) {
 # simulate a set of metacommunities with low environmental heterogeneity among patches
 low_out <- vector("list", n_rep)
 low_env_var <- vector("list", length = n_rep)
+low_var <- seq(0.2, 0.8, length.out = n_rep)
 for (i in 1:n_rep) {
 
-x <- 
-  sim_metacomm_BEF(patches = patches, species = species, dispersal = 0.05, 
-                   timesteps = ts, start_abun = 150,
-                   extirp_prob = 0,
-                   landscape = l.1, disp_mat = d.1, env.df = e.2[[sample(1:5, 1)]], 
-                   env_traits.df = t.1, int_mat = si.2)
-low_out[[i]] <- x
-
-x <- Isbell_2018_cleaner(mix = x$mixture, mono = x$monoculture, 
-                         t_sel  = c(50, 100))
-
-x$env_het <- "low"
-
-low_env_var[[i]] <- x
+  # simulate low heterogeneity
+  e.2 <- 
+    sapply(rep(low_var[i], patches), function(x) {
+      z <- 
+        sapply(runif(n = ts-1, min = 0, 0.025), function(y) {
+          y*sample(x = c(-1,1), size = 1)
+        })
+      u <- cumsum(c(x, z))
+      ifelse( (u < 0), 0, ifelse( (u > 1), 1, u))
+    })
+  
+  e.2 <- 
+    data.frame(env1 = unlist(apply(e.2, 1, function(x) list(x) ) ),
+               patch = rep(1:patches, ts),
+               time = rep(1:ts, each = patches))
+  
+  x <- 
+    sim_metacomm_BEF(patches = patches, species = species, dispersal = 0.05, 
+                     timesteps = ts, start_abun = 200,
+                     extirp_prob = 0,
+                     landscape = l.1, disp_mat = d.1, env.df = e.2, 
+                     env_traits.df = t.1, int_mat = si.2)
+  low_out[[i]] <- x
+  
+  x <- Isbell_2018_cleaner(mix = x$mixture, mono = x$monoculture, 
+                           t_sel  = round(seq(5, ts, length.out = 5), 0) )
+  
+  x$env_het <- "low"
+  
+  low_env_var[[i]] <- x
 
 }
 
@@ -235,109 +270,40 @@ ggplot(data = df,
   theme_classic()
 
 df %>%
-  pivot_longer(cols = c("NBE", "TC", "TS", "NO", "IT", "AS", "TI", "SI", "ST", "LC", "LS"),
+  group_by(env_het) %>%
+  summarise(mean_NBE = mean(NBE))
+
+df_plot <- 
+  df %>%
+  pivot_longer(cols = c("NBE", "TC", "TS", "NO","AS", "IT", "TI", "SI", "ST"),
                names_to = "BEFF",
-               values_to = "Value") %>%
-ggplot(data = .,
+               values_to = "Value")
+
+df_plot$BEFF <- factor(df_plot$BEFF,
+                       levels =c("NBE", "TC", "TS", "NO","AS", "IT", "TI", "SI", "ST") )
+
+ggplot(data = df_plot,
        mapping = aes(x = BEFF, y = Value, colour = env_het)) +
-  geom_jitter(alpha = 0.1, width = 0.1) +
-  geom_boxplot(width = 0.1) +
-  theme_classic()
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_boxplot(width = 0.2, position=position_dodge(1), outlier.shape = NA) +
+  theme_classic() +
+  scale_y_continuous(limits = c(-250, 550)) +
+  theme(legend.position = "bottom")
 
 df %>%
-  filter(NO == min(NO))
+  filter(NO < -100)
 
-t.1
-
-high_out[[43]]$mixture %>%
+high_out[[49]]$mixture %>%
   ggplot(data = .,
-         mapping = aes(x = time, y = N, colour = as.character(species))) +
+         mapping = aes(x = time, y = N, colour = as.character(species) )) +
   geom_line() +
-  facet_wrap(~patch, scales = "free") +
+  facet_wrap(~patch) +
   theme_classic()
 
-high_out[[43]]$monoculture %>%
-  group_by(patch, species) %>%
-  summarise(mean_N = mean(N))
-
-high_out[[43]]$monoculture %>%
-  group_by(patch) %>%
-  summarise(env = range(env))
-
-high_out[[43]]$monoculture %>%
+high_out[[49]]$monoculture %>%
   ggplot(data = .,
-         mapping = aes(x = time, y = N, colour = as.character(species))) +
+         mapping = aes(x = time, y = N, colour = as.character(species) )) +
   geom_line() +
-  facet_wrap(~patch, scales = "free") +
+  facet_wrap(~patch) +
   theme_classic()
 
-full_join(bind_rows(lapply(high_out, function(x) x$monoculture %>% select(-mono_mix) )),
-          bind_rows(lapply(high_out, function(x) { 
-            x$mixture %>%
-              group_by(time, patch) %>%
-              mutate(RA = N/sum(N)) %>%
-              select(sample, time, patch, env, species, RA)} ))) %>% 
-  filter(time %in% c(50, 100)) %>%
-  ggplot(data = .,
-         mapping = aes(x = N, y = RA, colour = as.character(species) )) +
-  geom_point() +
-  facet_wrap(~patch, scales = "free") +
-  theme_classic()
-  
-full_join(bind_rows(lapply(low_out, function(x) x$monoculture %>% select(-mono_mix) )),
-          bind_rows(lapply(low_out, function(x) { 
-            x$mixture %>%
-              group_by(time, patch) %>%
-              mutate(RA = N/sum(N)) %>%
-              select(sample, time, patch, env, species, RA)} ))) %>% 
-  filter(time %in% c(50, 100)) %>%
-  ggplot(data = .,
-         mapping = aes(x = N, y = RA, colour = as.character(species) )) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE) +
-  facet_wrap(~patch, scales = "free") +
-  theme_classic()
-
-
-
-
-ggplot(data = df,
-       mapping = aes(x = env_het, y = IT)) +
-  geom_point() +
-  theme_classic()
-
-# what about the proportion of the total biodiversity effect
-df %>%
-  mutate(AS = AS/NBE) %>%
-  ggplot(data = .,
-       mapping = aes(x = env_het, y = AS)) +
-  geom_point() +
-  theme_classic()
-
-df %>%
-  mutate(LS = LS/NBE) %>%
-  ggplot(data = .,
-         mapping = aes(x = env_het, y = LS)) +
-  geom_point() +
-  theme_classic()
-
-df %>%
-  mutate(SI = SI/NBE) %>%
-  ggplot(data = .,
-         mapping = aes(x = env_het, y = SI)) +
-  geom_point() +
-  theme_classic()
-
-df %>%
-  mutate(TI = TI/NBE) %>%
-  ggplot(data = .,
-         mapping = aes(x = env_het, y = TI)) +
-  geom_point() +
-  theme_classic()
-
-df %>%
-  mutate(ST = ST/NBE) %>%
-  ggplot(data = .,
-         mapping = aes(x = env_het, y = ST)) +
-  geom_point() +
-  theme_classic()
