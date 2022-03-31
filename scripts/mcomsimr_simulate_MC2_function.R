@@ -53,7 +53,15 @@ simulate_MC2 <- function(patches, species, dispersal = 0.01, timesteps = 1200,
     
     # we use equation 3 to determine the realised carrying capacity
     # of each species (col) in each patch (row)
-    K <- env_traits.df$K_max*exp(-(t((env_traits.df$optima - matrix(rep(env, each = species), nrow = species, ncol = patches))/(2*env_traits.df$env_niche_breadth)))^2)
+    # K <- env_traits.df$K_max*exp(-(t((env_traits.df$optima - matrix(rep(env, each = species), nrow = species, ncol = patches))/(2*env_traits.df$env_niche_breadth)))^2)
+    
+    # make K and r negatively correlated
+    K <- sapply(r, function(x) {
+      faux::rnorm_multi(n = 1, mu = c(x, env_traits.df$K_max[1]),
+                             sd = c(0.1, 30),
+                             r = c(0.75))
+      } )
+    K <- matrix(unlist(K[2,]), nrow = patches, ncol = species)
     
     # here we implement the difference equation
     N_hat <- N + ((N*r) * (1 - ((N %*% int_mat)/K) ))
