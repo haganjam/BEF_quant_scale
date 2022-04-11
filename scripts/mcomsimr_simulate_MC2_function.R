@@ -153,7 +153,7 @@ sim_metacomm_BEF <- function(species = 5, patches = 10,
     
     # simulate each species
     x <- simulate_MC2(species = 1, patches = patches, 
-                      dispersal = 0, start_abun = start_abun,
+                      dispersal = dispersal, start_abun = start_abun,
                       timesteps = timesteps,
                       extirp_prob = extirp_prob,
                       landscape = landscape, 
@@ -232,17 +232,7 @@ Isbell_2018_cleaner <- function(mix, mono, t_sel) {
     arrange(sample, time, place, species)
   head(mix.mono)
   
-  # apply the Isbell partition to these data
-  n_species <- length(unique(mix.mono$species))
-  part.df <- Isbell_2018_sampler(data = mix.mono, RYe = rep(1/n_species, n_species), RYe_post = FALSE)
-  
-  # convert to the wide format
-  part.df <- 
-    tidyr::pivot_wider(bind_rows(part.df$Beff, select(part.df$L.Beff, Beff = L.Beff, Value)),
-                       names_from = "Beff",
-                       values_from = "Value")
-  
-  return(part.df)
+  return(mix.mono)
   
 }
 
