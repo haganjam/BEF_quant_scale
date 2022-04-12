@@ -71,6 +71,7 @@ Simulate_hetero_exp <- function(n_rep = 5, temp_fluc = 0.025,
       Simulate_heterogeneity(patches = patches, timesteps = timesteps, 
                              het = "high", env_min = env_min, env_max = env_max,
                              temp_fluc = temp_fluc)
+    names(e.1) <- c("env1", "place", "time")
     
     # simulate a metacommunity in this cluster
     MC1 <- sim_metacomm_BEF(patches = patches, species = species, dispersal = dispersal, 
@@ -81,6 +82,9 @@ Simulate_hetero_exp <- function(n_rep = 5, temp_fluc = 0.025,
     
     MC1 <- Isbell_2018_cleaner(mix = MC1$mixture, mono = MC1$monoculture, 
                                t_sel  = t_sel )
+    
+    # add the environmental variables to these data
+    MC1 <- left_join(MC1, e.1, by = c("place", "time"))
     
     # add a low heterogeneity variable
     MC1$env_het <- "high"
@@ -100,6 +104,7 @@ Simulate_hetero_exp <- function(n_rep = 5, temp_fluc = 0.025,
       Simulate_heterogeneity(patches = patches, timesteps = timesteps, 
                              het = "low", env = x,
                              temp_fluc = temp_fluc)
+    names(e.2) <- c("env1", "place", "time")
     
     # simulate a metacommunity in this cluster
     MC2 <- sim_metacomm_BEF(patches = patches, species = species, dispersal = dispersal, 
@@ -112,6 +117,9 @@ Simulate_hetero_exp <- function(n_rep = 5, temp_fluc = 0.025,
     
     MC2 <- Isbell_2018_cleaner(mix = MC2$mixture, mono = MC2$monoculture, 
                                t_sel  = t_sel )
+    
+    # add the environmental variables to these data
+    MC2 <- left_join(MC2, e.2, by = c("place", "time"))
     
     # add a low heterogeneity variable
     MC2$env_het <- "low"
@@ -213,32 +221,109 @@ ggplot() +
   geom_hline(yintercept = 0, linetype = "dashed") +
   theme_classic()
 
-# why is spatial insurance greater than net biodiversity?
-Exp1[[1]] %>%
-  group_by(sample) %>%
-  summarise(M_m = mean(M),
-            max_M = max(M),
-            Y_m = sum(Y))
-
-x <- 
-  Exp1[[1]] %>%
-  group_by(sample, time, place) %>%
-  mutate(RA = Y/sum(Y)) %>%
-  group_by(place, species) %>%
-  summarise(RA = mean(RA),
-            M = mean(M))
-
-plot(x[x$species == 1,]$RA, x[x$species == 1,]$M) 
-plot(x[x$species == 2,]$RA, x[x$species == 2,]$M) 
-plot(x[x$species == 3,]$RA, x[x$species == 3,]$M)
-
 
 ## Assume incomplete data
 
-# can we recover the observed values sufficiently to make inference
+# for each cluster, we pick 3 samples (i.e. time, place combination)
+# where we have mixture and monoculture data, only mixture data for all others
+Exp1_m <- 
+  lapply(Exp1, function(x) {
+  df <- x
+  x <- sample(unique(df$sample), 3)
+  df$M[!(df$sample %in% x)] <- NA
+  return(df)
+})
+
+# merge these data into a single data.frame and 
+Exp1_m <- 
+  Exp1_m %>%
+  bind_rows(., .id = "ID") %>%
+  select(ID, sample, env1, species, M, Y)
+
+# model the monoculture yields using rethinking()
+library(rethinking)
+
+Exp1_m_cc <- Exp1_m[complete.cases(Exp1_m), ]
+
+dat <- list(
+  M = Exp1_m_cc$M ,
+  Y = standardize(Exp1_m_cc$Y ) ,
+  E = Exp1_m_cc$env1,
+  S = Exp1_m_cc$species)
+str(dat)
+
+# intercept only
+m1 <- ulam(
+  alist(
+    M ~ dpois( lambda ),
+    log(lambda) <- aS[S] + b_yS[S]*Y + b_eS[S]*E,
+    
+    # priors
+    aS[S] ~ normal(3, 1),
+    b_yS[S] ~ normal(0, 1),
+    b_eS[S] ~ normal(0, 1)
+    
+  ), data=dat , chains = 4 )
+
+# check the traceplots and the precis output
+traceplot(m1)
+precis(m1, depth = 3)
+
+# extract samples from this model
+m1.post <- extract.samples(m1)
+
+# predict new data
+dat.pred <- list(
+  Y = standardize(Exp1_m[is.na(Exp1_m$M), ]$Y ) ,
+  E = Exp1_m[is.na(Exp1_m$M), ]$env1,
+  S = Exp1_m[is.na(Exp1_m$M), ]$species)
+
+# simulate observations from these data
+m1_pred <- sim(m1, data = dat.pred)
+
+# summarise this posterior distribution
+mu_m1 <- apply(m1_pred, 2, function(x) mean(x) )
+PI_m1 <- apply(m1_pred, 2, function(x) PI(x, 0.95) )
+
+# pull into a data.frame and plot
+data.frame(mono_obs = Exp1_m[is.na(Exp1_m$M), ]$Y,
+           mu_m1 = mu_m1, 
+           PI_low = apply(PI_m1, 2, function(x) x[1]),
+           PI_high = apply(PI_m1, 2, function(x) x[2]) ) %>%
+  ggplot(data = df_plot,
+         mapping = aes(x = mono_obs, y = mu_m1)) +
+  geom_point() +
+  geom_errorbar(mapping = aes(ymin = PI_low, ymax = PI_high), width = 0.1) +
+  ylab("mean +- 89% prediction interval") +
+  xlab("actual monoculture yield") +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
+  theme_classic()
+  
+
+# Calculate the biodiversity effects using different samples from the posterior
+# For each sample from the posterior, also assume a variety of different starting relative yields
+
+# Overall, we should technically only use a set of Dirichlet distributions
+
+# Post sample 1: Dirichlet 1, 2, 3, 4, 5, 6 etc.
+
+# Then, we can directly compare different posterior samples and calculate contrasts
+# because posterior samples will be matching
+
+# What if we can't get decent monocultures? Can we do something else?
+# Can we use DI models?
 
 
 
 
+
+  
+  
+  
+  
+  
+  
+  
+  
 
 
