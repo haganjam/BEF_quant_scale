@@ -29,7 +29,7 @@ source(here("scripts/isbell_2018_partition.R"))
 simulate_MC2 <- function(patches, species, dispersal = 0.01, timesteps = 1200,
                          start_abun = 150,
                          extirp_prob = 0,
-                         landscape, disp_mat, env.df, env_traits.df, int_mat){
+                         landscape, disp_mat, env.df, env_traits.df, int_mat, meas_error = 5){
   
   # load the dplyr library
   library(dplyr)
@@ -57,8 +57,10 @@ simulate_MC2 <- function(patches, species, dispersal = 0.01, timesteps = 1200,
     # here we implement the difference equation
     N_hat <- N + ((N*r) * (1 - ((N %*% int_mat)/K) ))
     
+    # add noise from a normal distribution to these data
+    N_hat <- N_hat + rnorm(n = length(N_hat), mean = 0, sd = meas_error)
     N_hat[N_hat < 0] <- 0
-    N_hat <- matrix(rpois(n = species*patches, lambda = N_hat), ncol = species, nrow = patches)
+    N_hat <- round(N_hat, 0)
     
     E <- matrix(rbinom(n = patches * species, size = N_hat, prob = rep(dispersal, each = patches)), nrow = patches, ncol = species)
     dispSP <- colSums(E)
@@ -120,7 +122,8 @@ sim_metacomm_BEF <- function(species = 5, patches = 10,
                              disp_mat, 
                              env.df, 
                              env_traits.df, 
-                             int_mat
+                             int_mat,
+                             meas_error = 5
                              ) {
   
   # simulate the mixture of species
@@ -134,7 +137,8 @@ sim_metacomm_BEF <- function(species = 5, patches = 10,
                       disp_mat = disp_mat, 
                       env.df = env.df, 
                       env_traits.df = env_traits.df, 
-                      int_mat = int_mat
+                      int_mat = int_mat,
+                      meas_error = meas_error
   )
   
   # add a mixture column
@@ -160,7 +164,8 @@ sim_metacomm_BEF <- function(species = 5, patches = 10,
                       disp_mat = disp_mat, 
                       env.df = env.df, 
                       env_traits.df = env_traits.df[i,], 
-                      int_mat = int_mat[i,i])
+                      int_mat = int_mat[i,i],
+                      meas_error = meas_error)
     
     # rename the species column
     x$species <- i
