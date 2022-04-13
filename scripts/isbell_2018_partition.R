@@ -178,7 +178,7 @@ Isbell_2018_sampler <- function(data, RYe, RYe_post = FALSE, N = 100, alpha_par 
   if (!RYe_post) {
     
     # test for RYe values
-    if (any(!is.na(RYe)) & sum(RYe) != 1 ) {
+    if (any(!is.na(RYe)) & !near(sum(RYe), 1) ) {
       stop("Expected relative yield values do not sum to 1")
     } 
     

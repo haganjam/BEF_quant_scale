@@ -6,6 +6,7 @@ library(ggplot2)
 library(tidyr)
 library(dplyr)
 library(here)
+library(pbapply)
 source(here("scripts/mcomsimr_simulate_MC2_function.R"))
 
 # Generate high and low heterogeneity clusters
@@ -182,7 +183,7 @@ Exp1 <- Simulate_hetero_exp(n_rep = n_rep,
                             )
 
 # calculate biodiversity effects for each of these replicate clusters
-df_obs <- lapply(Exp1, function(x) {
+BEFF_obs <- lapply(Exp1, function(x) {
   
   y <- Isbell_2018_sampler(data = x[, c("sample", "time", "place", "species", "M", "Y")],
                            RYe_post = FALSE, RYe = rep(1/species, species)
@@ -192,20 +193,19 @@ df_obs <- lapply(Exp1, function(x) {
 })
 
 # bind rows and convert to wide format
-df_obs <- 
-  df_obs %>%
+BEFF_obs <- 
+  BEFF_obs %>%
   bind_rows(., .id = "ID") %>%
-  mutate(exp_het = rep(c("high", "low"), each = n_rep*9),
-         exp_rep = rep(rep(c(1:n_rep), each = 9) , 2)) %>%
-  select(ID, exp_het, exp_rep, Beff, Value) %>%
-  pivot_wider(id_cols = c("ID", "exp_het", "exp_rep"),
+  mutate(exp_het = rep(c("high", "low"), each = n_rep*9)) %>%
+  select(ID, exp_het, Beff, Value) %>%
+  pivot_wider(id_cols = c("ID", "exp_het"),
               names_from = Beff,
               values_from = Value)
-(df_obs)
+(BEFF_obs)
 
 # plot the data: Net biodiversity effect
 ggplot() +
-  geom_jitter(data = df_obs,
+  geom_jitter(data = BEFF_obs,
              mapping = aes(x = exp_het, y = NBE), width = 0.1) +
   geom_point(data = df_obs %>% group_by(exp_het) %>% summarise(NBE = mean(NBE)),
              mapping = aes(x = exp_het, y = NBE), colour = "red", size = 2) +
@@ -214,9 +214,9 @@ ggplot() +
 
 # plot the data: Proportion spatial insurance
 ggplot() +
-  geom_jitter(data = df_obs %>% mutate(SI_prop = SI/NBE),
+  geom_jitter(data = BEFF_obs %>% mutate(SI_prop = SI/NBE),
               mapping = aes(x = exp_het, y = SI_prop), width = 0.1) +
-  geom_point(data = df_obs %>% group_by(exp_het) %>% summarise(SI_prop = mean(SI/NBE)),
+  geom_point(data = BEFF_obs %>% group_by(exp_het) %>% summarise(SI_prop = mean(SI/NBE)),
              mapping = aes(x = exp_het, y = SI_prop), colour = "red", size = 2) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   theme_classic()
@@ -224,9 +224,15 @@ ggplot() +
 
 ## Assume incomplete data
 
+# merge these data into a single data.frame and 
+Exp1_mobs <- 
+  Exp1 %>%
+  bind_rows(., .id = "ID") %>%
+  select(ID, sample, time, place, env1, species, M, Y)
+
 # for each cluster, we pick 3 samples (i.e. time, place combination)
 # where we have mixture and monoculture data, only mixture data for all others
-Exp1_m <- 
+Exp1_msim <- 
   lapply(Exp1, function(x) {
   df <- x
   x <- sample(unique(df$sample), 3)
@@ -235,21 +241,20 @@ Exp1_m <-
 })
 
 # merge these data into a single data.frame and 
-Exp1_m <- 
-  Exp1_m %>%
+Exp1_msim <- 
+  Exp1_msim %>%
   bind_rows(., .id = "ID") %>%
-  select(ID, sample, env1, species, M, Y)
+  select(ID, sample, time, place, env1, species, M, Y)
 
 # model the monoculture yields using rethinking()
 library(rethinking)
 
-Exp1_m_cc <- Exp1_m[complete.cases(Exp1_m), ]
-
+Exp1_msim_cc <- Exp1_msim[complete.cases(Exp1_msim), ]
 dat <- list(
-  M = Exp1_m_cc$M ,
-  Y = standardize(Exp1_m_cc$Y ) ,
-  E = Exp1_m_cc$env1,
-  S = Exp1_m_cc$species)
+  M = Exp1_msim_cc$M ,
+  Y = standardize(Exp1_msim_cc$Y ) ,
+  E = Exp1_msim_cc$env1,
+  S = Exp1_msim_cc$species)
 str(dat)
 
 # intercept only
@@ -269,29 +274,27 @@ m1 <- ulam(
 traceplot(m1)
 precis(m1, depth = 3)
 
-# extract samples from this model
-m1.post <- extract.samples(m1)
-
 # predict new data
-dat.pred <- list(
-  Y = standardize(Exp1_m[is.na(Exp1_m$M), ]$Y ) ,
-  E = Exp1_m[is.na(Exp1_m$M), ]$env1,
-  S = Exp1_m[is.na(Exp1_m$M), ]$species)
+msim_pred <- list(
+  Y = standardize(Exp1_msim[is.na(Exp1_msim$M), ]$Y ) ,
+  E = Exp1_msim[is.na(Exp1_msim$M), ]$env1,
+  S = Exp1_msim[is.na(Exp1_msim$M), ]$species)
 
 # simulate observations from these data
-m1_pred <- sim(m1, data = dat.pred)
+m1_pred <- sim(m1, data = msim_pred)
 
 # summarise this posterior distribution
 mu_m1 <- apply(m1_pred, 2, function(x) mean(x) )
 PI_m1 <- apply(m1_pred, 2, function(x) PI(x, 0.95) )
 
 # pull into a data.frame and plot
-data.frame(mono_obs = Exp1_m[is.na(Exp1_m$M), ]$Y,
+data.frame(mono_obs = Exp1_mobs[is.na(Exp1_msim$M), ]$M,
+           species = as.character(Exp1_msim[is.na(Exp1_msim$M), ]$species),
            mu_m1 = mu_m1, 
            PI_low = apply(PI_m1, 2, function(x) x[1]),
            PI_high = apply(PI_m1, 2, function(x) x[2]) ) %>%
-  ggplot(data = df_plot,
-         mapping = aes(x = mono_obs, y = mu_m1)) +
+  ggplot(data = .,
+         mapping = aes(x = mono_obs, y = mu_m1, colour = species)) +
   geom_point() +
   geom_errorbar(mapping = aes(ymin = PI_low, ymax = PI_high), width = 0.1) +
   ylab("mean +- 89% prediction interval") +
@@ -299,6 +302,71 @@ data.frame(mono_obs = Exp1_m[is.na(Exp1_m$M), ]$Y,
   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
   theme_classic()
   
+# simulate different initial proportions from the Dirichlet distribution
+dr <- sapply(1:100, function(x) gtools::rdirichlet(n = 1, rep(3, length(unique(Exp1_msim$species))) ) )
+#dr <- sapply(1:100, function(x) rep(1/3, 3) )
+
+Mono_reps <- 
+  pbapply(m1_pred[sample(x = 1:nrow(m1_pred), 50),], 1, function(x) {
+  
+  # fill in the missing monoculture data with one sample from the posterior
+  df <- Exp1_msim
+  df[is.na(df$M), ]$M <- x
+  
+  # split the df data by ID i.e. experimental replicate
+  df <- split(df, df$ID)
+  
+  Exp_reps <- lapply(df, function(y) {
+    
+    RYe_reps <- 
+      apply(dr, 2, function(z) {
+      
+      a <- Isbell_2018_sampler(data = y[,c("sample", "time", "place", "species", "M", "Y")], RYe = z, RYe_post = FALSE)
+      return(bind_rows(a$Beff, rename(a$L.Beff, Beff = L.Beff)))
+      
+    } )
+    
+    return(bind_rows(RYe_reps, .id = "RYe_rep"))
+    
+  } )
+  
+  return(bind_rows(Exp_reps, .id = "ID"))
+  
+} )
+
+# posterior Beff effects
+post_Beff <- 
+  bind_rows(Mono_reps, .id = "mono_rep") %>%
+  arrange(ID, mono_rep, RYe_rep, Beff, Value) %>%
+  pivot_wider(id_cols = c("ID", "mono_rep", "RYe_rep"),
+              names_from = "Beff", 
+              values_from = "Value")
+
+# add the heterogeneity treatment to this using the observed data
+post_Beff <- full_join(post_Beff, BEFF_obs[, c("ID", "exp_het")], by = "ID")
+
+# view the data
+View(post_Beff)
+
+ggplot(data = post_Beff,
+       mapping = aes(x = exp_het, y = SI/NBE, colour = ID)) +
+  geom_boxplot(width = 0.1, position = position_dodge(width = 0.5), outlier.shape = NA) +
+  geom_point(data = BEFF_obs, 
+             mapping = aes(x = exp_het, y = SI/NBE, colour = ID),
+             size = 3.5, position = position_dodge(width = 0.5)) +
+  ylab("Spatial insurance prop. (SI/NBE)") +
+  xlab("Heterogeneity") +
+  scale_y_continuous(limits = c(-0.05, 1.05)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  scale_colour_viridis_d(option = "C") +
+  theme_classic() +
+  theme(legend.position = "none")
+
+post_Beff %>%
+  filter((SI/NBE) > 1) %>%
+  View()
+
+
 
 # Calculate the biodiversity effects using different samples from the posterior
 # For each sample from the posterior, also assume a variety of different starting relative yields
