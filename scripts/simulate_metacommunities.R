@@ -76,7 +76,7 @@ Simulate_hetero_exp <- function(n_rep = 5, temp_fluc = 0.025,
     
     # simulate a metacommunity in this cluster
     MC1 <- sim_metacomm_BEF(patches = patches, species = species, dispersal = dispersal, 
-                            timesteps = ts, start_abun = start_abun,
+                            timesteps = timesteps, start_abun = start_abun,
                             extirp_prob = extirp_prob,
                             landscape = landscape, disp_mat = disp_mat, env.df = e.1, 
                             env_traits.df = env_traits.df, int_mat = int_mat)
@@ -109,7 +109,7 @@ Simulate_hetero_exp <- function(n_rep = 5, temp_fluc = 0.025,
     
     # simulate a metacommunity in this cluster
     MC2 <- sim_metacomm_BEF(patches = patches, species = species, dispersal = dispersal, 
-                            timesteps = ts, start_abun = start_abun,
+                            timesteps = timesteps, start_abun = start_abun,
                             extirp_prob = extirp_prob,
                             landscape = landscape, disp_mat = disp_mat, env.df = e.2, 
                             env_traits.df = env_traits.df, int_mat = int_mat
@@ -139,11 +139,30 @@ Simulate_hetero_exp <- function(n_rep = 5, temp_fluc = 0.025,
 
 ## Explore model behaviour
 
-# set-up fixed inputs
+# set a seed
+set.seed(54258748)
+
+# set-up model inputs
 species <- 3
 patches <- 3
-ts <- 20
+timesteps <- 20
 n_rep <- 5
+temp_fluc = 0.025
+env_min = 0.2
+env_max = 0.8
+t_sel = round(seq(5, timesteps, length.out = 3),0)
+dispersal = 0.05
+start_abun = 60
+extirp_prob = 0
+
+optima = seq(0.2, 0.8, length.out = species)
+env_niche_breadth = c(0.2, 0.2, 0.2)
+max_r = 0.5
+K_max = 150
+
+int_min = 0.1
+int_max = 0.75
+intra = 1
 
 # landscape parameters
 # generate a random landscape
@@ -159,28 +178,60 @@ d.1 <- dispersal_matrix(landscape = l.1, torus = TRUE, kernel_exp = 0.1, plot = 
 # generate species environmental optima
 t.1 <- 
   data.frame(species = 1:species,
-             optima = seq(0.33, 0.66, length.out = species),
-             env_niche_breadth = c(0.1, 0.2, 0.4),
-             max_r = 0.5,
-             K_max = 150)
+             optima = optima,
+             env_niche_breadth = env_niche_breadth,
+             max_r = max_r,
+             K_max = K_max)
 
 # competition matrices
-si.1 <- matrix(runif(n = species*species, min = 0.8, max = 0.8), 
+si.1 <- matrix(runif(n = species*species, min = int_min, max = int_max), 
                nrow = species, ncol = species)
 si.1[lower.tri(si.1)] = t(si.1)[lower.tri(si.1)]
-diag(si.1) <- 1
+diag(si.1) <- intra
 head(si.1)
 
 # simulate the experiment
 Exp1 <- Simulate_hetero_exp(n_rep = n_rep, 
-                            temp_fluc = 0.025,
-                            env_min = 0.33, env_max = 0.66, t_sel = round(seq(5, ts, length.out = 3),0),
-                            patches, species, dispersal = 0.05, 
-                            timesteps = ts, start_abun = 60,
-                            extirp_prob = 0,
+                            temp_fluc = temp_fluc,
+                            env_min = env_min, env_max = env_max, t_sel = t_sel,
+                            patches = patches, species = species, dispersal = dispersal, 
+                            timesteps = timesteps, start_abun = start_abun,
+                            extirp_prob = extirp_prob,
                             landscape = l.1, disp_mat = d.1, 
                             env_traits.df = t.1, int_mat = si.1
                             )
+
+# sample a random replicate cluster
+N_exp <- sample(1:length(Exp1), 1)
+print(N_exp)
+
+# plot the mixtures
+ggplot(data = Exp1[[N_exp]] %>% mutate(species = as.character(species)), 
+       mapping = aes(x = time, y = Y, colour = species)) +
+  geom_line() +
+  ylab("Mixture yield") +
+  xlab("Time") +
+  scale_y_continuous(limits = c(0, 180)) +
+  facet_wrap(~place) +
+  theme_classic()
+
+# plot the monocultures
+ggplot(data = Exp1[[N_exp]] %>% mutate(species = as.character(species)), 
+       mapping = aes(x = time, y = M, colour = species)) +
+  geom_line() +
+  ylab("Monoculture yield") +
+  xlab("Time") +
+  scale_y_continuous(limits = c(0, 180)) +
+  facet_wrap(~place) +
+  theme_classic()
+
+# is the total mixture greater than the average monoculture
+Exp1[[N_exp]] %>%
+  group_by(time, place) %>%
+  summarise(M_mu = mean(M),
+            M_max = max(M),
+            Y = sum(Y))
+
 
 # calculate biodiversity effects for each of these replicate clusters
 BEFF_obs <- lapply(Exp1, function(x) {
@@ -207,7 +258,7 @@ BEFF_obs <-
 ggplot() +
   geom_jitter(data = BEFF_obs,
              mapping = aes(x = exp_het, y = NBE), width = 0.1) +
-  geom_point(data = df_obs %>% group_by(exp_het) %>% summarise(NBE = mean(NBE)),
+  geom_point(data = BEFF_obs %>% group_by(exp_het) %>% summarise(NBE = mean(NBE)),
              mapping = aes(x = exp_het, y = NBE), colour = "red", size = 2) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   theme_classic()
@@ -265,7 +316,7 @@ m1 <- ulam(
     
     # priors
     aS[S] ~ normal(3, 1),
-    b_yS[S] ~ normal(0, 1),
+    b_yS[S] ~ normal(1, 1),
     b_eS[S] ~ normal(0, 1)
     
   ), data=dat , chains = 4 )
@@ -304,10 +355,9 @@ data.frame(mono_obs = Exp1_mobs[is.na(Exp1_msim$M), ]$M,
   
 # simulate different initial proportions from the Dirichlet distribution
 dr <- sapply(1:100, function(x) gtools::rdirichlet(n = 1, rep(3, length(unique(Exp1_msim$species))) ) )
-#dr <- sapply(1:100, function(x) rep(1/3, 3) )
 
 Mono_reps <- 
-  pbapply(m1_pred[sample(x = 1:nrow(m1_pred), 50),], 1, function(x) {
+  pbapply(m1_pred[sample(x = 1:nrow(m1_pred), 100),], 1, function(x) {
   
   # fill in the missing monoculture data with one sample from the posterior
   df <- Exp1_msim
@@ -347,51 +397,60 @@ post_Beff <- full_join(post_Beff, BEFF_obs[, c("ID", "exp_het")], by = "ID")
 
 # view the data
 View(post_Beff)
+dim(post_Beff)
 
-ggplot(data = post_Beff,
+p1 <- 
+  ggplot(data = post_Beff,
        mapping = aes(x = exp_het, y = SI/NBE, colour = ID)) +
-  geom_boxplot(width = 0.1, position = position_dodge(width = 0.5), outlier.shape = NA) +
+  geom_boxplot(width = 0.1, position = position_dodge(width = 0.5), outlier.alpha = 0.1) +
   geom_point(data = BEFF_obs, 
              mapping = aes(x = exp_het, y = SI/NBE, colour = ID),
              size = 3.5, position = position_dodge(width = 0.5)) +
   ylab("Spatial insurance prop. (SI/NBE)") +
   xlab("Heterogeneity") +
-  scale_y_continuous(limits = c(-0.05, 1.05)) +
+  # scale_y_continuous(limits = c(-0.05, 0.25)) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   scale_colour_viridis_d(option = "C") +
   theme_classic() +
   theme(legend.position = "none")
+plot(p1)
 
-post_Beff %>%
-  filter((SI/NBE) > 1) %>%
-  View()
-
-
-
-# Calculate the biodiversity effects using different samples from the posterior
-# For each sample from the posterior, also assume a variety of different starting relative yields
-
-# Overall, we should technically only use a set of Dirichlet distributions
-
-# Post sample 1: Dirichlet 1, 2, 3, 4, 5, 6 etc.
-
-# Then, we can directly compare different posterior samples and calculate contrasts
-# because posterior samples will be matching
-
-# What if we can't get decent monocultures? Can we do something else?
-# Can we use DI models?
+p2 <- 
+  ggplot(data = post_Beff,
+       mapping = aes(x = exp_het, y = NBE, colour = ID)) +
+  geom_boxplot(width = 0.1, position = position_dodge(width = 0.5), outlier.alpha = 0.1) +
+  geom_point(data = BEFF_obs, 
+             mapping = aes(x = exp_het, y = NBE, colour = ID),
+             size = 3.5, position = position_dodge(width = 0.5)) +
+  ylab("Net Biodiversity Effect (NBE)") +
+  xlab("Heterogeneity") +
+  # scale_y_continuous(limits = c(-0.05, 0.25)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  scale_colour_viridis_d(option = "C") +
+  theme_classic() +
+  theme(legend.position = "none")
+plot(p2)
 
 
+# combine outputs into a list and export as a .rds file
+fix_inputs <- data.frame(parameter = c("n_rep", "temp_fluc", "env_min", "env_max",
+                                       "t_sel", "patches", "species", "dispersal",
+                                       "timesteps", "start_abun", "extirp_prob"),
+                         value = c(n_rep, temp_fluc, env_min, env_max, paste(t_sel, collapse = "_"),
+                                   patches, species, dispersal,timesteps, start_abun,
+                                   extirp_prob))
 
+mod_list <- 
+  list("fixed_inputs" = fix_inputs, 
+     "landscape" = l.1, 
+     "dispersal_matrix"= d.1, 
+     "trait_matrix" = t.1, 
+     "int_mat" = si.1,
+     "observed_BEFF" = BEFF_obs,
+     "sim_BEFF" = post_Beff,
+     "SI_prop" = p1,
+     "NBE" = p2)
 
+saveRDS(object = mod_list, here("results/pre_sim_2.rds"))
 
-  
-  
-  
-  
-  
-  
-  
-  
-
-
+### END

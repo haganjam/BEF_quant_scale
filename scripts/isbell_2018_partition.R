@@ -216,8 +216,8 @@ Isbell_2018_sampler <- function(data, RYe, RYe_post = FALSE, N = 100, alpha_par 
 
 # load the test data
 library(here)
-test.data <- readRDS(file = here("test_data/Isbell_test_data.rds"))
-ans.data <- readRDS(file = here("test_data/Isbell_test_data_solutions.rds"))
+test.data <- readRDS(file = here("data/Isbell_test_data.rds"))
+ans.data <- readRDS(file = here("data/Isbell_test_data_solutions.rds"))
 
 # run the test
 results <- vector(length = length(test.data))
