@@ -45,7 +45,7 @@ d.1 <- dispersal_matrix(landscape = l.1, torus = TRUE, kernel_exp = 0.1, plot = 
 
 # start loop
 M_test <- 
-  lapply(1:2, function(a) {
+  lapply(1:50, function(a) {
     
     # get the starting abundances
     start_abun = round(runif(n = species, 5, 30), 0)
@@ -258,7 +258,7 @@ M_test <-
     # reorder the columns
     df_unc_sum <- 
       df_unc_sum %>%
-      select(t_steps, dispersal, start_abun, optima, niche_breadth,
+      select(t_steps, dispersal, start_abun, optima, niche_breadth, inter_comp,
              Effect, Value_obs, mu, mu_deviation, starts_with("PI"),
              starts_with("HPDI"))
     
@@ -266,9 +266,4 @@ M_test <-
     
   } )
 
-
-
-
-
-
-
+### END
