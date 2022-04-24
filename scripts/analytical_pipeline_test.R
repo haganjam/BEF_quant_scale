@@ -45,7 +45,7 @@ d.1 <- dispersal_matrix(landscape = l.1, torus = TRUE, kernel_exp = 0.1, plot = 
 
 # start loop
 M_test <- 
-  lapply(1:50, function(a) {
+  lapply(1:30, function(a) {
     
     # get the starting abundances
     start_abun = round(runif(n = species, 5, 30), 0)
@@ -265,5 +265,7 @@ M_test <-
     return(df_unc_sum)
     
   } )
+
+saveRDS(M_test, here("results/test_sim.rds"))
 
 ### END
