@@ -34,8 +34,17 @@ simulate_MC2 <- function(patches, species, dispersal = 0.01, timesteps = 1200,
   # load the dplyr library
   library(dplyr)
   
+  # check the starting abundances
+  if(length(start_abun) == 1) {
+    SA <- rep(round(start_abun/species, 0), species*patches)
+  } else if (length(start_abun) == species) {
+    SA <- rep(start_abun, each = patches)
+  } else {
+    stop("add appropriate starting abundances")
+  }
+  
   dynamics.df <- data.frame()
-  N <- matrix(rep(round(start_abun/species, 0), species*patches), nrow = patches, ncol = species)
+  N <- matrix(round(SA, 0), nrow = patches, ncol = species)
   pb <- txtProgressBar(min = 0, max = timesteps, style = 3)
   for(i in 1:(timesteps)){
     
@@ -157,7 +166,7 @@ sim_metacomm_BEF <- function(species = 5, patches = 10,
     
     # simulate each species
     x <- simulate_MC2(species = 1, patches = patches, 
-                      dispersal = dispersal, start_abun = start_abun,
+                      dispersal = dispersal, start_abun = sum(start_abun),
                       timesteps = timesteps,
                       extirp_prob = extirp_prob,
                       landscape = landscape, 

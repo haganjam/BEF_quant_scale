@@ -1,5 +1,18 @@
 
-# Simulate a test of our hypothesis
+# Project: Quantifying biodiversity effects across scales in natural ecosystems
+# Title: Simulate the effect of heterogeneity on biodiversity effects across scales
+# Author: James Hagan
+# Date: 2022/04/24
+
+# R version 4.1.2 (2021-11-01)
+# Platform: x86_64-w64-mingw32/x64 (64-bit)
+# Running under: Windows 10 x64 (build 19043)
+
+# attached base packages:
+# stats, graphics, grDevice, utils, datasets, methods, base     
+
+# other attached packages:
+# mcomsimr_0.1.0, pbapply_1.5-0, here_1.0.1, dplyr_1.0.7, tidyr_1.1.4, ggplot2_3.3.5 
 
 # Load the functions and packages
 library(ggplot2)
@@ -9,10 +22,7 @@ library(here)
 library(pbapply)
 source(here("scripts/mcomsimr_simulate_MC2_function.R"))
 
-# Generate high and low heterogeneity clusters
-
-# simulate a set of metacommunities with high environmental heterogeneity among patches
-
+# function to generate patches with different levels of environmental heterogeneity through time
 Simulate_heterogeneity <- function(patches, timesteps, 
                                    het = "low", env_min, env_max, env,
                                    temp_fluc) {
@@ -136,8 +146,7 @@ Simulate_hetero_exp <- function(n_rep = 5, temp_fluc = 0.025,
   
 }
 
-
-## Explore model behaviour
+# set the model inputs
 
 # set a seed
 set.seed(54258748)
@@ -145,23 +154,23 @@ set.seed(54258748)
 # set-up model inputs
 species <- 3
 patches <- 3
-timesteps <- 20
+timesteps <- 50
 n_rep <- 5
-temp_fluc = 0.025
+temp_fluc = 0.05
 env_min = 0.2
 env_max = 0.8
-t_sel = round(seq(5, timesteps, length.out = 3),0)
+t_sel = round(seq(10, timesteps, length.out = 4),0)
 dispersal = 0.05
 start_abun = 60
 extirp_prob = 0
 
-optima = seq(0.2, 0.8, length.out = species)
-env_niche_breadth = c(0.2, 0.2, 0.2)
+optima = seq(0.3, 0.6, length.out = species)
+env_niche_breadth = c(0.15, 0.15, 0.15)
 max_r = 0.5
 K_max = 150
 
-int_min = 0.1
-int_max = 0.75
+int_min = 0.5
+int_max = 1
 intra = 1
 
 # landscape parameters
@@ -204,6 +213,7 @@ Exp1 <- Simulate_hetero_exp(n_rep = n_rep,
 # sample a random replicate cluster
 N_exp <- sample(1:length(Exp1), 1)
 print(N_exp)
+N_exp <- 10
 
 # plot the mixtures
 ggplot(data = Exp1[[N_exp]] %>% mutate(species = as.character(species)), 
@@ -398,6 +408,13 @@ post_Beff <- full_join(post_Beff, BEFF_obs[, c("ID", "exp_het")], by = "ID")
 # view the data
 View(post_Beff)
 dim(post_Beff)
+summary(post_Beff)
+max(as.integer(post_Beff$mono_rep))
+
+post_Beff %>%
+  filter(ID == 10) %>%
+  mutate(SE_NBE =SI/NBE) %>%
+  summary()
 
 p1 <- 
   ggplot(data = post_Beff,
@@ -408,7 +425,7 @@ p1 <-
              size = 3.5, position = position_dodge(width = 0.5)) +
   ylab("Spatial insurance prop. (SI/NBE)") +
   xlab("Heterogeneity") +
-  # scale_y_continuous(limits = c(-0.05, 0.25)) +
+  scale_y_continuous(limits = c(-1, 1)) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   scale_colour_viridis_d(option = "C") +
   theme_classic() +
@@ -431,6 +448,21 @@ p2 <-
   theme(legend.position = "none")
 plot(p2)
 
+p3 <- 
+  ggplot(data = post_Beff,
+         mapping = aes(x = exp_het, y = SI, colour = ID)) +
+  geom_boxplot(width = 0.1, position = position_dodge(width = 0.5), outlier.alpha = 0.1) +
+  geom_point(data = BEFF_obs, 
+             mapping = aes(x = exp_het, y = SI, colour = ID),
+             size = 3.5, position = position_dodge(width = 0.5)) +
+  ylab("Spatial insurance effect (SI)") +
+  xlab("Heterogeneity") +
+  # scale_y_continuous(limits = c(-0.05, 0.25)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  scale_colour_viridis_d(option = "C") +
+  theme_classic() +
+  theme(legend.position = "none")
+plot(p3)
 
 # combine outputs into a list and export as a .rds file
 fix_inputs <- data.frame(parameter = c("n_rep", "temp_fluc", "env_min", "env_max",
