@@ -24,15 +24,20 @@ source(here("scripts/mcomsimr_simulate_MC2_function.R"))
 
 # set the model inputs
 
+# number of replicate simulations
+N_REP <- 50
+
 # set a seed
 set.seed(54258748)
 
-# set-up model inputs
 species <- 5
 patches <- 5
 timesteps <- 50
 dispersal = 0.05
 extirp_prob = 0
+
+max_r = 0.5
+K_max = 150
 
 # landscape parameters
 # generate a random landscape
@@ -43,25 +48,27 @@ l.1 <-
 # generate a random dispersal matrix
 d.1 <- dispersal_matrix(landscape = l.1, torus = TRUE, kernel_exp = 0.1, plot = FALSE)
 
+# generate species environmental optima
+# optima = seq(0.1, 0.9, length.out = species)
+optima = seq(0.15, 0.85, length.out = species)
+print(optima)
+env_niche_breadth = lapply(1:N_REP, function(x) round(runif(species, 0.1, 0.25), 2))
+print(env_niche_breadth)
+
+# simulate different initial proportions from the Dirichlet distribution
+dr <- sapply(1:100, function(x) gtools::rdirichlet(n = 1, rep(3,  species) ) )
+
 # start loop
 M_test <- 
-  lapply(1:30, function(a) {
+  lapply(1:N_REP, function(a) {
     
     # get the starting abundances
     start_abun = round(runif(n = species, 5, 30), 0)
     
-    # generate species environmental optima
-    # optima = seq(0.1, 0.9, length.out = species)
-    optima = round(runif(species, 0.05, 0.95), 1)
-    print(optima)
-    env_niche_breadth = round(runif(species, 0.1, 0.3), 1)
-    max_r = 0.5
-    K_max = 150
-    
     t.1 <- 
       data.frame(species = 1:species,
                  optima = optima,
-                 env_niche_breadth = env_niche_breadth,
+                 env_niche_breadth = env_niche_breadth[[a]],
                  max_r = max_r,
                  K_max = K_max)
     
@@ -76,7 +83,7 @@ M_test <-
     diag(si.1) <- intra
     
     # simulate environmental variables
-    autocorr <- round(runif(1, 100, 900), 0)
+    autocorr <- round(runif(1, 100, 500), 0)
     e.1 <- mcomsimr::env_generate(landscape = l.1, 
                                   env1Scale = autocorr, timesteps = timesteps, plot = FALSE)
     
@@ -182,9 +189,6 @@ M_test <-
     # geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
     # theme_classic()
     
-    # simulate different initial proportions from the Dirichlet distribution
-    dr <- sapply(1:100, function(x) gtools::rdirichlet(n = 1, rep(3,  species) ) )
-    
     Mono_reps <- 
       pbapply(MC1_pred[sample(x = 1:nrow(MC1_pred), 100),], 1, function(x) {
         
@@ -262,10 +266,46 @@ M_test <-
              Effect, Value_obs, mu, mu_deviation, starts_with("PI"),
              starts_with("HPDI"))
     
-    return(df_unc_sum)
+    return(list(bind_rows(MC1a), df_unc_sum) )
     
   } )
 
 saveRDS(M_test, here("results/test_sim.rds"))
+
+# load the test data
+M_test <- readRDS(file = here("results/test_sim.rds"))
+head(M_test)
+
+# bind these data
+M_test <- bind_rows(M_test, .id = "ID")
+head(M_test)
+
+# check the relationship between the true value and the mean with interval
+ggplot(data = M_test,
+       mapping = aes(x = Value_obs, y = mu)) +
+  geom_point() +
+  geom_errorbar(mapping = aes(ymin = HPDI_low, ymax = HPDI_high)) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", colour = "red") +
+  facet_wrap(~Effect, scales = "free") +
+  theme_classic()
+
+M_test %>%
+  filter(Effect == "NBE", HPDI_int > 1000) %>% View()
+
+ggplot(data = M_test %>% filter( !(ID %in% c(9, 10, 28)) ),
+       mapping = aes(x = Value_obs, y = mu)) +
+  geom_point() +
+  geom_errorbar(mapping = aes(ymin = HPDI_low, ymax = HPDI_high)) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", colour = "red") +
+  facet_wrap(~Effect, scales = "free") +
+  theme_classic()
+
+M_test %>%
+  filter(Effect == "AS", HPDI_int > 1000) %>%
+  View()
+
+M_test %>%
+  filter(Effect == "LC") %>%
+  View()
 
 ### END
