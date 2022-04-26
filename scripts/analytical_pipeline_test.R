@@ -25,7 +25,7 @@ source(here("scripts/mcomsimr_simulate_MC2_function.R"))
 # set the model inputs
 
 # number of replicate simulations
-N_REP <- 50
+N_REP <- 30
 
 # set a seed
 set.seed(54258748)
@@ -126,8 +126,22 @@ M_test <-
       full_join(MC1b, MC1e, by = c("time", "place")) %>%
       arrange(sample, time, place, species)
     
+    p_comb <- combn(unique(MC1_NA$place), m = 2)
+    max_env <- 
+      apply(p_comb, 2, function(x) {
+      
+      y <- 
+        MC1_NA %>%
+        filter(place %in% x) %>%
+        pull(env) %>%
+        range(.)
+      
+      return(diff(y))
+      
+    })
+
     # most likely that we would have say 2 places and all times
-    MC1_NA$M1 <- ifelse((MC1_NA$place %in% sample(unique(MC1_NA$place), 2)), NA, MC1_NA$M)
+    MC1_NA$M1 <- ifelse((MC1_NA$place %in% p_comb[, which(max_env == max(max_env))] ), MC1_NA$M, NA)
     
     # model the monoculture yields using rethinking()
     library(rethinking)
@@ -169,8 +183,8 @@ M_test <-
     dim(MC1_pred)
     
     # summarise the posterior distribution
-    # mu_m1 <- apply(MC1_pred, 2, function(x) mean(x) )
-    # PI_m1 <- apply(MC1_pred, 2, function(x) PI(x, 0.95) )
+    mu_m1 <- apply(MC1_pred, 2, function(x) mean(x) )
+    PI_m1 <- apply(MC1_pred, 2, function(x) PI(x, 0.95) )
     
     # pull into a data.frame and plot
     # df_plot <- 
@@ -227,10 +241,10 @@ M_test <-
     df_unc_sum <- 
       df_unc %>%
       group_by(Beff) %>%
-      summarise(PI_low = PI(Value, prob = 0.95)[1],
-                PI_high = PI(Value, prob = 0.95)[2],
-                HPDI_low = HPDI(Value, prob = 0.95)[1],
-                HPDI_high = HPDI(Value, prob = 0.95)[2],
+      summarise(PI_low = PI(Value, prob = 0.90)[1],
+                PI_high = PI(Value, prob = 0.90)[2],
+                HPDI_low = HPDI(Value, prob = 0.90)[1],
+                HPDI_high = HPDI(Value, prob = 0.90)[2],
                 mu = mean(Value), .groups="drop") %>%
       mutate(PI_int = PI_high - PI_low,
              HPDI_int = HPDI_high - HPDI_low)
@@ -241,9 +255,7 @@ M_test <-
     # calculate deviation from the mean in percent and percent of the width
     df_unc_sum <- 
       df_unc_sum %>%
-      mutate(mu_deviation = abs((abs(mu - Value_obs)/Value_obs)*100),
-             HPDI_width = (HPDI_int/abs(Value_obs) )*100,
-             PI_width = (PI_int/abs(Value_obs) )*100 ) %>%
+      mutate(mu_deviation = abs((abs(mu - Value_obs)/Value_obs)*100) ) %>%
       select(Effect = Beff,
              starts_with("PI"), 
              starts_with("HPDI"),
@@ -258,11 +270,12 @@ M_test <-
     df_unc_sum$niche_breadth <- paste(t.1$env_niche_breadth, collapse = "_")  
     df_unc_sum$t_steps <- paste(t_sel, collapse = "_")
     df_unc_sum$dispersal <- dispersal
+    df_unc_sum$mono_cor <- cor(mu_m1, MC1_NA$M[is.na(MC1_NA$M1)])
     
     # reorder the columns
     df_unc_sum <- 
       df_unc_sum %>%
-      select(t_steps, dispersal, start_abun, optima, niche_breadth, inter_comp,
+      select(t_steps, dispersal, start_abun, optima, niche_breadth, inter_comp, mono_cor,
              Effect, Value_obs, mu, mu_deviation, starts_with("PI"),
              starts_with("HPDI"))
     
@@ -270,15 +283,18 @@ M_test <-
     
   } )
 
-saveRDS(M_test, here("results/test_sim.rds"))
+# saveRDS(M_test, here("results/test_sim.rds"))
 
 # load the test data
 M_test <- readRDS(file = here("results/test_sim.rds"))
 head(M_test)
 
 # bind these data
-M_test <- bind_rows(M_test, .id = "ID")
+M_test <- bind_rows(lapply(M_test, function(x) x[[2]]), .id = "ID")
 head(M_test)
+dim(M_test)
+View(M_test)
+
 
 # check the relationship between the true value and the mean with interval
 ggplot(data = M_test,
