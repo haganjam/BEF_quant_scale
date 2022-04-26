@@ -283,7 +283,7 @@ M_test <-
     
   } )
 
-# saveRDS(M_test, here("results/test_sim.rds"))
+saveRDS(M_test, here("results/test_sim.rds"))
 
 # load the test data
 M_test <- readRDS(file = here("results/test_sim.rds"))
@@ -298,7 +298,7 @@ View(M_test)
 
 # check the relationship between the true value and the mean with interval
 ggplot(data = M_test,
-       mapping = aes(x = Value_obs, y = mu)) +
+       mapping = aes(x = Value_obs, y = mu, colour = mono_cor)) +
   geom_point() +
   geom_errorbar(mapping = aes(ymin = HPDI_low, ymax = HPDI_high)) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed", colour = "red") +
