@@ -25,7 +25,7 @@ source(here("scripts/mcomsimr_simulate_MC2_function.R"))
 # set the model inputs
 
 # number of replicate simulations
-N_REP <- 30
+N_REP <- 10
 
 # set a seed
 set.seed(54258748)
@@ -38,6 +38,10 @@ extirp_prob = 0
 
 max_r = 0.5
 K_max = 150
+
+int_min = 0.25
+int_max = 0.5
+intra = 1
 
 # landscape parameters
 # generate a random landscape
@@ -55,15 +59,19 @@ print(optima)
 env_niche_breadth = lapply(1:N_REP, function(x) round(runif(species, 0.1, 0.25), 2))
 print(env_niche_breadth)
 
+# selected time points
+t_sel <- c(10, 20, 30, 40, 50)
+
 # simulate different initial proportions from the Dirichlet distribution
 dr <- sapply(1:100, function(x) gtools::rdirichlet(n = 1, rep(3,  species) ) )
+print(dr)
 
 # start loop
 M_test <- 
   lapply(1:N_REP, function(a) {
     
     # get the starting abundances
-    start_abun = round(runif(n = species, 5, 30), 0)
+    start_abun <- round(runif(n = species, 5, 30), 0)
     
     t.1 <- 
       data.frame(species = 1:species,
@@ -73,10 +81,6 @@ M_test <-
                  K_max = K_max)
     
     # competition matrices
-    int_min = 0.3
-    int_max = 1
-    intra = 1
-    
     si.1 <- matrix(runif(n = species*species, min = int_min, max = int_max), 
                    nrow = species, ncol = species)
     si.1[lower.tri(si.1)] = t(si.1)[lower.tri(si.1)]
@@ -91,7 +95,7 @@ M_test <-
     # simulate the metacommunity
     MC1a <- sim_metacomm_BEF(patches = patches, species = species, dispersal = dispersal,
                              timesteps = timesteps, start_abun = start_abun,
-                             extirp_prob = 0.000001,
+                             extirp_prob = extirp_prob,
                              landscape = l.1, disp_mat = d.1, env.df = e.1, 
                              env_traits.df = t.1, int_mat = si.1)
     
@@ -102,7 +106,6 @@ M_test <-
     # theme_classic()
     
     # clean the data.frame to calculate BEF effects
-    t_sel <- c(20, 30, 40, 50)
     MC1b <- Isbell_2018_cleaner(mix = MC1a$mixture, mono = MC1a$monoculture, 
                                 t_sel  = t_sel)
     
@@ -119,14 +122,13 @@ M_test <-
     BEF1_obs <- 
       bind_rows(BEF1_obs$Beff, rename(BEF1_obs$L.Beff, Beff = L.Beff)) %>%
       mutate(Value = round(Value, 2))
-    print(BEF1_obs)
     
     # assume incomplete monoculture and unknown RYE
     MC1_NA <- 
       full_join(MC1b, MC1e, by = c("time", "place")) %>%
       arrange(sample, time, place, species)
     
-    p_comb <- combn(unique(MC1_NA$place), m = 2)
+    p_comb <- combn(unique(MC1_NA$place), m = round(0.30*length(unique(MC1_NA$place)), 0) )
     max_env <- 
       apply(p_comb, 2, function(x) {
       
@@ -166,7 +168,7 @@ M_test <-
         b_eS[S] ~ normal(0, 1),
         b_yeS[S] ~ normal(0, 1)
         
-      ), data=MC_dat , chains = 4, iter = 2000, log_lik = TRUE)
+      ), data=MC_dat , chains = 4, iter = 2000, log_lik = FALSE)
     
     # check the traceplots and the precis output
     # traceplot(m1)
@@ -271,11 +273,12 @@ M_test <-
     df_unc_sum$t_steps <- paste(t_sel, collapse = "_")
     df_unc_sum$dispersal <- dispersal
     df_unc_sum$mono_cor <- cor(mu_m1, MC1_NA$M[is.na(MC1_NA$M1)])
+    df_unc_sum$bad_mono_n <- sum( apply(PI_m1, 2, diff)/mean(mu_m1) > 2 )/length(mu_m1) 
     
     # reorder the columns
     df_unc_sum <- 
       df_unc_sum %>%
-      select(t_steps, dispersal, start_abun, optima, niche_breadth, inter_comp, mono_cor,
+      select(t_steps, dispersal, start_abun, optima, niche_breadth, inter_comp, mono_cor, bad_mono_n,
              Effect, Value_obs, mu, mu_deviation, starts_with("PI"),
              starts_with("HPDI"))
     
@@ -286,11 +289,11 @@ M_test <-
 saveRDS(M_test, here("results/test_sim.rds"))
 
 # load the test data
-M_test <- readRDS(file = here("results/test_sim.rds"))
+M_test1 <- readRDS(file = here("results/test_sim.rds"))
 head(M_test)
 
 # bind these data
-M_test <- bind_rows(lapply(M_test, function(x) x[[2]]), .id = "ID")
+M_test <- bind_rows(lapply(M_test1, function(x) x[[2]]), .id = "ID")
 head(M_test)
 dim(M_test)
 View(M_test)
@@ -305,8 +308,13 @@ ggplot(data = M_test,
   facet_wrap(~Effect, scales = "free") +
   theme_classic()
 
+range(M_test$mono_cor)
+
 M_test %>%
-  filter(Effect == "NBE", HPDI_int > 1000) %>% View()
+  filter(Effect == "IT", HPDI_int > 2000)
+
+M_test %>%
+  filter(Effect == "NBE", HPDI_int < 400)
 
 ggplot(data = M_test %>% filter( !(ID %in% c(9, 10, 28)) ),
        mapping = aes(x = Value_obs, y = mu)) +
