@@ -16,16 +16,16 @@ set.seed(54258748)
 max_r = 0.5
 K_max = 150
 
-species <- 5
+species <- 10
 patches <- 10
-timesteps <- 200
-extirp_prob = 0.00001
+timesteps <- 500
+extirp_prob = 0.0001
 
 # landscape parameters
 # generate a random landscape
 # l.1 <- landscape_generate(patches = patches)
-l.1 <- data.frame(x = seq(0, 100, length.out = patches),
-           y = 50)
+l.1 <- data.frame(x = rep(seq(0, 100, length.out = patches/2), 2),
+           y = rep(c(25, 75), patches))
 plot(l.1)
 
 # generate a random dispersal matrix
@@ -41,18 +41,18 @@ print(optima)
 env_niche_breadth = rep(0.3, species)
 
 # get the starting abundances
-start_abun <- rep(30, species)
+start_abun <- rep(15, species)
 
 t.1 <- 
   data.frame(species = 1:species,
              optima = optima,
-             env_niche_breadth = env_niche_breadth[[1]],
+             env_niche_breadth = env_niche_breadth,
              max_r = max_r,
              K_max = K_max)
 
 # simulate a fluctuating environment
-temp_fluc <- 0.001
-spat_het <- seq(0.1, 0.9, length.out = patches)
+temp_fluc <- 0.005
+spat_het <- seq(0.05, 0.95, length.out = patches)
 env1.sim <- 
   sapply(spat_het, function(x) {
   # choose a random number between 0 and 0.025 and then decide if it is negative or positive
@@ -62,6 +62,21 @@ env1.sim <-
   # make sure they remain between zero and one
   return(ifelse( (z < 0), 0, ifelse( (z > 1), 1, z)))
 })
+
+# simulate a fluctuating environment
+env_width = 0.075
+period = 60
+spat_het <- seq(0.05, 0.95, length.out = patches)
+env1.sim <- 
+  sapply(spat_het, function(x) {
+    samp <- sample(20:period, 1)
+    y <- x + (env_width + rnorm(n = 1, mean = 0, sd = 0.01)) *sin( ((pi*2)/samp)*1:(timesteps + samp) )
+    z <- y + rnorm(n = length(y), mean = 0, sd = 0.01)
+    st <- sample(0:samp, 1)
+    z <- z[st:(timesteps + st - 1)]
+    return(ifelse( (z < 0), 0, ifelse( (z > 1), 1, z)))
+  })
+
 # bind into a data.frame
 e.1 <- data.frame(env1 = unlist(apply(env1.sim, 1, function(x) list(x) ) ),
                   patch = rep(1:patches, timesteps),
@@ -72,6 +87,7 @@ ggplot(data = e.1,
   geom_line() +
   theme_classic() +
   scale_y_continuous(limits = c(-0.05, 1.05)) +
+  facet_wrap(~patch, scales = "free") +
   theme(legend.position = "bottom")
 
 int_min = 1
@@ -85,7 +101,38 @@ si.1[lower.tri(si.1)] = t(si.1)[lower.tri(si.1)]
 diag(si.1) <- intra
 si.1
 
-dispersal <- 0.1
+dispersal <- 0
+
+# simulate the metacommunity
+x <- 
+  simulate_MC2(species = species, 
+               patches = patches, 
+               dispersal = dispersal, 
+               start_abun = start_abun,
+               timesteps = timesteps,
+               extirp_prob = extirp_prob,
+               landscape = l.1, 
+               disp_mat = d.1, 
+               env.df = e.1, 
+               env_traits.df = t.1, 
+               int_mat = si.1, meas_error = 1
+  )
+
+ggplot(data = x %>% mutate(species = as.character(species)),
+       mapping = aes(x = time, y = N, colour = species)) +
+  geom_line() +
+  facet_wrap(~patch, scales = "free") +
+  #geom_hline(yintercept = 150, linetype = "dashed") +
+  theme_classic()
+
+x %>%
+  filter(time == max(time)) %>%
+  filter(N > 0) %>%
+  pull(species) %>%
+  unique() %>%
+  length()
+  
+
 
 # simulate the metacommunity
 MC1a <- sim_metacomm_BEF(patches = patches, species = species, dispersal = dispersal,
