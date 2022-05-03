@@ -62,12 +62,16 @@ simulate_MC2 <- function(patches, species, dispersal = 0.01, timesteps = 1200,
     K <- env_traits.df$K_max*exp(-(t((env_traits.df$optima - matrix(rep(env, each = species), nrow = species, ncol = patches))/(2*env_traits.df$env_niche_breadth)))^2)
     K <- K + rnorm(n = length(K), mean = 0, sd = 2)
     K <- ifelse(K <= 0, 1, K)
+    # K <- matrix(rep(env_traits.df$K_max, each = species*patches), nrow = patches, ncol = species)
     
     # here we implement the difference equation
     N_hat <- N + ((N*r) * (1 - ((N %*% int_mat)/K) ))
     
     # add noise from a normal distribution to these data
-    N_hat <- N_hat + rnorm(n = length(N_hat), mean = 0, sd = meas_error)
+    if (any(N_hat == 0) ) {
+      N_hat[N_hat == 0] <- 0 
+    } 
+    N_hat[N_hat > 0] <- N_hat[N_hat > 0] + rnorm(n = length(N_hat[N_hat > 0]), mean = 0, sd = meas_error)
     N_hat[N_hat < 0] <- 0
     N_hat <- round(N_hat, 0)
     
@@ -155,14 +159,14 @@ sim_metacomm_BEF <- function(species = 5, patches = 10,
   
   # add a column for each unique sample
   sample <- unique(with(mix, paste(time, patch)))
-  mix$sample <- rep(sort(as.integer(as.factor(sample)) ), each = species)
+  mix$sample <- rep((as.integer(as.factor(sample)) ), each = species)
   
   # reorder the columns
   mix <- mix[, c("mono_mix", "sample", "time", "patch", "env", "species", "N")]
   
   # simulate each monoculture over all times and places
   mono <- vector("list", length = species)
-  for (i in 1:species) {
+  for (j in 1:species) {
     
     # simulate each species
     x <- simulate_MC2(species = 1, patches = patches, 
@@ -172,22 +176,22 @@ sim_metacomm_BEF <- function(species = 5, patches = 10,
                       landscape = landscape, 
                       disp_mat = disp_mat, 
                       env.df = env.df, 
-                      env_traits.df = env_traits.df[i,], 
-                      int_mat = int_mat[i,i],
+                      env_traits.df = env_traits.df[j,], 
+                      int_mat = int_mat[j,j],
                       meas_error = meas_error)
     
     # rename the species column
-    x$species <- i
+    x$species <- j
     
     # add a mono_mix variable
     x$mono_mix <- "monoculture"
     
     # add a column for each unique sample
     sample <- unique(with(x, paste(time, patch)))
-    x$sample <- sort(as.integer(as.factor(sample)) )
+    x$sample <- (as.integer(as.factor(sample)) )
     
     # write the dynamics data.frame into a list
-    mono[[i]] <- x
+    mono[[j]] <- x
     
   }
   
