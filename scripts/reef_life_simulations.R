@@ -51,7 +51,7 @@ t.1 <-
              K_max = K_max)
 
 # simulate a fluctuating environment
-temp_fluc <- 0.005
+temp_fluc <- 0.0005
 spat_het <- seq(0.05, 0.95, length.out = patches)
 env1.sim <- 
   sapply(spat_het, function(x) {
@@ -87,7 +87,7 @@ ggplot(data = e.1,
   geom_line() +
   theme_classic() +
   scale_y_continuous(limits = c(-0.05, 1.05)) +
-  facet_wrap(~patch, scales = "free") +
+  # facet_wrap(~patch, scales = "free") +
   theme(legend.position = "bottom")
 
 int_min = 1
@@ -101,7 +101,7 @@ si.1[lower.tri(si.1)] = t(si.1)[lower.tri(si.1)]
 diag(si.1) <- intra
 si.1
 
-dispersal <- 0
+dispersal <- 0.01
 
 # simulate the metacommunity
 x <- 
@@ -110,7 +110,7 @@ x <-
                dispersal = dispersal, 
                start_abun = start_abun,
                timesteps = timesteps,
-               extirp_prob = extirp_prob,
+               extirp_prob = 0,
                landscape = l.1, 
                disp_mat = d.1, 
                env.df = e.1, 
