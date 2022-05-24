@@ -29,6 +29,7 @@ source(here("scripts/isbell_2018_partition.R"))
 simulate_MC2 <- function(patches, species, dispersal = 0.01, timesteps = 1200,
                          start_abun = 150,
                          extirp_prob = 0,
+                         comp = "Beverton_Holt",
                          landscape, disp_mat, env.df, env_traits.df, int_mat, meas_error = 5){
   
   # load the dplyr library
@@ -62,10 +63,15 @@ simulate_MC2 <- function(patches, species, dispersal = 0.01, timesteps = 1200,
     K <- env_traits.df$K_max*exp(-(t((env_traits.df$optima - matrix(rep(env, each = species), nrow = species, ncol = patches))/(2*env_traits.df$env_niche_breadth)))^2)
     K <- K + rnorm(n = length(K), mean = 0, sd = 2)
     K <- ifelse(K <= 0, 1, K)
-    # K <- matrix(rep(env_traits.df$K_max, each = species*patches), nrow = patches, ncol = species)
     
     # here we implement the difference equation
-    N_hat <- N + ((N*r) * (1 - ((N %*% int_mat)/K) ))
+    if (comp == "Beverton_Holt") {
+      N_hat <- N*r/(1+N%*%int_mat)
+    } else if (comp == "Lotka_Volterra") {
+      N_hat <- N + ((N*r) * (1 - ((N %*% int_mat)/K) ))
+    } else {
+      stop("Choose a supported competition structure")
+    }
     
     # add noise from a normal distribution to these data
     if (any(N_hat == 0) ) {
@@ -131,6 +137,7 @@ sim_metacomm_BEF <- function(species = 5, patches = 10,
                              timesteps = 10, 
                              start_abun = 150,
                              extirp_prob = 0.0001,
+                             comp = "Beverton_Holt",
                              landscape, 
                              disp_mat, 
                              env.df, 
@@ -146,6 +153,7 @@ sim_metacomm_BEF <- function(species = 5, patches = 10,
                       start_abun = start_abun,
                       timesteps = timesteps,
                       extirp_prob = extirp_prob,
+                      comp = comp,
                       landscape = landscape, 
                       disp_mat = disp_mat, 
                       env.df = env.df, 
@@ -173,6 +181,7 @@ sim_metacomm_BEF <- function(species = 5, patches = 10,
                       dispersal = dispersal, start_abun = sum(start_abun),
                       timesteps = timesteps,
                       extirp_prob = extirp_prob,
+                      comp = comp,
                       landscape = landscape, 
                       disp_mat = disp_mat, 
                       env.df = env.df, 

@@ -32,16 +32,16 @@ set.seed(54258748)
 
 species <- 5
 patches <- 5
-timesteps <- 50
+timesteps <- 100
 dispersal = 0.05
 extirp_prob = 0
 
-max_r = 0.5
-K_max = 150
+max_r = 5
+# K_max = 150
 
-int_min = 0.25
-int_max = 0.5
-intra = 1
+int_min = 0.05
+int_max = 0.05
+intra = 0.05
 
 # landscape parameters
 # generate a random landscape
@@ -96,6 +96,7 @@ M_test <-
     MC1a <- sim_metacomm_BEF(patches = patches, species = species, dispersal = dispersal,
                              timesteps = timesteps, start_abun = start_abun,
                              extirp_prob = extirp_prob,
+                             comp = "Beverton_Holt",
                              landscape = l.1, disp_mat = d.1, env.df = e.1, 
                              env_traits.df = t.1, int_mat = si.1)
     
@@ -163,7 +164,7 @@ M_test <-
         log(lambda) <- aS[S] + b_yS[S]*Y + b_eS[S]*E + b_yeS[S]*E*Y,
         
         # priors
-        aS[S] ~ dnorm(2, 1),
+        aS[S] ~ dnorm(2, 2),
         b_yS[S] ~ normal(0, 1),
         b_eS[S] ~ normal(0, 1),
         b_yeS[S] ~ normal(0, 1)
@@ -189,21 +190,21 @@ M_test <-
     PI_m1 <- apply(MC1_pred, 2, function(x) PI(x, 0.95) )
     
     # pull into a data.frame and plot
-    # df_plot <- 
-    # data.frame(mono_obs = MC1_NA$M[is.na(MC1_NA$M1)],
-    # species = as.character(MC1_NA$species[is.na(MC1_NA$M1)]),
-    # mu_m1 = mu_m1, 
-    # PI_low = apply(PI_m1, 2, function(x) x[1]),
-    # PI_high = apply(PI_m1, 2, function(x) x[2]) )
+    df_plot <- 
+      data.frame(mono_obs = MC1_NA$M[is.na(MC1_NA$M1)],
+                 species = as.character(MC1_NA$species[is.na(MC1_NA$M1)]),
+                 mu_m1 = mu_m1, 
+                 PI_low = apply(PI_m1, 2, function(x) x[1]),
+                 PI_high = apply(PI_m1, 2, function(x) x[2]) )
     
-    # ggplot(data = df_plot,
-    # mapping = aes(x = mono_obs, y = mu_m1, colour = species)) +
-    # geom_point() +
-    # geom_errorbar(mapping = aes(ymin = PI_low, ymax = PI_high), width = 0.1) +
-    # ylab("mean +- 89% prediction interval") +
-    # xlab("actual monoculture yield") +
-    # geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
-    # theme_classic()
+    ggplot(data = df_plot,
+           mapping = aes(x = mono_obs, y = mu_m1, colour = species)) +
+      geom_point() +
+      geom_errorbar(mapping = aes(ymin = PI_low, ymax = PI_high), width = 0.1) +
+      ylab("mean +- 89% prediction interval") +
+      xlab("actual monoculture yield") +
+      geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
+      theme_classic()
     
     Mono_reps <- 
       pbapply(MC1_pred[sample(x = 1:nrow(MC1_pred), 100),], 1, function(x) {
@@ -290,7 +291,20 @@ saveRDS(M_test, here("results/test_sim.rds"))
 
 # load the test data
 M_test1 <- readRDS(file = here("results/test_sim.rds"))
-head(M_test)
+head(M_test1)
+length(M_test1)
+
+M_test1[[3]][[1]] %>%
+  pull(mono_mix) %>%
+  unique()
+
+M_test1[[3]][[1]] %>%
+  pivot_wider(id_cols = c("sample", "time", "patch", "env", "species"),
+              names_from = "mono_mix",
+              values_from = "N") %>%
+  ggplot(data = .,
+         mapping = aes(x = mixture, y = monoculture)) +
+  geom_point()
 
 # bind these data
 M_test <- bind_rows(lapply(M_test1, function(x) x[[2]]), .id = "ID")
@@ -298,38 +312,38 @@ head(M_test)
 dim(M_test)
 View(M_test)
 
-
 # check the relationship between the true value and the mean with interval
-ggplot(data = M_test,
+ggplot(data = M_test %>%
+         filter(HPDI_int != max(HPDI_int)),
        mapping = aes(x = Value_obs, y = mu, colour = mono_cor)) +
   geom_point() +
   geom_errorbar(mapping = aes(ymin = HPDI_low, ymax = HPDI_high)) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed", colour = "red") +
+  scale_colour_viridis_c() +
   facet_wrap(~Effect, scales = "free") +
   theme_classic()
 
-range(M_test$mono_cor)
-
-M_test %>%
-  filter(Effect == "IT", HPDI_int > 2000)
-
-M_test %>%
-  filter(Effect == "NBE", HPDI_int < 400)
-
-ggplot(data = M_test %>% filter( !(ID %in% c(9, 10, 28)) ),
-       mapping = aes(x = Value_obs, y = mu)) +
+# relationship between interval width and correlation
+ggplot(data = M_test %>% filter(mono_cor != min(mono_cor)),
+       mapping = aes(x = mono_cor, y = HPDI_int, colour = bad_mono_n)) +
   geom_point() +
-  geom_errorbar(mapping = aes(ymin = HPDI_low, ymax = HPDI_high)) +
+  geom_smooth(method = "lm", se = FALSE) +  
   geom_abline(intercept = 0, slope = 1, linetype = "dashed", colour = "red") +
+  scale_colour_viridis_c() +
   facet_wrap(~Effect, scales = "free") +
   theme_classic()
 
-M_test %>%
-  filter(Effect == "AS", HPDI_int > 1000) %>%
-  View()
+hist(M_test$mono_cor)
+hist(M_test$bad_mono_n)
 
-M_test %>%
-  filter(Effect == "LC") %>%
-  View()
+# deviation of the mean from the true value and the correlation 
+ggplot(data = M_test,
+       mapping = aes(x = mono_cor, y = abs(mu - Value_obs))) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +  
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", colour = "red") +
+  scale_colour_viridis_c() +
+  facet_wrap(~Effect, scales = "free") +
+  theme_classic()
 
 ### END
