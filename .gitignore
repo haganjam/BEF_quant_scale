@@ -8,8 +8,10 @@
 # User-specific files
 .Ruserdata
 
-# RDS files
+# RDS files and other data files
 *.rds
+*.csv
+.csv
 
 # Example code in package build process
 *-Ex.R
