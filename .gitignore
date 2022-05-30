@@ -11,7 +11,7 @@
 # RDS files and other data files
 *.rds
 *.csv
-.csv
+*.txt
 
 # Example code in package build process
 *-Ex.R
