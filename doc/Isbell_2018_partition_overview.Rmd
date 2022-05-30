@@ -1,6 +1,7 @@
 ---
 title: "Quantifying biodiversity effects across times and places"
-output: html_notebook
+output:
+html_notebook: default
 ---
 
 # Bioversity-functioning partitions
@@ -536,6 +537,62 @@ Isbell_explorer(env = e.1, comp = si.1, n_runs = 10, disp_rate = 0.05, t_sel = s
 
 
 In all cases, there are no temporal insurance effects. This seems to happen because the time-scales that we are looking at are so short. Let's try to look at time-points that are more spread out so that there is more opportunity for communities to adjust.
+
+
+## What happens when we only have data from a natural system and incomplete monoculture data?
+
+The main innovation of this project is to figure out (in principle) a way to deal with two problems that limit the usefulness of Isbell et al.'s (2018) partition:
+
++ 1. The method requires monoculture data for all times and places for which mixture data are available. This is a very restrictive requirement in most natural systems.
+
++ 2. The method requires assumptions to be made about expected relative yield of the different species in mixture
+
+Of course, there is no magic bullet for determining these parameters. Rather, we will have to rely on different ways to estimate these parameters and then make sure that we incorporate all the uncertainty that is present when doing such estimations. 
+
+*Bayesian regression to model monocultures*
+
+To get monoculture data, we propose using Bayesian regression analyses. If we have at least some monoculture data, we can fit Bayesian regression models to the monocultures using mixture data and environmental predictor variables. Using these Bayesian regression models, we can model the monocultures that we don't have data for and, more importantly, obtain a posterior distribution for the monoculture values of the different species in all times and places.
+
+*Dirichlet distributions to randomly sample expected relative yields*
+
+Rather than simply assuming all species started at equal proportion in mixture, we can rather assume that the expected relative yields are drawn from a probability distribution. For this, we use a Dirichlet distribution which samples a simplex.
+
+*Incorporating monoculture and expected relative yield uncertainty*
+
+To incorporate all the uncertainty present here, we calculate all Isbell et al.'s (2018) biodiversity effects for each sample from the posterior distribution and for N expected relative yields. Therefore, if there are 1000 samples in the posterior distribution and 100 expected relative yield simplex, we get to 100 000 biodiversity effects. This distribution then incorporates all the uncertainty in the monocultures and in the expected relative yields.
+
+*How well does it work?*
+
+It seems to work fairly well. The only problem that I've found at the moment is that, sometimes, the posterior distribution for a given monoculture value has a very wide distribution. This leads to absurdly large or small biodiversity effects.
+
+There is no simple way to deal with this problem beyond getting better monoculture yield estimates. Of course, we can trim the distribution and pretend we are more certain than we actually are but that's not a great solution.
+
+The error created using the different expected relative yield samples is relatively minor and is only relevant for some of the effects, namely:
+
++ Average selection
++ Total insurance
++ Local selection
++ Total selection
+
+The rest of the effects do not respond to it. For example, local complementary is calculated as an average change in relative yield. Any simplex distribution must have the same average because it is the same number of samples that all add up to one.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
