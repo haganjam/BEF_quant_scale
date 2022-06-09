@@ -27,8 +27,9 @@ swe_dat <-
          klimat, humid, temp = tsumma,
          stand_age = bestald, 
          # sdtvtall, sdtvgran, sdtvbjork, sdtvek, sdtvasp, sdtvbok,
+         # dbiomass02,
          stvtall, stvgran, stvbjork, stvek, stvasp, stvbok,
-         dbiomass02) %>%
+         tot.bmass) %>%
   group_by(region2, year, trakt) %>%
   summarise(SoilMoist.cont = mean(SoilMoist.cont, na.rm = TRUE),
             soil_type = median(soil_type, na.rm = TRUE),
@@ -44,13 +45,14 @@ swe_dat <-
             #sdtvek = mean(sdtvek, na.rm = TRUE),
             #sdtvasp = mean(sdtvasp, na.rm = TRUE), 
             #sdtvbok = mean(sdtvbok, na.rm = TRUE),
+            # dbiomass02 = mean(dbiomass02, na.rm = TRUE)
             stvtall = mean(stvtall, na.rm = TRUE), 
             stvgran = mean(stvgran, na.rm = TRUE), 
             stvbjork = mean(stvbjork, na.rm = TRUE), 
             stvek = mean(stvek, na.rm = TRUE),
             stvasp = mean(stvasp, na.rm = TRUE), 
             stvbok = mean(stvbok, na.rm = TRUE),
-            dbiomass02 = mean(dbiomass02, na.rm = TRUE), .groups = "drop") %>%
+            tot.bmass = mean(tot.bmass, na.rm = TRUE), .groups = "drop") %>%
   rename(place = trakt,
          scots_pine = stvtall, 
          norway_spruce = stvgran,
@@ -60,82 +62,68 @@ swe_dat <-
          beech = stvbok)
 
 # get complete cases
+sum(complete.cases(swe_dat))
+nrow(swe_dat)
 swe_dat <- swe_dat[complete.cases(swe_dat), ]
 
 # check how much these six species make up in general
 swe_dat %>%
-  mutate(prop_six_species = (scots_pine + norway_spruce + birch + oak + aspen + beech)/dbiomass02 ) %>%
+  mutate(prop_six_species = (scots_pine + norway_spruce + birch + oak + aspen + beech)/tot.bmass ) %>%
   pull(prop_six_species) %>%
   summary()
 
 # subset the rows where these six species make up between 0.9 and 1
 swe_dat <- 
   swe_dat %>%
-  mutate(prop_six_species = (scots_pine + norway_spruce + birch + oak + aspen + beech)/dbiomass02 )
+  mutate(prop_six_species = (scots_pine + norway_spruce + birch + oak + aspen + beech)/tot.bmass ) %>%
+  filter(prop_six_species > 0.7, prop_six_species < 1)
+nrow(swe_dat)
+summary(swe_dat)
 
-# check how many monocultures there are
-swe_dat$SR <- 
-  apply(swe_dat[, c("scots_pine", "norway_spruce", "birch", "oak", "aspen", "beech")], 1, function(x) {
-  sum(x > 0) } )
-sum(swe_dat$SR == 1)
-
-swe_dat %>%
-  filter(SR == 1) %>%
-  View()
-
-# subset the data to only include plots where the six species make up most of the productivity
-swe_dat <- 
-  swe_dat %>%
-  filter(prop_six_species > 0.9, prop_six_species <= 1) %>%
-  select(-prop_six_species)
-sum(swe_dat$SR == 1)
-
-# exclude negative values
-swe_dat %>%
-  filter()
-
-swe_dat <- 
-  swe_dat[apply(swe_dat[, c("scots_pine", "norway_spruce", "birch", "oak", "aspen", "beech")], 1, function(x) {
-  all(x >= 0)
-} ), ]
-
-# get the monoculture data
-swe_mono <- 
-  swe_dat %>%
-  filter(SR == 1) %>%
-  select(-dbiomass02, - SR)
-
-swe_mono <- 
-  swe_mono %>%
-  pivot_longer(cols = c("scots_pine", "norway_spruce", "birch", "oak", "aspen", "beech"),
-               names_to = "species",
-               values_to = "M")
+# get complete cases only
+nrow(swe_dat)
+swe_dat <- swe_dat[complete.cases(swe_dat), ]
+nrow(swe_dat)
+summary(swe_dat)
+hist(swe_dat$prop_six_species)
 
 # load the rethinking package
 library(rethinking)
 
 # fit the ulam() model
 M_mono <- list(
-  M = swe_mono$M ,
-  SM = standardize(swe_mono$SoilMoist.cont),
-  H = standardize(swe_mono$humid),
-  TE = standardize(swe_mono$temp),
-  AGE = standardize(swe_mono$stand_age),
-  S = as.integer(factor(swe_mono$species)))
+  SP_foc = swe_dat$aspen,
+  SP1 = swe_dat$scots_pine/max(swe_dat$scots_pine),
+  SP2 = swe_dat$norway_spruce/max(swe_dat$norway_spruce),
+  SP3 = swe_dat$birch/max(swe_dat$birch),
+  SP4 = swe_dat$oak/max(swe_dat$oak),
+  SP5 = swe_dat$beech/max(swe_dat$beech),
+  SM = standardize(swe_dat$SoilMoist.cont),
+  H = standardize(swe_dat$humid),
+  TE = standardize(swe_dat$temp),
+  AGE = standardize(swe_dat$stand_age))
 str(M_mono)
+hist(M_mono$SP_foc)
+hist(M_mono$SP5)
+M_mono$SP_foc[M_mono$SP_foc> 0] %>% length()
 
 # model the full model with E and Y interaction
 m1 <- ulam(
   alist(
-    M ~ dnorm( u, sd ),
-    u <- aS[S] + b_SM[S]*SM + b_H[S]*H + b_TE[S]*TE + b_AGE[S]*AGE,
+    SP_foc ~ dnorm( u, sd ),
+    u <- a + b_sm*SM + b_H*H + b_TE*TE + b_AGE*AGE + b_s1*SP1 + b_s2*SP2 + b_s3*SP3 + b_s4*SP4 + b_s5*SP5,
     
     # priors
-    aS[S] ~ dnorm(0, 2),
-    b_SM[S] ~ normal(0, 2),
-    b_H[S] ~ normal(0, 2),
-    b_TE[S] ~ normal(0, 2),
-    b_AGE[S] ~ normal(0, 2),
+    a ~ dnorm(0, 2),
+    b_sm ~ normal(0, 2),
+    b_H ~ normal(0, 2),
+    b_TE ~ normal(0, 2),
+    b_AGE ~ normal(0, 2),
+    b_s1 ~ normal(0, 2),
+    b_s2 ~ normal(0, 2),
+    b_s3 ~ normal(0, 2),
+    b_s4 ~ normal(0, 2),
+    b_s5 ~ normal(0, 2),
     sd ~ dexp(0.5)
     
   ), data=M_mono, chains = 4, iter = 2000, log_lik = FALSE)
@@ -145,9 +133,9 @@ precis(m1, depth = 2)
 
 # check the prediction value
 pred.m1 <- sim(fit = m1, M_mono[-1])
-apply(pred.m1, 2, mean)
+# apply(pred.m1, 2, mean)
 
-plot(M_mono$M, apply(pred.m1, 2, mean))
+plot(M_mono$SP_foc, apply(pred.m1, 2, mean))
 abline(a = 0, b = 1)
 
 
