@@ -13,6 +13,8 @@
 *.csv
 *.txt
 *.xlsx
+*.png
+*.docx
 
 # Example code in package build process
 *-Ex.R

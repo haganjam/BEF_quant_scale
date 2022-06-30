@@ -1,0 +1,20 @@
+---
+title: "&nbsp;"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+  pdf_document: default
+classoption: landscape
+---
+
+```{r echo = FALSE, results='asis'}
+
+x <- list.files(here::here("scripts/03_empirical_analysis/02_fieldwork_2022/01_preparation/"))
+x <- x[grepl(pattern = ".png", x)]
+x <- paste("![](", x, ")", sep = "")
+for(i in 1:length(x[1:4])) {
+  cat(x[i], "\\newpage")
+}
+
+```
