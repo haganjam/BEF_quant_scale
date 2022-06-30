@@ -13,7 +13,7 @@ classoption: landscape
 x <- list.files(here::here("scripts/03_empirical_analysis/02_fieldwork_2022/01_preparation/"))
 x <- x[grepl(pattern = ".png", x)]
 x <- paste("![](", x, ")", sep = "")
-for(i in 1:length(x[1:4])) {
+for(i in 1:length(x)) {
   cat(x[i], "\\newpage")
 }
 
