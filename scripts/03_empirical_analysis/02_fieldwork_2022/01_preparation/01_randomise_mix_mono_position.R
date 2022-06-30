@@ -47,6 +47,9 @@ mix_mono <- dplyr::bind_rows(mix_mono)
 pan_dat <- dplyr::bind_cols(clus_lab, mix_mono)
 View(pan_dat)
 
+# add laser id to the panel_id
+pan_dat$panel_id <- paste(pan_dat$panel_id, " (", pan_dat$laser_id, ")", sep = "")
+
 # plot a grid for each site_id
 lapply( split(pan_dat, pan_dat$site_id), function(z) {
   
