@@ -157,7 +157,38 @@ ggplot(data = l.dat %>% mutate(depth = as.character(depth)),
   geom_abline(slope = 1, intercept = 0) +
   theme_bw()
 
+View(l.dat)
 
+# check what the values for Lux_new there are when Lux_old is zero
+l.dat %>%
+  filter(near(Lux_old, 0)) %>%
+  View()
+
+# plot for values where the Lux_old is greater than 0
+l.dat %>% 
+  filter(Lux_old > 0) %>%
+  mutate(depth = as.character(depth)) %>%
+  ggplot(data = .,
+         mapping = aes(x = log(Lux_new), y = log(Lux_old), colour = depth)) +
+  geom_point() +
+  facet_wrap(~depth) +
+  geom_abline(slope = 1, intercept = 0) +
+  theme_bw()
+
+lapply(split(l.dat, l.dat$depth), function(x) {
+  
+  y <- 
+    x %>%
+    filter(Lux_old > 0)
+  
+  y <- 
+    y %>%
+    mutate(Lux_new = log(Lux_new),
+           Lux_old = log(Lux_old) )
+  
+  cor.test(y$Lux_new, y$Lux_old)
+  
+})  
 
 
 
