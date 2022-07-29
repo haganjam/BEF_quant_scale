@@ -6,7 +6,7 @@ library(mcomsimr)
 
 # load key functions
 library(here)
-source(here("scripts/isbell_2018_partition.R"))
+source(here("scripts/01_partition_functions/02_isbell_2018_partition.R"))
 
 
 #' Modified version of the simulate_MC function from the mcomsimr package (Thompson et al. 2020, Ecology Letters)
