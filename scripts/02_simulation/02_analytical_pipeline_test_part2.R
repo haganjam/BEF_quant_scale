@@ -13,6 +13,9 @@
 
 # load the relevant libraries
 library(here)
+library(dplyr)
+library(foreach)
+library(doParallel)
 
 # load the relevant functions
 source(here("scripts/01_partition_functions/02_isbell_2018_partition.R"))
@@ -21,10 +24,26 @@ source(here("scripts/01_partition_functions/02_isbell_2018_partition.R"))
 MC_sims <- readRDS(file = here("results/MC_sims.rds"))
 start_RA <- readRDS(file = here("results/MC_sims_start_RA.rds"))
 
-BEF_post <- 
-  
-  lapply(MC_sims, function(MC.rep) {
+# set-up a parallel for-loop
+n.cores <- 10
 
+#create the cluster
+my.cluster <- parallel::makeCluster(
+  n.cores, 
+  type = "PSOCK"
+)
+
+#register it to be used by %dopar%
+doParallel::registerDoParallel(cl = my.cluster)
+
+BEF_post <- foreach(
+  
+  i = 1:length(MC_sims)
+  
+) %dopar% {
+  
+  MC.rep <- MC_sims[[i]]
+  
   BEF_mod <-
     
     apply(
@@ -81,7 +100,7 @@ BEF_post <-
   
   return(output)
   
-  })
+}
 
 # save this as an RDS file
 saveRDS(object = BEF_post, file = here("results/BEF_post.rds"))
