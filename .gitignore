@@ -10,7 +10,6 @@
 .Ruserdata
 
 # RDS files and other data files
-*.rds
 *.csv
 *.txt
 *.xlsx
