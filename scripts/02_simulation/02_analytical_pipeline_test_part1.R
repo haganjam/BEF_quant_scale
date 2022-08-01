@@ -32,7 +32,7 @@ source(here("scripts/02_simulation/01_mcomsimr_simulate_MC2_function.R"))
 set.seed(54258748)
 
 # number of replicate simulations
-N_REP <- 2
+N_REP <- 100
 
 # set-up basic model inputs
 species <- 5
