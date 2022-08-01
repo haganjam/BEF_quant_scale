@@ -1,42 +1,89 @@
+#'
+#' @title: Simulate metacommunities to test the analytical pipeline
+#' 
+#' @description: Calculates biodiversity effects when monoculture data is missing
+#' 
+#' @details: This script uses the posterior distributions generated for each missing monoculture
+#' and a distribution of starting relative abundances from the Dirichlet distribution to generate
+#' posterior distributions of biodiversity effects. This script is to be run on a computer
+#' cluster because it is very computationally intensive.
+#' 
+#' @authors: James G. Hagan (james_hagan(at)outlook.com)
+#' 
 
-# 5. calculates Isbell et al.'s (2018) biodiversity effects using all the uncertainty present in the
-# - modelled monocultures by drawing different samples from the posterior distribution
-# - using starting relative abundances from a Dirichlet distribution
+# load the relevant libraries
+library(here)
 
-# which objects do I need in memory to run this?
+# load the relevant functions
+source(here("scripts/01_partition_functions/02_isbell_2018_partition.R"))
 
-# MC1_pred object
+# read in the data
+MC_sims <- readRDS(file = here("results/MC_sims.rds"))
+start_RA <- readRDS(file = here("results/MC_sims_start_RA.rds"))
 
-# MC1_NA object
+BEF_post <- 
+  
+  lapply(MC_sims, function(MC.rep) {
 
-# dr object
-
-
-
-# fill in the monocultures with one sample from the posterior
-# for that one sample from the posterior, calculate biodiversity effects with 100 samples from the Dirichlet distribution
-Mono_reps <- 
-  apply(MC1_pred[sample(x = 1:nrow(MC1_pred), 100), ], 1, function(x) {
+  BEF_mod <-
     
-    # fill in the missing monoculture data with one sample from the posterior
-    df <- MC1_NA
-    df[is.na(df$M1), ]$M1 <- x
-    df <- df[,c("sample", "time", "place", "species", "M1", "Y")]
-    df <- rename(df, M = M1)
-    
-    RYe_reps <- 
-      apply(dr, 2, function(z) {
+    apply(
+      
+      X = MC.rep[["MC.x.pred"]] [sample(x = 1:nrow(MC.rep[["MC.x.pred"]]), 10), ], 
+      
+      MARGIN = 1, 
+      
+      FUN = function(x) {
         
-        a <- Isbell_2018_sampler(data = df, RYe = z, RYe_post = FALSE)
-        return(bind_rows(a$Beff, rename(a$L.Beff, Beff = L.Beff)))
+        # fill in the missing monoculture data with one sample from the posterior
+        
+        # generate a data.frame called MC.x.post
+        MC.x.post <- MC.rep[["MC.x.NA"]]
+        
+        # for the missing monoculture values, we fill them in with posterior distribution samples
+        MC.x.post[is.na(MC.x.post$M1), ]$M1 <- x
+        
+        # select the relevant columns
+        MC.x.post <- MC.x.post[,c("sample", "time", "place", "species", "M1", "Y")]
+        
+        # rename the M1 column
+        names(MC.x.post)[names(MC.x.post) == "M1"] <- "M"
+        
+        RYe_reps <- 
+          
+          apply(
+            
+            X = start_RA, 
+            
+            MARGIN = 2, 
+            
+            FUN = function(RA) {
+              
+              # calculate te biodiversity effects for each of the potential starting abundances
+              BEF_post.x <- Isbell_2018_sampler(data = MC.x.post, RYe = RA, RYe_post = FALSE)
+              names(BEF_post.x[["L.Beff"]])[names(BEF_post.x[["L.Beff"]]) == "L.Beff"] <- "Beff"
+              
+              # combine the general biodiversity effects and local effects into one data.frame
+              BEF_post.x <- rbind(BEF_post.x[["Beff"]], BEF_post.x[["L.Beff"]])
+              
+              # convert to a data.frame
+              BEF_post.x <- as.data.frame(BEF_post.x, row.names = NULL)
+              
+              return(BEF_post.x)
+              
+            } )
+        
+        return(RYe_reps)
         
       } )
-    
-    return(RYe_reps)
-    
-  } )
+  
+  output <- dplyr::bind_rows(BEF_mod, .id = "rep")
+  
+  return(output)
+  
+  })
 
-df_unc <- bind_rows(Mono_reps, .id = "ID")
+# save this as an RDS file
+saveRDS(object = BEF_post, file = here("results/BEF_post.rds"))
 
-
-
+### END

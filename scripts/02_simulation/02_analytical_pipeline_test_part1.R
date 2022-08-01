@@ -1,44 +1,19 @@
 #'
-#' @title: Clean the experiment data from the initial measurements
+#' @title: Simulate metacommunities to test the analytical pipeline
 #' 
-#' @description: Script to clean and output a cleaned version of the initial experiment
-#' data. This uses a combination of the direct measurements and the measurements from the
-#' processed images.
+#' @description: Simulate BEF experiments and calculate biodiversity effects
 #' 
-#' @authors: James G. Hagan (james_hagan(at)outlook.com) and Benedikt Schrofner-Brunner (bschrobru(at)gmail.com)
-#'
-
-# Project: Quantifying biodiversity effects across scales in natural ecosystems
-# Title: Can we reliably quantify biodiversity effects across scales in natural ecosystems?
-# Author: James Hagan
-# Date: 2022/04/24
-
-# R version 4.1.2 (2021-11-01)
-# Platform: x86_64-w64-mingw32/x64 (64-bit)
-# Running under: Windows 10 x64 (build 19043)
-
-# attached base packages:
-# stats, graphics, grDevice, utils, datasets, methods, base     
-
-# other attached packages:
-# mcomsimr_0.1.0, pbapply_1.5-0, here_1.0.1, dplyr_1.0.7, tidyr_1.1.4, ggplot2_3.3.5 
-
-# next steps:
-
-# 1. split the code so that we can push the most computationally intensive part of the 
-# code i.e. using the posterior distribution and calculating biodiversity effects for each
-# sample 100 times with different samples from the Dirichlet distribution
-
-# - currently, this takes five minutes
-
-# if we run 100 models, without that step, it should only take 2 hours and then we don't
-# have the hassle of trying to load these obscure packages to the cluster
-
-# once that it is done, we can save the outputs and then, in a new script run 
-# the calculates on the Albiorix cluster
-
-# this will save a lot of time
-
+#' @details: This script simulates a BEF experiment with full mixtures and monocultures
+#' in each patch. It then uses the known starting abundances and full monoculture data
+#' to calculate observed biodiversity effects using Isbell et al.'s (2018) partition.
+#' It then assumes that we only have monoculture data in 30% of the patches and uses
+#' a simple linear model with mixture yield and environmental data to generate posterior
+#' predictions for the missing monoculture data. In addition, it generates a set of 100
+#' starting relative abundances from the Dirichlet distribution. These outputs are all saved
+#' as .rds files. These .rds files will then be used to calculate biodiversity effect
+#' distributions using a computer cluster as the code is very computationally intensive.
+#' 
+#' @authors: James G. Hagan (james_hagan(at)outlook.com)
 
 # load the relevant packages
 library(ggplot2)
@@ -109,17 +84,7 @@ t_sel <- c(10, 20, 30, 40, 50)
 # set different levels of starting abundances for the different species
 start_abun <- round(runif(n = species, 0, 30), 0)
 
-
-# run the pipeline which does the following:
-
-# 1. simulates a BEF experiment with full mixtures in monocultures for each patch
-
-# 2. uses the known starting abundances and full monoculture data to calculate observed biodiversity effects (Isbell et al. 2018)
-
-# 3. assumes that we only have monoculture data in 30 % of the patches
-
-# 4. uses a simple linear model to model the missing monoculture data using the environment and mixture abundance of each species
-
+# run the model for each of the replicates
 MC_sims <- 
   
   pblapply(1:N_REP, function(x) {
