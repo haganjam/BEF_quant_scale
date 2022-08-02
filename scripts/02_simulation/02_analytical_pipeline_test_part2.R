@@ -18,9 +18,12 @@ library(foreach)
 library(doParallel)
 
 # load the relevant functions
+# source(here("scripts/01_partition_functions/02_isbell_2018_partition.R"))
 source(here("BEF_quant_scale/scripts/01_partition_functions/02_isbell_2018_partition.R"))
 
 # read in the data
+# MC_sims <- readRDS(file = here("results/MC_sims.rds"))
+# start_RA <- readRDS(file = here("results/MC_sims_start_RA.rds"))
 MC_sims <- readRDS(file = here("BEF_quant_scale/results/MC_sims.rds"))
 start_RA <- readRDS(file = here("BEF_quant_scale/results/MC_sims_start_RA.rds"))
 
@@ -38,7 +41,7 @@ doParallel::registerDoParallel(cl = my.cluster)
 
 BEF_post <- foreach(
   
-  i = 1:10 # length(MC_sims)
+  i = 1:20 # length(MC_sims)
   
 ) %dopar% {
   
@@ -103,6 +106,7 @@ BEF_post <- foreach(
 }
 
 # save this as an RDS file
+# saveRDS(object = BEF_post, file = here("results/BEF_post.rds"))
 saveRDS(object = BEF_post, file = here("BEF_quant_scale/results/BEF_post.rds"))
 
 ### END
