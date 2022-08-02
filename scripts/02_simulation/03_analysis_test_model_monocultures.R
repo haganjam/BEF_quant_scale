@@ -88,18 +88,12 @@ MC.x.pred <- foreach(
     E = v$env,
     S = as.integer(v$species))
   
-  # extract the stancode
-  x <- rstan::stanc( here::here("BEF_quant_scale/scripts/02_simulation/missing_monoculture_glm.stan") )
-  
-  # fit the model using rstan
-  m1 <- rstan::stan( model_code = x$model_code, 
-                     data = MC.x.train, 
-                     chains = 4
-                     )
-              
+  # fit the model in stan
+  m1 <- rstan::stan_model(here::here("BEF_quant_scale/scripts/02_simulation/missing_monoculture_glm.stan"))
+  m1.fit <- rstan::sampling(m1, data = MC.x.train)
   
   # extract the posterior distribution
-  m1.post <- rstan::extract(m1)
+  m1.post <- rstan::extract(m1.fit)
   
   # predict the missing data
   MC.x.pred <- MC.x.NA[is.na(MC.x.NA$M1), ]
