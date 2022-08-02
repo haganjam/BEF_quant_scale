@@ -21,7 +21,7 @@ library(doParallel)
 source(here("BEF_quant_scale/scripts/01_partition_functions/02_isbell_2018_partition.R"))
 
 # read in the data
-MC_sims <- readRDS(file = here("BEF_quant_scale/results/MC_sims2.rds"))
+MC_sims2 <- readRDS(file = here("BEF_quant_scale/results/MC_sims2.rds"))
 start_RA <- readRDS(file = here("BEF_quant_scale/results/MC_sims_start_RA.rds"))
 
 # set-up a parallel for-loop
@@ -38,11 +38,11 @@ doParallel::registerDoParallel(cl = my.cluster)
 
 BEF_post <- foreach(
   
-  i = 1:length(MC_sims)
+  i = 1:length(MC_sims2)
   
 ) %dopar% {
   
-  MC.rep <- MC_sims[[i]]
+  MC.rep <- MC_sims2[[i]]
   
   BEF_mod <-
     
