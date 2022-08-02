@@ -141,7 +141,7 @@ MC_sims <-
   
   mapply(function(x, y) {
   
-  return( c(x, list("MC.x.pred2" = y) ) )
+  return( c(x, list("MC.x.pred" = y) ) )
     
     }, 
   
