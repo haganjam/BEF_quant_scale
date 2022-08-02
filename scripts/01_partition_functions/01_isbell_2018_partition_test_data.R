@@ -94,10 +94,10 @@ cs6.ans <- data.frame(Beff = c("NBE", "TC", "TS", "NO", "IT", "AS", "TI", "SI", 
 # write the raw data into a list
 library(here)
 test.data <- list(t1a, t1b, cs1, cs2, cs3, cs4, cs5, cs6)
-saveRDS(test.data, here("test_data/Isbell_test_data.rds"))
+saveRDS(test.data, here("data/Isbell_test_data.rds"))
 
 # write the answer data into a list
 ans.data <- list(t1a.ans, t1b.ans, cs1.ans, cs2.ans, cs3.ans, cs4.ans, cs5.ans, cs6.ans)
-saveRDS(ans.data, here("test_data/Isbell_test_data_solutions.rds"))
+saveRDS(ans.data, here("data/Isbell_test_data_solutions.rds"))
 
 ### END
