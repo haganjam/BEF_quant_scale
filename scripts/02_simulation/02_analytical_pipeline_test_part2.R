@@ -38,7 +38,7 @@ doParallel::registerDoParallel(cl = my.cluster)
 
 BEF_post <- foreach(
   
-  i = 1:20 # length(MC_sims)
+  i = 1:length(MC_sims)
   
 ) %dopar% {
   
