@@ -41,7 +41,7 @@ BEF_post <- foreach(
   i = 1:length(MC_sims2)
   
 ) %dopar% {
-  
+
   MC.rep <- MC_sims2[[i]]
   
   BEF_mod <-
@@ -100,7 +100,7 @@ BEF_post <- foreach(
   
   return(output)
   
-}
+  }
 
 # save this as an RDS file
 saveRDS(object = BEF_post, file = here("BEF_quant_scale/results/BEF_post.rds"))

@@ -141,7 +141,11 @@ MC_sims <-
   
   mapply(function(x, y) {
   
-  return( c(x, list("MC.x.pred" = y) ) )
+    # overwrite the old MC.x.NA with NAs added
+    x[["MC.x.NA"]] <- MC.x.NA
+    
+    # attach the predictions
+    return( c(x, list("MC.x.pred" = y) ) )
     
     }, 
   
