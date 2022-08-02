@@ -68,6 +68,8 @@ MC.x.pred <- foreach(
   # most likely that we would have say 2 places and all times: Pick the 2 places with most environmental variation
   MC.x.NA$M1 <- ifelse( MC.x.NA$place %in% p_comb[, sample(which(max_env == max(max_env)), 1)], MC.x.NA$M, NA)
   
+  # replace the old MC.x.NA data with the updated one
+  MC_sims[[i]][["MC.x.NA"]] <- MC.x.NA
   
   # model the monoculture yields using rstan()
   
@@ -140,9 +142,6 @@ MC.x.pred <- foreach(
 MC_sims <- 
   
   mapply(function(x, y) {
-  
-    # overwrite the old MC.x.NA with NAs added
-    x[["MC.x.NA"]] <- MC.x.NA
     
     # attach the predictions
     return( c(x, list("MC.x.pred" = y) ) )
