@@ -218,4 +218,8 @@ MC_sims <-
 # save the MC_sims object
 saveRDS(object = MC_sims, here("results/MC_sims.rds"))
 
+# generate and save a set of 100 potential starting relative abundances from the Dirichlet distribution
+start_RA <- sapply(1:100, function(x) gtools::rdirichlet(n = 1, rep(3,  species) ) )
+saveRDS(object = start_RA, here("results/MC_sims_start_RA.rds"))
+
 ### END
