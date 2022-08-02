@@ -19,7 +19,7 @@ library(foreach)
 library(doParallel)
 
 # make the function recompile
-rstan::rstan_options(auto_write = FALSE)
+rstan::rstan_options(auto_write = TRUE)
 
 # read in the MC_sims object
 MC_sims <- readRDS(here::here("BEF_quant_scale/results/MC_sims.rds"))
