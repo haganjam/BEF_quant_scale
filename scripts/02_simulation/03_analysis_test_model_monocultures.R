@@ -19,7 +19,7 @@ library(foreach)
 library(doParallel)
 
 # read in the MC_sims object
-MC_sims <- readRDS(here("BEF_quant_scale/results/MC_sims.rds"))
+MC_sims <- readRDS(here::here("BEF_quant_scale/results/MC_sims.rds"))
 
 # use lapply to extract the MC.x.NA data
 MC_sims_NA <- lapply(MC_sims, function(x) x[["MC.x.NA"]])
@@ -82,13 +82,14 @@ MC.x.pred <- foreach(
     S = as.integer(v$species))
   
   # extract the stancode
-  x <- rstan::stanc( here("BEF_quant_scale/scripts/02_simulation/missing_monoculture_glm.stan") )
+  x <- rstan::stanc( here::here("BEF_quant_scale/scripts/02_simulation/missing_monoculture_glm.stan") )
   
   # fit the model using rstan
-  m1 <- stan( model_code = x$model_code, 
-              data = MC.x.train, 
-              chains = 4
-  )
+  m1 <- rstan::stan( model_code = x$model_code, 
+                     data = MC.x.train, 
+                     chains = 4
+                     )
+              
   
   # extract the posterior distribution
   m1.post <- extract(m1)
@@ -150,6 +151,6 @@ MC_sims <-
   SIMPLIFY = FALSE )
 
 # save the MC_sims object
-saveRDS(object = MC_sims, here("BEF_quant_scale/results/MC_sims2.rds"))
+saveRDS(object = MC_sims, here::here("BEF_quant_scale/results/MC_sims2.rds"))
 
 ### END
