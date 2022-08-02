@@ -12,6 +12,7 @@
 #' 
 
 # load the relevant libraries
+library(here)
 library(dplyr)
 library(rethinking)
 
