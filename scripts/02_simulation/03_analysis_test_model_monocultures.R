@@ -24,6 +24,14 @@ MC_sims <- readRDS(here::here("BEF_quant_scale/results/MC_sims.rds"))
 # use lapply to extract the MC.x.NA data
 MC_sims_NA <- lapply(MC_sims, function(x) x[["MC.x.NA"]])
 
+# remove it from the MC_sims list
+MC_sims <- lapply(MC_sims, function(x) { 
+  
+  list("MC.x.ids" = x[["MC.x.ids"]],
+       "BEF_obs" = x[["BEF_obs"]]) 
+  
+  }  )
+
 # set-up a parallel for-loop
 n.cores <- 10
 
@@ -67,9 +75,6 @@ MC.x.pred <- foreach(
   
   # most likely that we would have say 2 places and all times: Pick the 2 places with most environmental variation
   MC.x.NA$M1 <- ifelse( MC.x.NA$place %in% p_comb[, sample(which(max_env == max(max_env)), 1)], MC.x.NA$M, NA)
-  
-  # replace the old MC.x.NA data with the updated one
-  MC_sims[[i]][["MC.x.NA"]] <- MC.x.NA
   
   # model the monoculture yields using rstan()
   
@@ -133,7 +138,7 @@ MC.x.pred <- foreach(
   # bind this into a matrix
   MC.x.pred <- do.call("rbind", pred.list)
   
-  return(MC.x.pred)
+  return( list("MC.x.NA" = MC.x.NA, "MC.x.pred" = MC.x.pred) )
   
   }
 
@@ -144,7 +149,7 @@ MC_sims <-
   mapply(function(x, y) {
     
     # attach the predictions
-    return( c(x, list("MC.x.pred" = y) ) )
+    return( c(x, y) )
     
     }, 
   
