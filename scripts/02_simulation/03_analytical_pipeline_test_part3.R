@@ -149,6 +149,4 @@ ggplot(data = BEF_output_sum,
   geom_point(colour = "red", size = 2) +
   theme_bw()
 
-  
-  
-  
+### END
