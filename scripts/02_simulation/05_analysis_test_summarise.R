@@ -22,17 +22,17 @@ library(ggbeeswarm)
 thresh <- 0.5
 
 # load the observed BEF values
-MC_sims <- readRDS(file = here("results/MC_sims.rds"))
+MC_sims2 <- readRDS(file = here("results/MC_sims2.rds"))
 
 # load the posterior data
 BEF_post <- readRDS(file = here("results/BEF_post.rds"))
 
 # how many models were run?
-n <- length(MC_sims)
+n <- length(MC_sims2)
 BEF_sum_list <- vector("list", length = n)
 
 for (i in 1:n) {
-  
+
   BEF_sum <- 
     
     full_join(
@@ -43,7 +43,7 @@ for (i in 1:n) {
                   PI_low = round( PI(Value, prob = 0.95)[1], 2),
                   PI_high = round( PI(Value, prob = 0.95)[2], 2) ),
       
-      rename(MC_sims[[i]] [["BEF_obs"]], Value_obs = Value ), 
+      rename(MC_sims2[[i]] [["BEF_obs"]], Value_obs = Value ), 
       
       by = "Beff"
       
@@ -62,25 +62,25 @@ for (i in 1:n) {
     mutate(mu_threshold = thresh)
   
   # add the identifer variables  
-  BEF_sum <- bind_cols( MC_sims[[i]] [["MC.x.ids"]], BEF_sum)
+  BEF_sum <- bind_cols( MC_sims2[[i]] [["MC.x.ids"]], BEF_sum)
   
   # add bad monoculture correlation information
   
   # calculate the overall monoculture error
   
   # summarise the posterior distribution
-  mu_m <- apply(MC_sims[[i]] [["MC.x.pred"]], 2, function(x) mean(x) )
-  PI_m <- apply(MC_sims[[i]] [["MC.x.pred"]], 2, function(x) PI(x, 0.95) )
+  mu_m <- apply(MC_sims2[[i]] [["MC.x.pred"]], 2, function(x) mean(x) )
+  PI_m <- apply(MC_sims2[[i]] [["MC.x.pred"]], 2, function(x) PI(x, 0.95) )
   
   # calculate the correlation coefficient
-  BEF_sum[["mono_cor"]] <- cor(mu_m, MC_sims[[i]] [["MC.x.NA"]]$M[is.na(MC_sims[[i]] [["MC.x.NA"]]$M1)])
+  BEF_sum[["mono_cor"]] <- cor(mu_m, MC_sims2[[i]] [["MC.x.NA"]]$M[is.na(MC_sims2[[i]] [["MC.x.NA"]]$M1)])
   
   # calculate absolute error between monocultures and mixtures for all posterior samples
     mono_error <- 
       
-    apply(MC_sims[[i]] [["MC.x.pred"]], 1, function(x) {
+    apply(MC_sims2[[i]] [["MC.x.pred"]], 1, function(x) {
       
-      M_obs <- MC_sims[[i]] [["MC.x.NA"]] [is.na(M_obs[["M1"]]), ] [["M"]]
+      M_obs <- MC_sims2[[i]] [["MC.x.NA"]] [is.na(MC_sims2[[i]] [["MC.x.NA"]][["M1"]]), ] [["M"]]
       sum( abs( x - M_obs ) )
       
     })
