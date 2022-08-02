@@ -92,7 +92,7 @@ MC.x.pred <- foreach(
               
   
   # extract the posterior distribution
-  m1.post <- extract(m1)
+  m1.post <- rstan::extract(m1)
   
   # predict the missing data
   MC.x.pred <- MC.x.NA[is.na(MC.x.NA$M1), ]
