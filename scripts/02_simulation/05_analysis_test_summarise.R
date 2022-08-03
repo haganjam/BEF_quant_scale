@@ -48,25 +48,7 @@ BEF_sum_list <- foreach(
   library(dplyr)
   
   # set-up the PI function from the rethinking package
-  PI <- function (samples, prob = 0.89) {
-    x <- sapply(prob, function(p) {
-      a <- (1 - p)/2
-      quantile(samples, probs = c(a, 1 - a))
-    })
-    n <- length(prob)
-    result <- rep(0, n * 2)
-    for (i in 1:n) {
-      low_idx <- n + 1 - i
-      up_idx <- n + i
-      result[low_idx] <- x[1, i]
-      result[up_idx] <- x[2, i]
-      a <- (1 - prob[i])/2
-      names(result)[low_idx] <- concat(round(a * 100, 0), "%")
-      names(result)[up_idx] <- concat(round((1 - a) * 100, 
-                                            0), "%")
-    }
-    return(result)
-  }
+  
   
   BEF_sum <- 
     
@@ -75,8 +57,8 @@ BEF_sum_list <- foreach(
       BEF_post[[i]] %>% 
         group_by(Beff) %>%
         summarise(mu = mean(Value, na.rm = TRUE),
-                  PI_low = round( PI(Value, prob = 0.95)[1], 2),
-                  PI_high = round( PI(Value, prob = 0.95)[2], 2) ),
+                  PI_low = round( quantile(Value, prob = 0.025), 2),
+                  PI_high = round( quantile(Value, prob = 0.975), 2) ),
       
       rename(MC_sims2[[i]] [["BEF_obs"]], Value_obs = Value ), 
       
@@ -105,7 +87,6 @@ BEF_sum_list <- foreach(
   
   # summarise the posterior distribution
   mu_m <- apply(MC_sims2[[i]] [["MC.x.pred"]], 2, function(x) mean(x) )
-  PI_m <- apply(MC_sims2[[i]] [["MC.x.pred"]], 2, function(x) PI(x, 0.95) )
   
   # calculate the correlation coefficient
   BEF_sum[["mono_cor"]] <- cor(mu_m, MC_sims2[[i]] [["MC.x.NA"]]$M[is.na(MC_sims2[[i]] [["MC.x.NA"]]$M1)])
