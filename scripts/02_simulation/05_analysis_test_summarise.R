@@ -4,9 +4,9 @@
 #' @description: Compares biodiversity effects from the analytical pipeline to the observed biodiversity effects
 #' 
 #' @details: Summarises the distribution for each biodiversity effect and compares it to 
-#' the observed value. We assume that for an effect to be meaningful, the 95% HPDI interval 
+#' the observed value. We assume that for an effect to be meaningful, the 90% interval 
 #' of an effect must be within the interval of the observed value +- 0.5*observed value. 
-#' This means that the 95% HPDI interval contains the true value within a reasonable distance of the true value
+#' This means that the 90% PI interval contains the true value within a reasonable distance of the true value
 #' 
 #' @authors: James G. Hagan (james_hagan(at)outlook.com)
 #' 
@@ -40,7 +40,7 @@ doParallel::registerDoParallel(cl = my.cluster)
 
 BEF_sum_list <- foreach(
   
-  i = 1:10  # length(MC_sims2)
+  i = 1:length(MC_sims2)
   
 ) %dopar% {
   
@@ -57,8 +57,8 @@ BEF_sum_list <- foreach(
       BEF_post[[i]] %>% 
         group_by(Beff) %>%
         summarise(mu = mean(Value, na.rm = TRUE),
-                  PI_low = round( quantile(Value, prob = 0.025), 2),
-                  PI_high = round( quantile(Value, prob = 0.975), 2) ),
+                  PI_low = round( quantile(Value, prob = 0.05), 2),
+                  PI_high = round( quantile(Value, prob = 0.95), 2) ),
       
       rename(MC_sims2[[i]] [["BEF_obs"]], Value_obs = Value ), 
       

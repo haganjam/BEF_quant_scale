@@ -48,7 +48,7 @@ BEF_post <- foreach(
     
     apply(
       
-      X = MC.rep[["MC.x.pred"]] [sample(x = 1:nrow(MC.rep[["MC.x.pred"]]), 10), ], 
+      X = MC.rep[["MC.x.pred"]] [sample(x = 1:nrow(MC.rep[["MC.x.pred"]]), 100), ], 
       
       MARGIN = 1, 
       

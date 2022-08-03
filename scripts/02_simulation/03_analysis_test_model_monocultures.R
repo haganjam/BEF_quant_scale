@@ -95,7 +95,7 @@ MC.x.pred <- foreach(
     S = as.integer(v$species))
   
   # sample the stan model
-  m1.fit <- rstan::sampling(m1, data = MC.x.train)
+  m1.fit <- rstan::sampling(m1, data = MC.x.train, iter = 1000)
   
   # extract the posterior distribution
   m1.post <- rstan::extract(m1.fit)

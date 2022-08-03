@@ -1,6 +1,10 @@
 
 # examine the accuracy
 
+# notes: PI_mu_true
+# whether the 90% PI interval is within 50% of the observed value on either side
+# PI_mu is whether the observed value is within the 90% interval
+
 # load the relevant libraries
 library(here)
 library(dplyr)
