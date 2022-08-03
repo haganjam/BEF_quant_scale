@@ -4,11 +4,14 @@
 #' @description: Simulate BEF experiments and calculate biodiversity effects
 #' 
 #' @details: This script uses the simulated metacommunities and then then assumes that 
-#' we only have monoculture data in 30% of the patches and uses a simple linear model 
-#' with mixture yield and environmental data to generate posterior predictions for the 
-#' missing monoculture data. In addition, it generates a set of 100 starting relative 
-#' abundances from the Dirichlet distribution. These outputs are all saved as .rds 
-#' files.
+#' we only have monoculture data in 30% of the patches. It then fits a Bayesian linear
+#' regression model to the data for the 30% of the patches with monoculture data. The
+#' nmodel uses mixture yields and the model's environmental variable as predictors.
+#' Seperate slopes and intercepts are fitted for all species. We then use this model to
+#' predict monoculture yields for the 70% of patches with missing data. The predicted
+#' monoculture yields use the entire posterior distribution. This script is very 
+#' computationally intensive and was run in parellel on a computer cluster using 10
+#' cores (Albiorix: http://mtop.github.io/albiorix/).
 #' 
 #' @authors: James G. Hagan (james_hagan(at)outlook.com)
 

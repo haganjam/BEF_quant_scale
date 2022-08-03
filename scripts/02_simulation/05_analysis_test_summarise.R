@@ -3,10 +3,22 @@
 #' 
 #' @description: Compares biodiversity effects from the analytical pipeline to the observed biodiversity effects
 #' 
-#' @details: Summarises the distribution for each biodiversity effect and compares it to 
-#' the observed value. We assume that for an effect to be meaningful, the 90% interval 
-#' of an effect must be within the interval of the observed value +- 0.5*observed value. 
-#' This means that the 90% PI interval contains the true value within a reasonable distance of the true value
+#' @details: Summarises the distribution for each biodiversity effect generated
+#' from the uncertainty from the monocultures and the starting relative
+#' abundances. This distrbution is then compared to the observed value calculated from
+#' known monoculture yields and starting relative abundances from the model. There
+#' are two important metrics that are not obvious from the variable titles:
+#' 
+#' PI_true: This measures whether the 90% percentile interval of the posterior distribution
+#' is contained within 0.50 x (observed value) and 1.5 x (observed value). This quantity
+#' shows whether interval generated is reasonably close to the observed value.
+#' 
+#' PI_mu_true: This simply measures whether the observed value is within the 
+#' 90% percentile interval of the distribution.
+#' 
+#' This script is also very computationally intensive because it runs on very large
+#' data files generated in the previous steps. Therefore, it was run in parellel on a 
+#' computer cluster using 10 cores (Albiorix: http://mtop.github.io/albiorix/).
 #' 
 #' @authors: James G. Hagan (james_hagan(at)outlook.com)
 #' 
@@ -81,14 +93,12 @@ BEF_sum_list <- foreach(
   # add the identifer variables  
   BEF_sum <- bind_cols( MC_sims2[[i]] [["MC.x.ids"]], BEF_sum)
   
-  # add bad monoculture correlation information
-  
   # calculate the overall monoculture error
   
   # summarise the posterior distribution
   mu_m <- apply(MC_sims2[[i]] [["MC.x.pred"]], 2, function(x) mean(x) )
   
-  # calculate the correlation coefficient
+  # calculate the correlation coefficient between the mean of the posterior and the true monoculture values
   BEF_sum[["mono_cor"]] <- cor(mu_m, MC_sims2[[i]] [["MC.x.NA"]]$M[is.na(MC_sims2[[i]] [["MC.x.NA"]]$M1)])
   
   # calculate absolute error between monocultures and mixtures for all posterior samples

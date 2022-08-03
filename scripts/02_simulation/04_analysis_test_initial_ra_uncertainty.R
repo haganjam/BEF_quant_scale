@@ -5,8 +5,9 @@
 #' 
 #' @details: This script uses the posterior distributions generated for each missing monoculture
 #' and a distribution of starting relative abundances from the Dirichlet distribution to generate
-#' posterior distributions of biodiversity effects. This script is to be run on a computer
-#' cluster because it is very computationally intensive.
+#' posterior distributions of biodiversity effects. This script is very 
+#' computationally intensive and was run in parellel on a computer cluster using 10
+#' cores (Albiorix: http://mtop.github.io/albiorix/).
 #' 
 #' @authors: James G. Hagan (james_hagan(at)outlook.com)
 #' 

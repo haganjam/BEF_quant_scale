@@ -6,7 +6,9 @@
 #' @details: This script simulates a BEF experiment with full mixtures and monocultures
 #' in each patch. It then uses the known starting abundances and full monoculture data
 #' to calculate observed biodiversity effects using Isbell et al.'s (2018) partition. The 
-#' model outputs and the observed biodiversity effects are outputted as .rds files.
+#' model outputs and the observed biodiversity effects are outputted as .rds files. In addition, it generates a set of 100 starting relative 
+#' abundances from the Dirichlet distribution. These outputs are all saved as .rds 
+#' files. This script can be run locally on a regular desktop computer.
 #' 
 #' @authors: James G. Hagan (james_hagan(at)outlook.com)
 
