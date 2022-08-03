@@ -1,8 +1,15 @@
 
 # examine the accuracy
 
+# load the relevant libraries
+library(here)
+library(dplyr)
 library(ggplot2)
 library(ggbeeswarm)
+
+# load the data
+BEF_output <- readRDS(here("results/BEF_output.rds"))
+View(BEF_output)
 
 # analyse the accuracy
 View(BEF_output)
