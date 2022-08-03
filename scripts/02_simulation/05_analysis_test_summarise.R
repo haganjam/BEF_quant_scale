@@ -14,25 +14,58 @@
 # load the relevant libraries
 library(here)
 library(dplyr)
-library(rethinking)
-library(ggplot2)
-library(ggbeeswarm)
 
 # set the percentage threshold from the actual biodiversity effect (see details above)
 thresh <- 0.5
 
 # load the observed BEF values
-MC_sims2 <- readRDS(file = here("results/MC_sims2.rds"))
+MC_sims2 <- readRDS(file = here("BEF_quant_scale/results/MC_sims2.rds"))
 
 # load the posterior data
-BEF_post <- readRDS(file = here("results/BEF_post.rds"))
+BEF_post <- readRDS(file = here("BEF_quant_scale/results/BEF_post.rds"))
 
-# how many models were run?
-n <- length(MC_sims2)
-BEF_sum_list <- vector("list", length = n)
+# set-up a parallel for-loop
+n.cores <- 10
 
-for (i in 1:n) {
+#create the cluster
+my.cluster <- parallel::makeCluster(
+  n.cores, 
+  type = "PSOCK"
+)
 
+#register it to be used by %dopar%
+doParallel::registerDoParallel(cl = my.cluster)
+
+BEF_sum_list <- foreach(
+  
+  i = 1:10  # length(MC_sims2)
+  
+) %dopar% {
+  
+  # load the dplyr package
+  library(dplyr)
+  
+  # set-up the PI function from the rethinking package
+  PI <- function (samples, prob = 0.89) {
+    x <- sapply(prob, function(p) {
+      a <- (1 - p)/2
+      quantile(samples, probs = c(a, 1 - a))
+    })
+    n <- length(prob)
+    result <- rep(0, n * 2)
+    for (i in 1:n) {
+      low_idx <- n + 1 - i
+      up_idx <- n + i
+      result[low_idx] <- x[1, i]
+      result[up_idx] <- x[2, i]
+      a <- (1 - prob[i])/2
+      names(result)[low_idx] <- concat(round(a * 100, 0), "%")
+      names(result)[up_idx] <- concat(round((1 - a) * 100, 
+                                            0), "%")
+    }
+    return(result)
+  }
+  
   BEF_sum <- 
     
     full_join(
@@ -76,15 +109,15 @@ for (i in 1:n) {
   BEF_sum[["mono_cor"]] <- cor(mu_m, MC_sims2[[i]] [["MC.x.NA"]]$M[is.na(MC_sims2[[i]] [["MC.x.NA"]]$M1)])
   
   # calculate absolute error between monocultures and mixtures for all posterior samples
-    mono_error <- 
-      
+  mono_error <- 
+    
     apply(MC_sims2[[i]] [["MC.x.pred"]], 1, function(x) {
       
       M_obs <- MC_sims2[[i]] [["MC.x.NA"]] [is.na(MC_sims2[[i]] [["MC.x.NA"]][["M1"]]), ] [["M"]]
       sum( abs( x - M_obs ) )
       
     })
-    
+  
   BEF_sum[["mono_error"]] <- mean(mono_error, na.rm = TRUE)
   
   # reorder the columns
@@ -100,53 +133,15 @@ for (i in 1:n) {
            PI_low, PI_high,
            PI_true, PI_mu_true)
   
-  BEF_sum_list[[i]] <- BEF_sum
+  return(BEF_sum)
   
-}
-
+  }
+  
 # bind this list into a data.frame that can be analysed
-BEF_output <- bind_rows(BEF_sum_list, .id = "model_ID")
+BEF_output <- dplyr::bind_rows(BEF_sum_list, .id = "model_ID")
 
-# analyse the accuracy
-View(BEF_output)
-
-# check for outliers
-summary(BEF_output)
-
-# check the large mono-error outlier
-BEF_output %>%
-  filter(mono_error == max(mono_error)) %>%
-  View()
-
-# is there a relationship between monoculture correlation and mu deviation
-ggplot(data = BEF_output,
-         mapping = aes(x = log(mono_error), y = (mu_deviation) )) +
-  geom_point() +
-  geom_smooth() +
-  facet_wrap(~Beff, scales = "free") +
-  theme_bw()
-
-ggplot(data = BEF_output,
-       mapping = aes(x = log10(mono_error), y = log10(PI_high-PI_low) )) +
-  geom_point() +
-  geom_smooth() +
-  facet_wrap(~Beff, scales = "free") +
-  theme_bw()
-
-BEF_output_sum <- 
-  BEF_output %>%
-  group_by(Beff) %>%
-  summarise(accuracy_value = sum(PI_true)/n(),
-            accuracy_interval = sum(PI_mu_true)/n(),
-            Value_obs = mean(Value_obs))
-
-# plot the full set of simulations
-ggplot(data = BEF_output_sum,
-       mapping = aes(x = Beff, y = Value_obs)) +
-  geom_hline(yintercept = 0, linetype = "dashed", colour = "red") +
-  geom_quasirandom(data = BEF_output %>% filter(mu < 10000 & mu > -10000), 
-                   mapping = aes(x = Beff, y = mu), alpha = 0.1 ) +
-  geom_point(colour = "red", size = 2) +
-  theme_bw()
+# output this as a .rds file
+# save this as an RDS file
+saveRDS(object = BEF_output, file = here("BEF_quant_scale/results/BEF_output.rds"))
 
 ### END

@@ -50,6 +50,12 @@ ply_dat <-
   ply_dat %>% 
   filter( composition %in% c("All", "F", "B", "S", "L") )
 
+# check how many replicates there were of each
+ply_dat %>%
+  group_by(shore, month, composition) %>%
+  summarise(n = n()) %>%
+  View()
+
 # add column for total cover of the four focal species
 ply_dat$total_focal_cover <- 
   ply_dat %>%
