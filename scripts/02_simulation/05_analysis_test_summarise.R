@@ -14,6 +14,8 @@
 # load the relevant libraries
 library(here)
 library(dplyr)
+library(foreach)
+library(doParallel)
 
 # set the percentage threshold from the actual biodiversity effect (see details above)
 thresh <- 0.5
