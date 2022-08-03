@@ -47,6 +47,9 @@ my.cluster <- parallel::makeCluster(
 #register it to be used by %dopar%
 doParallel::registerDoParallel(cl = my.cluster)
 
+# compile the stan model
+m1 <- rstan::stan_model(here::here("BEF_quant_scale/scripts/02_simulation/missing_monoculture_glm.stan"))
+
 MC.x.pred <- foreach(
   
   i = 1:length(MC_sims_NA)
@@ -91,8 +94,7 @@ MC.x.pred <- foreach(
     E = v$env,
     S = as.integer(v$species))
   
-  # fit the model in stan
-  m1 <- rstan::stan_model(here::here("BEF_quant_scale/scripts/02_simulation/missing_monoculture_glm.stan"))
+  # sample the stan model
   m1.fit <- rstan::sampling(m1, data = MC.x.train)
   
   # extract the posterior distribution
