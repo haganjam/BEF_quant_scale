@@ -6,16 +6,18 @@ library(readr)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
+library(ggbeeswarm)
 library(here)
+library(viridis)
 
 # set script to call partition functions from
-source(here("scripts/isbell_2018_partition.R"))
+source(here("scripts/01_partition_functions/02_isbell_2018_partition.R"))
+source(here("scripts/Function_plotting_theme.R"))
 
 # read in the data
 ply_dat <- read_delim( here("data/Plymouth_data.csv"), delim = "," )
 
 # check the data
-View(ply_dat)
 head(ply_dat)
 summary(ply_dat)
 
@@ -30,7 +32,8 @@ tot_spp <- 4
 ply_dat <- 
   ply_dat %>%
   mutate(species_richness = (tot_spp - removed) ) %>%
-  select( all_of(id_vars), grid_squares, species_richness, totcover, cover_nocrusts, all_of(foc_spp) )
+  select( month, shore, pool, composition, removed,
+          grid_squares, species_richness, totcover, cover_nocrusts, all_of(foc_spp) )
 
 # create a new mixture/monoculture column
 # reorder the columns again
@@ -67,17 +70,16 @@ ply_mix <-
   ply_sum %>%
   filter(composition == "All") %>%
   select(-composition, -mono_mix) %>%
-  pivot_longer(cols = foc_spp,
+  pivot_longer(cols = all_of(foc_spp),
                names_to = "species",
                values_to = "Y") %>%
   rename(place = shore, time = month) %>%
   arrange(place, time, species)
 
-
 ply_mono <- 
   ply_sum %>% 
   filter(composition != "All") %>%
-  pivot_longer(cols = foc_spp,
+  pivot_longer(cols = all_of(foc_spp),
                names_to = "species",
                values_to = "M") %>%
   mutate(species_comp = toupper(substr(species, 1, 1)) ) %>%
@@ -129,16 +131,91 @@ df_unc <- bind_rows(RYe_reps, .id = "ID")
 # check the data
 summary(df_unc)
 
-# plot the data
-ggplot() +
-  geom_jitter(data = df_unc,
-               mapping = aes(x = Beff, y = Value, colour = Beff, fill = Beff),
-               alpha = 0.3) +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  theme_classic() +
-  theme(legend.position = "none")
+# summarise the df_unc data
+df_unc_sum <- 
+  df_unc %>%
+  group_by(Beff) %>%
+  summarise(Value_m = mean(Value),
+            Value_sd = sd(Value))
 
-# why does local complementarity vary with the RYe
+# set-up a colour palette
+nbe.no.col <- c("black", "brown")
+names(nbe.no.col) <- c("NBE", "NO")
+v.col.sel.comp <- viridis(option = "C", n = 4, alpha = 1, begin = 0, end = 0.4)
+names(v.col.sel.comp) <- c("LC", "LS", "TC", "TS")
+v.col.ins <- viridis(option = "C", n = 5, alpha = 1, begin = 0.5, end = 1)
+names(v.col.ins) <- c("IT", "AS", "TI", "SI", "ST")
+
+# combine this colour palette
+v.col <- c(nbe.no.col, v.col.sel.comp, v.col.ins)
+
+# compare local and total complementarity and selection effects
+eff_in <- c("LC", "LS", "TC", "TS")
+v.col.sel <- v.col[ names(v.col) %in% eff_in ]
+v.col.sel <- v.col.sel[order(match(names(v.col.sel) , eff_in))]
+
+ggplot(data = df_unc_sum %>%
+         filter(Beff %in% eff_in)) +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "red") +
+  geom_col(mapping = aes(x = Beff, y = Value_m, colour = Beff, fill = Beff), width = 0.5) +
+  geom_errorbar(mapping = aes(x = Beff, 
+                              ymin = Value_m - Value_sd,
+                              ymax = Value_m + Value_sd,
+                              colour = Beff),
+                width = 0) + 
+  scale_colour_manual(values = v.col.sel) +
+  scale_fill_manual(values = v.col.sel) +
+  ylab("Biodiversity effect (cover (%) 3month-1)") +
+  xlab(NULL) +
+  theme_meta()
+  
+# compare net biodiversity effects, total complementarity and total selection
+eff_in <- c("NBE", "TC", "NO", "IT")
+v.col.sel <- v.col[ names(v.col) %in% eff_in ]
+v.col.sel <- v.col.sel[order(match(names(v.col.sel) , eff_in))]
+
+ggplot(data = df_unc_sum %>%
+         filter(Beff %in% eff_in) %>%
+         mutate(Beff = factor(Beff, levels = eff_in))
+       ) +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "red") +
+  geom_col(mapping = aes(x = Beff, y = Value_m, colour = Beff, fill = Beff), 
+           width = 0.5) +
+  geom_errorbar(mapping = aes(x = Beff, 
+                              ymin = Value_m - Value_sd,
+                              ymax = Value_m + Value_sd,
+                              colour = Beff),
+                width = 0) +
+  scale_colour_manual(values = v.col.sel) +
+  scale_fill_manual(values = v.col.sel) +
+  ylab("Biodiversity effect (cover (%) 3month-1)") +
+  xlab(NULL) +
+  theme_meta()
+
+# examine the distribution of the insurance effects
+eff_in <- c("AS", "TI", "SI", "ST")
+v.col.sel <- v.col[ names(v.col) %in% eff_in ]
+v.col.sel <- v.col.sel[order(match(names(v.col.sel) , eff_in))]
+
+ggplot(data = df_unc_sum %>%
+         filter(Beff %in% eff_in) %>%
+         mutate(Beff = factor(Beff, levels = eff_in))
+       ) +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "red") +
+  geom_col(mapping = aes(x = Beff, y = Value_m, colour = Beff, fill = Beff), 
+           width = 0.5) +
+  geom_errorbar(mapping = aes(x = Beff, 
+                              ymin = Value_m - Value_sd,
+                              ymax = Value_m + Value_sd,
+                              colour = Beff),
+                width = 0) +
+  scale_colour_manual(values = v.col.sel) +
+  scale_fill_manual(values = v.col.sel) +
+  ylab("Biodiversity effect (cover (%) 3month-1)") +
+  xlab(NULL) +
+  theme_meta()
+
+# why does local complementarity not vary with the RYe
 # formula uses average change in relative yield and average relative yield is the same
 apply(dr, 2, mean)
 
@@ -148,7 +225,7 @@ ply_part %>%
   mutate(rel_abun = Y/sum(Y)) %>%
   group_by(place, species) %>%
   summarise(M = mean(M),
-            rel_abun = mean(rel_abun)) %>%
+            rel_abun = mean(rel_abun), .groups = "drop") %>%
   ggplot(data = .,
          mapping = aes(x = M, y = rel_abun, colour = species)) +
   geom_point() +
@@ -167,4 +244,5 @@ ply_part %>%
   geom_smooth(method = "lm", se = FALSE) +
   theme_classic()
 
+### END
 
