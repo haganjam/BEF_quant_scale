@@ -9,6 +9,7 @@ library(ggplot2)
 library(ggbeeswarm)
 library(here)
 library(viridis)
+library(ggpubr)
 
 # set script to call partition functions from
 source(here("scripts/01_partition_functions/02_isbell_2018_partition.R"))
@@ -154,73 +155,105 @@ eff_in <- c("LC", "LS", "TC", "TS")
 v.col.sel <- v.col[ names(v.col) %in% eff_in ]
 v.col.sel <- v.col.sel[order(match(names(v.col.sel) , eff_in))]
 
-ggplot(data = df_unc_sum %>%
+p1 <- 
+  ggplot(data = df_unc_sum %>%
          filter(Beff %in% eff_in)) +
-  geom_hline(yintercept = 0, linetype = "dashed", colour = "red") +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
   geom_col(mapping = aes(x = Beff, y = Value_m, colour = Beff, fill = Beff), width = 0.5) +
   geom_errorbar(mapping = aes(x = Beff, 
                               ymin = Value_m - Value_sd,
-                              ymax = Value_m + Value_sd,
-                              colour = Beff),
+                              ymax = Value_m + Value_sd),
                 width = 0) + 
   scale_colour_manual(values = v.col.sel) +
   scale_fill_manual(values = v.col.sel) +
-  ylab("Biodiversity effect (cover (%) 3month-1)") +
+  ylab("Effect (cover (%) time-1)") +
   xlab(NULL) +
-  theme_meta()
+  theme_meta() +
+  theme(legend.position = "none")
+plot(p1)
   
 # compare net biodiversity effects, total complementarity and total selection
 eff_in <- c("NBE", "TC", "NO", "IT")
 v.col.sel <- v.col[ names(v.col) %in% eff_in ]
 v.col.sel <- v.col.sel[order(match(names(v.col.sel) , eff_in))]
 
-ggplot(data = df_unc_sum %>%
+p2 <- 
+  ggplot(data = df_unc_sum %>%
          filter(Beff %in% eff_in) %>%
          mutate(Beff = factor(Beff, levels = eff_in))
        ) +
-  geom_hline(yintercept = 0, linetype = "dashed", colour = "red") +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
   geom_col(mapping = aes(x = Beff, y = Value_m, colour = Beff, fill = Beff), 
            width = 0.5) +
   geom_errorbar(mapping = aes(x = Beff, 
                               ymin = Value_m - Value_sd,
-                              ymax = Value_m + Value_sd,
-                              colour = Beff),
+                              ymax = Value_m + Value_sd),
                 width = 0) +
   scale_colour_manual(values = v.col.sel) +
   scale_fill_manual(values = v.col.sel) +
-  ylab("Biodiversity effect (cover (%) 3month-1)") +
+  ylab("Effect (cover (%) time-1)") +
   xlab(NULL) +
-  theme_meta()
+  theme_meta() +
+  theme(legend.position = "none")
+plot(p2)
 
 # examine the distribution of the insurance effects
 eff_in <- c("AS", "TI", "SI", "ST")
 v.col.sel <- v.col[ names(v.col) %in% eff_in ]
 v.col.sel <- v.col.sel[order(match(names(v.col.sel) , eff_in))]
 
-ggplot(data = df_unc_sum %>%
+p3 <- 
+  ggplot(data = df_unc_sum %>%
          filter(Beff %in% eff_in) %>%
          mutate(Beff = factor(Beff, levels = eff_in))
        ) +
-  geom_hline(yintercept = 0, linetype = "dashed", colour = "red") +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
   geom_col(mapping = aes(x = Beff, y = Value_m, colour = Beff, fill = Beff), 
            width = 0.5) +
   geom_errorbar(mapping = aes(x = Beff, 
                               ymin = Value_m - Value_sd,
-                              ymax = Value_m + Value_sd,
-                              colour = Beff),
+                              ymax = Value_m + Value_sd),
                 width = 0) +
   scale_colour_manual(values = v.col.sel) +
   scale_fill_manual(values = v.col.sel) +
-  ylab("Biodiversity effect (cover (%) 3month-1)") +
+  ylab("Effect (cover (%) time-1)") +
   xlab(NULL) +
-  theme_meta()
+  theme_meta() +
+  theme(legend.position = "none")
+plot(p3)
+
+# arrange this plot
+p123 <- 
+  ggarrange(p1, p2, p3, ncol = 3, nrow = 1,
+            labels = c("a", "b", "c"),
+            font.label = list(size = 11, face = "plain"))
+plot(p123)
+
+ggsave(filename = here("figures/ply_fig1.png"), p123,
+       unit = "cm", width = 20, height = 7)
 
 # why does local complementarity not vary with the RYe
 # formula uses average change in relative yield and average relative yield is the same
 apply(dr, 2, mean)
 
 # check the correlation between relative yield and monoculture yields
-ply_part %>%
+
+# make a legend
+legend <- ply_part[1:4, ]
+legend$Species <- c("B. bifurcata", "F. serratus", "L. digitata", "S. muticum")
+legend <- 
+  get_legend( 
+    ggplot(data = legend,
+           mapping = aes(x = M, y = Y, colour = Species)) +
+      geom_point(size = 2) +
+      scale_colour_viridis_d(begin = 0.1, end = 0.9, option = "C") +
+      theme_bw() +
+      theme(legend.position = "top")
+    )
+  
+p1 <- 
+  
+  ply_part %>%
   group_by(sample) %>%
   mutate(rel_abun = Y/sum(Y)) %>%
   group_by(place, species) %>%
@@ -229,10 +262,19 @@ ply_part %>%
   ggplot(data = .,
          mapping = aes(x = M, y = rel_abun, colour = species)) +
   geom_point() +
+  ggtitle("Across places") +
   geom_smooth(method = "lm", se = FALSE) +
-  theme_classic()
+  scale_colour_viridis_d(begin = 0.1, end = 0.9, option = "C") +
+  ylab("Relative abundance") +
+  xlab("Monoculture cover (%)") +
+  theme_meta() +
+  theme(legend.position = "none",
+        plot.title = element_text(size = 12, hjust = 0.5))
+plot(p1)
 
-ply_part %>%
+p2 <- 
+  
+  ply_part %>%
   group_by(sample) %>%
   mutate(rel_abun = Y/sum(Y)) %>%
   group_by(time, species) %>%
@@ -241,8 +283,21 @@ ply_part %>%
   ggplot(data = .,
          mapping = aes(x = M, y = rel_abun, colour = species)) +
   geom_point() +
+  ggtitle("Across times") +
   geom_smooth(method = "lm", se = FALSE) +
-  theme_classic()
+  scale_colour_viridis_d(begin = 0.1, end = 0.9, option = "C") +
+  ylab("") +
+  xlab("Monoculture cover (%)") +
+  theme_meta()  +
+  theme(legend.position = "none",
+        plot.title = element_text(size = 12, hjust = 0.5))
+plot(p2)
+
+p12 <- 
+  ggarrange(p1, p2, legend.grob = legend, labels = c("a", "b"),
+            font.label = list(size = 11, face = "plain"))
+
+ggsave(filename = here("figures/ply_fig2.png"), p12,
+       unit = "cm", width = 13, height = 8)
 
 ### END
-
