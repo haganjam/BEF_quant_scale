@@ -30,7 +30,7 @@ library(foreach)
 library(doParallel)
 
 # set the percentage threshold from the actual biodiversity effect (see details above)
-thresh <- 0.5
+thresh <- 0.6
 
 # load the observed BEF values
 MC_sims2 <- readRDS(file = here("BEF_quant_scale/results/MC_sims2.rds"))
