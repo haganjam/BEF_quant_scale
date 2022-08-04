@@ -68,14 +68,6 @@ ggplot(data = BEF_output,
   facet_wrap(~Beff, scales = "free") +
   theme_bw()
 
-ggplot(data = BEF_output,
-       mapping = aes(x = (inter_comp), y = log10(mu_deviation) )) +
-  geom_point() +
-  geom_smooth() +
-  facet_wrap(~Beff, scales = "free") +
-  theme_bw()
-
-
 # calculate accuracy metrics
 BEF_output_sum <- 
   BEF_output %>%
