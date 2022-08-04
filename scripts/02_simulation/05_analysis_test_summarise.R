@@ -9,12 +9,12 @@
 #' known monoculture yields and starting relative abundances from the model. There
 #' are two important metrics that are not obvious from the variable titles:
 #' 
-#' PI_true: This measures whether the 90% percentile interval of the posterior distribution
+#' PI_true: This simply measures whether the observed value is within the 
+#' 90% percentile interval of the distribution.
+#' 
+#' PI_mu_true: This measures whether the 90% percentile interval of the posterior distribution
 #' is contained within 0.50 x (observed value) and 1.5 x (observed value). This quantity
 #' shows whether interval generated is reasonably close to the observed value.
-#' 
-#' PI_mu_true: This simply measures whether the observed value is within the 
-#' 90% percentile interval of the distribution.
 #' 
 #' This script is also very computationally intensive because it runs on very large
 #' data files generated in the previous steps. Therefore, it was run in parellel on a 
