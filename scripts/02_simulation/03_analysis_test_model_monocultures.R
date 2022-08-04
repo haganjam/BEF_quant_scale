@@ -112,8 +112,8 @@ MC.x.pred <- foreach(
   # loop over each sample from the posterior distribution
   
   # set an output list
-  pred.list <- vector("list", length = 2000)
-  for (j in 1:2000) {
+  pred.list <- vector("list", length = 1000)
+  for (j in 1:1000) {
     
     sample_pred <- 
       

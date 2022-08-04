@@ -87,7 +87,7 @@ BEF_sum_list <- foreach(
            Value_obs_max = (1+thresh)*Value_obs ) %>%
     mutate(PI_true = if_else( ( (Value_obs > PI_low) & (Value_obs < PI_high) ), TRUE, FALSE ) ) %>%
     mutate(PI_mu_true = if_else( (PI_low > Value_obs_min) & (PI_high < Value_obs_max), TRUE, FALSE ) ) %>%
-    mutate(mu_deviation = round( abs((abs(mu - Value_obs)/Value_obs)*100), 2 )  ) %>%
+    mutate(mu_deviation = round( abs((abs(mu - Value_obs)/Value_obs)*100), 4 )  ) %>%
     mutate(mu_threshold = thresh)
   
   # add the identifer variables  
