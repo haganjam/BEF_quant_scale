@@ -25,12 +25,12 @@ source(here("scripts/02_simulation/01_mcomsimr_simulate_MC2_function.R"))
 set.seed(54258748)
 
 # number of replicate simulations
-N_REP <- 1000
+N_REP <- 5
 
 # set-up basic model inputs
 species <- 5
 patches <- 20
-timesteps <- 100
+timesteps <- 500
 dispersal_min <- 0.01
 dispersal_max <- 0.1
 extirp_prob <- 0.00001
@@ -41,9 +41,9 @@ K_max <- NA
 
 # set-up parameters for the competition matrices
 int_min1 <- 0.05*0
-int_min2 <- 0.05*0.3
-int_max <- 0.05*1.2
-int_max <- 0.05*1.5
+int_min2 <- 0.05*0.5
+int_max1 <- 0.05*1
+int_max2 <- 0.05*1.5
 intra <- 0.05*1
 
 # set-up the type of Lotka-Volterra competition
@@ -71,14 +71,11 @@ dispersal.x <- dispersal_matrix(landscape = landscape.x, torus = TRUE, kernel_ex
 # generate species environmental optima
 optima <- seq(0.15, 0.85, length.out = species)
 print(optima)
-env_niche_breadth <- lapply(1:N_REP, function(x) round(runif(species, 0.1, 0.25), 2))
+env_niche_breadth <- lapply(1:N_REP, function(x) round(runif(species, 0.05, 0.25), 2))
 print(env_niche_breadth)
 
 # select time-points to calculate biodiversity effects for
-t_sel <- c(25, 50, 75, 100)
-
-# set different levels of starting abundances for the different species
-start_abun <- round(runif(n = species, 0, 30), 0)
+t_sel <- c(100, 200, 300, 400, 500)
 
 # run the model for each of the replicates
 MC_sims <- 
@@ -86,7 +83,7 @@ MC_sims <-
   lapply(1:N_REP, function(x) {
     
     # get the starting abundances
-    start_abun <- round(runif(n = species, 5, 30), 0)
+    start_abun <- round(runif(n = species, 0, 30), 0)
     
     # pull species attributes into a data.frame
     sp_att <- 
@@ -119,8 +116,8 @@ MC_sims <-
     
     # simulate environmental variables
     
-    # randomly draw an autocorrelation value between 250 and 500
-    autocorr <- round(runif(1, 250, 500), 0)
+    # randomly draw an autocorrelation value between 300 and 500
+    autocorr <- round(runif(1, 200, 500), 0)
     
     # use the env_generate() function to generate a landscape of environmental variables
     env_var <- 
@@ -131,11 +128,14 @@ MC_sims <-
                              plot = FALSE
       )
     
+    # draw a random dispersal value
+    dispersal <- runif(1, dispersal_min, dispersal_max)
+    
     # simulate the metacommunity
     MC.x <- 
       
       sim_metacomm_BEF(patches = patches, species = species, 
-                       dispersal = runif(1, dispersal_min, dispersal_max),
+                       dispersal = dispersal,
                        timesteps = timesteps, 
                        start_abun = start_abun,
                        extirp_prob = extirp_prob,

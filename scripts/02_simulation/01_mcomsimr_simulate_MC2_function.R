@@ -77,7 +77,7 @@ simulate_MC2 <- function(patches, species, dispersal = 0.01, timesteps = 1200,
     if (any(N_hat == 0) ) {
       N_hat[N_hat == 0] <- 0 
     } 
-    N_hat[N_hat > 0] <- N_hat[N_hat > 0] + rnorm(n = length(N_hat[N_hat > 0]), mean = 0, sd = meas_error)
+    N_hat[N_hat > 0] <- rpois(n = length(N_hat[N_hat > 0]), lambda = (N_hat[N_hat > 0]))
     N_hat[N_hat < 0] <- 0
     N_hat <- round(N_hat, 0)
     

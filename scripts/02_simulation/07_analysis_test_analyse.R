@@ -56,6 +56,10 @@ BEF_output <-
   filter(outliers != 1) %>%
   select(-cond)
 
+# check the summary variable
+summary(BEF_output)
+hist(BEF_output$mono_PI_range)
+
 # set-up variables for testing the accuracy
 
 # set the mean range accuracy: 
@@ -97,6 +101,8 @@ ggplot(data = BEF_output,
   facet_wrap(~Beff, scales = "free") +
   theme_bw()
 
+plot(BEF_output$mono_cor, BEF_output$mono_PI_range)
+
 # calculate accuracy metrics
 BEF_output_sum <- 
   BEF_output %>%
@@ -119,18 +125,15 @@ hist(BEF_output$mono_cor)
 m.dat <- 
   list(BE = as.integer(as.factor(BEF_output$Beff)),
        C = BEF_output$mono_cor,
-       MR = BEF_output$mono_PI_range,
-       ME = log10(BEF_output$mono_error),
        INT = ifelse(BEF_output$PI_true == TRUE, 1, 0) )
 
 m1 <- ulam(
   alist(
     INT ~ dbinom( 1 , p ),
-    logit(p) <- a[BE] + b[BE]*C + b1[BE]*MR,
+    logit(p) <- a[BE] + b[BE]*C,
     
     a[BE] ~ dnorm( 0 , 2),
-    b[BE] ~ dnorm(0, 2),
-    b1[BE] ~ dnorm(0, 2)
+    b[BE] ~ dnorm(0, 2)
     
   ) , data = m.dat , chains = 4, cores = 4 )
 
@@ -144,10 +147,8 @@ saveRDS(m1, file = here("results/stan_model_m1.rds"))
 
 # choose the correlations
 cor.in <- c(0.1, 0.9)
-mono_range <- c(5000)
 
 m1.pred <- expand.grid(C = cor.in,
-                       ME = log10(mono_range),
                        BE = unique(as.integer(as.factor(BEF_output$Beff))))
 
 # use sim to simulate observations for this data.frame
@@ -159,7 +160,7 @@ m1.pred$PI_low <- apply(m1.sim, 2, function(x) PI(samples = x, prob = 0.90)[1] )
 m1.pred$PI_high <- apply(m1.sim, 2, function(x) PI(samples = x, prob = 0.90)[2] )
 
 # add the labels
-m1.pred$BE1 <- rep(levels(as.factor(BEF_output$Beff))[m.dat$BE[1:11]], each = length(cor.in)*length(mono_range))
+m1.pred$BE1 <- rep(levels(as.factor(BEF_output$Beff))[m.dat$BE[1:11]], each = length(cor.in))
 
 # plot the results
 ggplot() +
@@ -171,4 +172,5 @@ ggplot() +
   geom_point(data = BEF_output_sum,
              mapping = aes(x = BE1, y = PI_true)) +
   theme_bw()
-  
+
+### END
