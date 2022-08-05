@@ -40,26 +40,48 @@ str(BEF_output)
 # view the dataset
 View(BEF_output)
 
+# examine the distribution of modelled effects
+hist(BEF_output$mu)
+range(BEF_output$mu)
+mean(BEF_output$mu)
+
+# remove the major, major outliers
+BEF_output$cond <- (BEF_output$mu < quantile(BEF_output$mu, 0.99)) & (BEF_output$mu > quantile(BEF_output$mu, 0.01))
+
+BEF_output <- 
+  BEF_output %>%
+  group_by(model_ID) %>%
+  mutate(outliers = ifelse(any(cond == FALSE), 1, 0)) %>%
+  filter(outliers != 1) %>%
+  select(-cond)
+
 # set-up variables for testing the accuracy
 
 # set the mean range accuracy: 
-thresh <- 0.6
+thresh <- 0.75
 
 BEF_output <- 
   
   BEF_output %>%
-  mutate(mu_deviation = round( abs((abs(mu - Value_obs)/Value_obs)*100), 5 )  ) %>%
+  mutate(mu_deviation = round( abs((mu - Value_obs)), 5 )  ) %>%
+  mutate(mu_deviation_perc = round( abs(mu_deviation/Value_obs)*100, 5) ) %>%
   mutate(mu_threshold = thresh) %>%
   mutate(Value_obs_range = abs(2*thresh*Value_obs) ) %>%
   mutate(PI_range = PI_high-PI_low) %>%
   mutate(PI_range_true = ifelse( PI_range > Value_obs_range, FALSE, TRUE)  ) %>%
   mutate(PI_obs_true = ifelse( (PI_low < Value_obs) & (PI_high > Value_obs), TRUE, FALSE ) ) %>%
   mutate(PI_true = ifelse( (PI_range_true & PI_obs_true), TRUE, FALSE ))
-  
+View(BEF_output)  
+summary(BEF_output)
+
+BEF_output %>%
+  filter(mu_deviation_perc > 5000) %>%
+  pull(model_ID) %>%
+  unique()
 
 # is there a relationship between monoculture correlation and mu deviation
 ggplot(data = BEF_output,
-       mapping = aes(x = log10(mono_error), y = log10(mu_deviation) )) +
+       mapping = aes(x = log10(mono_error), y = (mu_deviation) )) +
   geom_point() +
   geom_smooth() +
   facet_wrap(~Beff, scales = "free") +
@@ -80,19 +102,28 @@ ggplot(data = BEF_output,
   theme_bw()
 
 # calculate accuracy metrics
+
+hist(BEF_output$mu_deviation_perc)
+range(BEF_output$mu_deviation_perc)
+
 BEF_output_sum <- 
   BEF_output %>%
   group_by(Beff) %>%
+  filter(mu_deviation_perc < quantile(mu_deviation_perc, 0.95)) %>%
   summarise(PI_obs_true = sum(PI_obs_true)/n(),
-            PI_true = sum(PI_true)/n())
+            PI_true = sum(PI_true)/n(),
+            mu_deviation_m = mean(mu_deviation_perc),
+            mu_deviation_sd = sd(mu_deviation_perc)) %>%
+  rename(BE1 = Beff)
 print(BEF_output_sum)
 
 # what is the average monoculture correlation?
 mean(BEF_output$mono_cor)
 hist(BEF_output$mono_cor)
 
-# fit a binomial regression to model the accuracy based on the effect and the monoculture correlation
+# accuracy test 1: PI_true
 
+# fit a binomial regression to model the accuracy based on the effect and the monoculture correlation
 m.dat <- 
   list(BE = as.integer(as.factor(BEF_output$Beff)),
        C = BEF_output$mono_cor,
@@ -121,7 +152,7 @@ saveRDS(m1, file = here("results/stan_model_m1.rds"))
 
 # choose the correlations
 cor.in <- c(0.1, 0.9)
-mono_error <- c(1000)
+mono_error <- c(5000)
 
 m1.pred <- expand.grid(C = cor.in,
                        ME = log10(mono_error),
@@ -138,11 +169,6 @@ m1.pred$PI_high <- apply(m1.sim, 2, function(x) PI(samples = x, prob = 0.90)[2] 
 # add the labels
 m1.pred$BE1 <- rep(levels(as.factor(BEF_output$Beff))[m.dat$BE[1:11]], each = length(cor.in)*length(mono_error))
 
-# add the observed values
-BEF_output_sum <- 
-  BEF_output_sum %>%
-  rename(BE1 = Beff)
-
 # plot the results
 ggplot() +
   geom_errorbar(data = m1.pred %>% mutate(C = as.character(C)), 
@@ -154,4 +180,3 @@ ggplot() +
              mapping = aes(x = BE1, y = PI_true)) +
   theme_bw()
   
-### END

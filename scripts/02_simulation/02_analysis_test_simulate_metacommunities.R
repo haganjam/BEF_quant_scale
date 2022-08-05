@@ -75,7 +75,7 @@ env_niche_breadth <- lapply(1:N_REP, function(x) round(runif(species, 0.1, 0.25)
 print(env_niche_breadth)
 
 # select time-points to calculate biodiversity effects for
-t_sel <- c(10, 20, 30, 40, 50)
+t_sel <- c(25, 50, 75, 100)
 
 # set different levels of starting abundances for the different species
 start_abun <- round(runif(n = species, 0, 30), 0)

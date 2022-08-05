@@ -89,6 +89,25 @@ BEF_sum_list <- foreach(
   
   BEF_sum[["mono_error"]] <- mean(mono_error, na.rm = TRUE)
   
+  # calculate the average PI range around the monocultures
+  PI_m <- apply(MC_sims2[[i]] [["MC.x.pred"]], 2, function(x) { 
+    
+    PI_range <- (quantile(x, 0.95) - quantile(x, 0.05))
+    
+    return(PI_range) } 
+    
+  )
+  
+  BEF_sum[["mono_PI_range"]] <- mean(PI_m, na.rm = TRUE)
+  
+  # reorder the columns
+  BEF_sum <- 
+    
+    BEF_sum %>%
+    select(t_steps, dispersal, start_abun, optima, niche_breadth, inter_comp, mono_cor, mono_error, mono_PI_range,
+           Beff, Value_obs, mu,
+           PI_low, PI_high)
+  
   # reorder the columns
   BEF_sum <- 
     
