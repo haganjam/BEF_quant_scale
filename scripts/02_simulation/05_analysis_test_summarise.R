@@ -108,14 +108,6 @@ BEF_sum_list <- foreach(
            Beff, Value_obs, mu,
            PI_low, PI_high)
   
-  # reorder the columns
-  BEF_sum <- 
-    
-    BEF_sum %>%
-    select(t_steps, dispersal, start_abun, optima, niche_breadth, inter_comp, mono_cor, mono_error,
-           Beff, Value_obs, mu,
-           PI_low, PI_high)
-  
   return(BEF_sum)
   
   }

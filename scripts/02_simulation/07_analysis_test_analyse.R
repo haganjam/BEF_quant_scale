@@ -32,6 +32,7 @@ library(rethinking)
 # load the data
 BEF_output <- readRDS(here("results/BEF_output.rds"))
 head(BEF_output)
+names(BEF_output)
 
 # check the summary statistics and variable structures
 summary(BEF_output)
@@ -74,11 +75,6 @@ BEF_output <-
 View(BEF_output)  
 summary(BEF_output)
 
-BEF_output %>%
-  filter(mu_deviation_perc > 5000) %>%
-  pull(model_ID) %>%
-  unique()
-
 # is there a relationship between monoculture correlation and mu deviation
 ggplot(data = BEF_output,
        mapping = aes(x = log10(mono_error), y = (mu_deviation) )) +
@@ -95,17 +91,13 @@ ggplot(data = BEF_output,
   theme_bw()
 
 ggplot(data = BEF_output,
-       mapping = aes(x = log10(mono_error), y = log10(PI_high-PI_low) )) +
+       mapping = aes(x = (mono_PI_range), y = log10(mu_deviation) )) +
   geom_point() +
   geom_smooth() +
   facet_wrap(~Beff, scales = "free") +
   theme_bw()
 
 # calculate accuracy metrics
-
-hist(BEF_output$mu_deviation_perc)
-range(BEF_output$mu_deviation_perc)
-
 BEF_output_sum <- 
   BEF_output %>%
   group_by(Beff) %>%
@@ -127,24 +119,24 @@ hist(BEF_output$mono_cor)
 m.dat <- 
   list(BE = as.integer(as.factor(BEF_output$Beff)),
        C = BEF_output$mono_cor,
+       MR = BEF_output$mono_PI_range,
        ME = log10(BEF_output$mono_error),
        INT = ifelse(BEF_output$PI_true == TRUE, 1, 0) )
 
 m1 <- ulam(
   alist(
     INT ~ dbinom( 1 , p ),
-    logit(p) <- a[BE] + b[BE]*C + b1[BE]*ME + b2[BE]*C*ME,
+    logit(p) <- a[BE] + b[BE]*C + b1[BE]*MR,
     
     a[BE] ~ dnorm( 0 , 2),
     b[BE] ~ dnorm(0, 2),
-    b1[BE] ~ dnorm(0, 2),
-    b2[BE] ~ dnorm(0, 2)
+    b1[BE] ~ dnorm(0, 2)
     
   ) , data = m.dat , chains = 4, cores = 4 )
 
 # check the model outputs: Rhat values are good and traceplots look decent
 precis( m1 , depth = 2 )
-traceplot(m1)
+traceplot( m1 )
 
 saveRDS(m1, file = here("results/stan_model_m1.rds"))
 
@@ -152,10 +144,10 @@ saveRDS(m1, file = here("results/stan_model_m1.rds"))
 
 # choose the correlations
 cor.in <- c(0.1, 0.9)
-mono_error <- c(5000)
+mono_range <- c(5000)
 
 m1.pred <- expand.grid(C = cor.in,
-                       ME = log10(mono_error),
+                       ME = log10(mono_range),
                        BE = unique(as.integer(as.factor(BEF_output$Beff))))
 
 # use sim to simulate observations for this data.frame
@@ -167,7 +159,7 @@ m1.pred$PI_low <- apply(m1.sim, 2, function(x) PI(samples = x, prob = 0.90)[1] )
 m1.pred$PI_high <- apply(m1.sim, 2, function(x) PI(samples = x, prob = 0.90)[2] )
 
 # add the labels
-m1.pred$BE1 <- rep(levels(as.factor(BEF_output$Beff))[m.dat$BE[1:11]], each = length(cor.in)*length(mono_error))
+m1.pred$BE1 <- rep(levels(as.factor(BEF_output$Beff))[m.dat$BE[1:11]], each = length(cor.in)*length(mono_range))
 
 # plot the results
 ggplot() +
