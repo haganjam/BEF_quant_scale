@@ -34,6 +34,10 @@ str(BEF_output)
 # view the dataset
 View(BEF_output)
 
+# set-up variables for testing the accuracy
+
+
+
 # how do we want to test the accuracy
 BEF_output <- 
   BEF_output %>%
@@ -61,13 +65,6 @@ ggplot(data = BEF_output,
   facet_wrap(~Beff, scales = "free") +
   theme_bw()
 
-ggplot(data = BEF_output,
-       mapping = aes(x = (mono_cor), y = log10(PI_high-PI_low) )) +
-  geom_point() +
-  geom_smooth() +
-  facet_wrap(~Beff, scales = "free") +
-  theme_bw()
-
 # calculate accuracy metrics
 BEF_output_sum <- 
   BEF_output %>%
@@ -77,10 +74,11 @@ BEF_output_sum <-
             accuracy = (sum(INT_true/n())))
 print(BEF_output_sum)
 
-# fit a binomial regression to model the accuracy based on the effect and the monoculture correlation
-
-# check the distribution of correlation
+# what is the average monoculture correlation?
+mean(BEF_output$mono_cor)
 hist(BEF_output$mono_cor)
+
+# fit a binomial regression to model the accuracy based on the effect and the monoculture correlation
 
 m.dat <- 
   list(BE = as.integer(as.factor(BEF_output$Beff)),

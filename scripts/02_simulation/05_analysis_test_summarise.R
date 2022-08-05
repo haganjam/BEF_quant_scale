@@ -29,9 +29,6 @@ library(dplyr)
 library(foreach)
 library(doParallel)
 
-# set the percentage threshold from the actual biodiversity effect (see details above)
-thresh <- 0.6
-
 # load the observed BEF values
 MC_sims2 <- readRDS(file = here("BEF_quant_scale/results/MC_sims2.rds"))
 
@@ -78,18 +75,6 @@ BEF_sum_list <- foreach(
       
     )
   
-  # generate some additional summary variables
-  
-  BEF_sum <- 
-    
-    BEF_sum %>%
-    mutate(Value_obs_min = (1-thresh)*Value_obs,
-           Value_obs_max = (1+thresh)*Value_obs ) %>%
-    mutate(PI_true = if_else( ( (Value_obs > PI_low) & (Value_obs < PI_high) ), TRUE, FALSE ) ) %>%
-    mutate(PI_mu_true = if_else( (PI_low > Value_obs_min) & (PI_high < Value_obs_max), TRUE, FALSE ) ) %>%
-    mutate(mu_deviation = round( abs((abs(mu - Value_obs)/Value_obs)*100), 4 )  ) %>%
-    mutate(mu_threshold = thresh)
-  
   # add the identifer variables  
   BEF_sum <- bind_cols( MC_sims2[[i]] [["MC.x.ids"]], BEF_sum)
   
@@ -114,17 +99,12 @@ BEF_sum_list <- foreach(
   BEF_sum[["mono_error"]] <- mean(mono_error, na.rm = TRUE)
   
   # reorder the columns
-  
-  # important: When PI_true is TRUE, it means that the 95% PI interval is within
-  # thresh*obs value +- obs value which means that 95% PI interval is narrow enough
-  # to be meaningful
   BEF_sum <- 
     
     BEF_sum %>%
     select(t_steps, dispersal, start_abun, optima, niche_breadth, inter_comp, mono_cor, mono_error,
-           Beff, Value_obs, mu, mu_deviation, mu_threshold,
-           PI_low, PI_high,
-           PI_true, PI_mu_true)
+           Beff, Value_obs, mu,
+           PI_low, PI_high)
   
   return(BEF_sum)
   
