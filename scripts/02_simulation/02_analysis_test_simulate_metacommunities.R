@@ -31,7 +31,8 @@ N_REP <- 1000
 species <- 5
 patches <- 20
 timesteps <- 100
-dispersal <- 0.05
+dispersal_min <- 0.01
+dispersal_max <- 0.1
 extirp_prob <- 0.00001
 
 # maximum growth parameters
@@ -39,7 +40,9 @@ max_r <- 5
 K_max <- NA
 
 # set-up parameters for the competition matrices
-int_min <- 0.05*0
+int_min1 <- 0.05*0
+int_min2 <- 0.05*0.3
+int_max <- 0.05*1.2
 int_max <- 0.05*1.5
 intra <- 0.05*1
 
@@ -100,7 +103,9 @@ MC_sims <-
       
       matrix(
         
-        runif(n = species*species, min = int_min, max = int_max),  
+        runif(n = species*species, 
+              min = runif(1, int_min1, int_min2),
+              max = runif(1, int_max1, int_max2) ),  
         nrow = species, 
         ncol = species
         
@@ -130,7 +135,7 @@ MC_sims <-
     MC.x <- 
       
       sim_metacomm_BEF(patches = patches, species = species, 
-                       dispersal = dispersal,
+                       dispersal = runif(1, dispersal_min, dispersal_max),
                        timesteps = timesteps, 
                        start_abun = start_abun,
                        extirp_prob = extirp_prob,

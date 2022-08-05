@@ -4,14 +4,20 @@
 #' @description: Examines accuracy of the pipeline on simulated metacommunities
 #' 
 #' @details: This script analyses the summary data generated from our different
-#' simulated metacommunities.
+#' simulated metacommunities. We use three key metrics of accuracy:
 #' 
-#' PI_true: This simply measures whether the observed value is within the 
-#' 90% percentile interval of the distribution.
+#' 1. mu_deviation: This measures the absolute deviation of the mean of the posterior
+#' from the observed value as a percentage of the observed value.
 #' 
-#' PI_mu_true: This measures whether the 90% percentile interval of the posterior distribution
-#' is contained within 0.50 x (observed value) and 1.5 x (observed value). This quantity
-#' shows whether interval generated is reasonably close to the observed value.
+#' 2. PI_obs_true: This measures whether the observed biodiversity effects fall
+#' within the 90% percentile interview of the posterior distribution
+#' 
+#' 3. PI_true: The problem with PI_obs_true is that when there is a lot of uncertainty,
+#' the PI 90% can be extremely wide. Therefore, whilst the 90% PI may contain the
+#' observed value, it is essentially meaningless as the 90% PI is so wide. To solve
+#' this problem, we determine which 90% PI ranges are less than the range of the observed
+#' value +- thresh*observed value. If the 90% PI range is less than this threshold range
+#' and the observed value falls within the range, then PI_true is given as TRUE.
 #' 
 #' @authors: James G. Hagan (james_hagan(at)outlook.com)
 #' 
@@ -36,12 +42,20 @@ View(BEF_output)
 
 # set-up variables for testing the accuracy
 
+# set the mean range accuracy: 
+thresh <- 0.6
 
-
-# how do we want to test the accuracy
 BEF_output <- 
+  
   BEF_output %>%
-  mutate(INT_true = ifelse( (PI_true == TRUE) & (PI_mu_true) == TRUE, TRUE, FALSE ))
+  mutate(mu_deviation = round( abs((abs(mu - Value_obs)/Value_obs)*100), 5 )  ) %>%
+  mutate(mu_threshold = thresh) %>%
+  mutate(Value_obs_range = abs(2*thresh*Value_obs) ) %>%
+  mutate(PI_range = PI_high-PI_low) %>%
+  mutate(PI_range_true = ifelse( PI_range > Value_obs_range, FALSE, TRUE)  ) %>%
+  mutate(PI_obs_true = ifelse( (PI_low < Value_obs) & (PI_high > Value_obs), TRUE, FALSE ) ) %>%
+  mutate(PI_true = ifelse( (PI_range_true & PI_obs_true), TRUE, FALSE ))
+  
 
 # is there a relationship between monoculture correlation and mu deviation
 ggplot(data = BEF_output,
@@ -69,9 +83,8 @@ ggplot(data = BEF_output,
 BEF_output_sum <- 
   BEF_output %>%
   group_by(Beff) %>%
-  summarise(PI_true_accuracy = sum(PI_true)/n(),
-            PI_mu_true_accuracy = sum(PI_mu_true)/n(),
-            accuracy = (sum(INT_true/n())))
+  summarise(PI_obs_true = sum(PI_obs_true)/n(),
+            PI_true = sum(PI_true)/n())
 print(BEF_output_sum)
 
 # what is the average monoculture correlation?
@@ -83,15 +96,18 @@ hist(BEF_output$mono_cor)
 m.dat <- 
   list(BE = as.integer(as.factor(BEF_output$Beff)),
        C = BEF_output$mono_cor,
+       ME = log10(BEF_output$mono_error),
        INT = ifelse(BEF_output$PI_true == TRUE, 1, 0) )
 
 m1 <- ulam(
   alist(
     INT ~ dbinom( 1 , p ),
-    logit(p) <- a[BE] + b[BE]*C,
+    logit(p) <- a[BE] + b[BE]*C + b1[BE]*ME + b2[BE]*C*ME,
     
     a[BE] ~ dnorm( 0 , 2),
-    b[BE] ~ dnorm(0, 2)
+    b[BE] ~ dnorm(0, 2),
+    b1[BE] ~ dnorm(0, 2),
+    b2[BE] ~ dnorm(0, 2)
     
   ) , data = m.dat , chains = 4, cores = 4 )
 
@@ -99,12 +115,16 @@ m1 <- ulam(
 precis( m1 , depth = 2 )
 traceplot(m1)
 
+saveRDS(m1, file = here("results/stan_model_m1.rds"))
+
 # set-up a data.frame of data to simulate
 
 # choose the correlations
-cor.in <- c(0.2, 0.8)
+cor.in <- c(0.1, 0.9)
+mono_error <- c(1000)
 
 m1.pred <- expand.grid(C = cor.in,
+                       ME = log10(mono_error),
                        BE = unique(as.integer(as.factor(BEF_output$Beff))))
 
 # use sim to simulate observations for this data.frame
@@ -116,22 +136,22 @@ m1.pred$PI_low <- apply(m1.sim, 2, function(x) PI(samples = x, prob = 0.90)[1] )
 m1.pred$PI_high <- apply(m1.sim, 2, function(x) PI(samples = x, prob = 0.90)[2] )
 
 # add the labels
-m1.pred$BE1 <- rep(levels(as.factor(BEF_output$Beff))[m.dat$BE[1:11]], each = length(cor.in))
+m1.pred$BE1 <- rep(levels(as.factor(BEF_output$Beff))[m.dat$BE[1:11]], each = length(cor.in)*length(mono_error))
 
 # add the observed values
 BEF_output_sum <- 
   BEF_output_sum %>%
-  rename(BE1 = Beff, mu = PI_true_accuracy)
+  rename(BE1 = Beff)
 
 # plot the results
 ggplot() +
-  geom_errorbar(data = m1.pred, 
+  geom_errorbar(data = m1.pred %>% mutate(C = as.character(C)), 
                 mapping = aes(x = BE1, ymin = PI_low, ymax = PI_high, 
-                              colour = as.character(C) ),
+                              colour = C),
                 width = 0,
                 position = position_dodge(width = 0.75)) +
   geom_point(data = BEF_output_sum,
-             mapping = aes(x = BE1, y = mu)) +
+             mapping = aes(x = BE1, y = PI_true)) +
   theme_bw()
   
 ### END
