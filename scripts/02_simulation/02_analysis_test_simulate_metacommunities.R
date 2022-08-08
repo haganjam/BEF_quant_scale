@@ -25,7 +25,7 @@ source(here("scripts/02_simulation/01_mcomsimr_simulate_MC2_function.R"))
 set.seed(54258748)
 
 # number of replicate simulations
-N_REP <- 5
+N_REP <- 1000
 
 # set-up basic model inputs
 species <- 5
@@ -117,7 +117,7 @@ MC_sims <-
     # simulate environmental variables
     
     # randomly draw an autocorrelation value between 300 and 500
-    autocorr <- round(runif(1, 200, 500), 0)
+    autocorr <- round(runif(1, 300, 500), 0)
     
     # use the env_generate() function to generate a landscape of environmental variables
     env_var <- 
