@@ -24,10 +24,10 @@ library(doParallel)
 BEF_post <- readRDS(file = here("BEF_quant_scale/results/BEF_post.rds"))
 
 # remove the NA values from the posterior
-NA_remove <- sapply(BEF_post, function(x) any( is.na(x[["Value"]]) ) )
+NA_remove <- sapply(BEF_post, function(x) !any( is.na(x[["Value"]]) ) )
 
 # load the observed BEF values
-MC_sims2 <- readRDS(file = here("BEF_quant_scale/results/MC_sims2.rds")) 
+MC_sims2 <- readRDS(file = here("BEF_quant_scale/results/MC_sims2.rds"))
 
 # remove the NAs
 BEF_post <- BEF_post[NA_remove]
