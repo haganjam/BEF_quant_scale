@@ -91,7 +91,7 @@ BEF_sum_list <- foreach(
   BEF_sum[["mono_cor"]] <- cor(mu_m, MC_sims2[[i]] [["MC.x.NA"]]$M[is.na(MC_sims2[[i]] [["MC.x.NA"]]$M1)])
   
   # calculate the proportion of monocultures where the range is greater than 100% of the mean
-  BEF_sum[["prop_wide_mono"]] <- sum(ifelse(mu_PI_range > 100, 1, 0))/length(mu_PI_range)
+  BEF_sum[["prop_wide_mono"]] <- sum(ifelse(mu_PI > 100, 1, 0))/length(mu_PI)
   
   # calculate the maximum monoculture range size from the mean as a percentage
   BEF_sum[["max_mono_width"]] <- max(mu_PI)
