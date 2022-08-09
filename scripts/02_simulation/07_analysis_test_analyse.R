@@ -29,6 +29,9 @@ library(ggplot2)
 library(ggbeeswarm)
 library(rethinking)
 
+# load relevant functions
+source(here("scripts/Function_plotting_theme.R"))
+
 # load the data
 BEF_output <- readRDS(here("results/BEF_output.rds"))
 head(BEF_output)
@@ -52,6 +55,14 @@ mean(BEF_output$mu)
 summary(BEF_output)
 hist(BEF_output$mono_PI_range)
 
+# remove the models where the max_mono_width is less than 200
+BEF_output <- 
+  BEF_output %>%
+  filter(max_mono_width < 200)
+
+# how many models are left over?
+length(unique(BEF_output$model_ID))
+
 # set-up variables for testing the accuracy
 
 # set the mean range accuracy: 
@@ -68,7 +79,6 @@ BEF_output <-
   mutate(PI_range_true = ifelse( PI_range > Value_obs_range, FALSE, TRUE)  ) %>%
   mutate(PI_obs_true = ifelse( (PI_low < Value_obs) & (PI_high > Value_obs), TRUE, FALSE ) ) %>%
   mutate(PI_true = ifelse( (PI_range_true & PI_obs_true), TRUE, FALSE ))
-View(BEF_output)  
 summary(BEF_output)
 
 # is there a relationship between monoculture correlation and mu deviation
@@ -86,15 +96,6 @@ ggplot(data = BEF_output,
   facet_wrap(~Beff, scales = "free") +
   theme_bw()
 
-ggplot(data = BEF_output,
-       mapping = aes(x = (mono_PI_range), y = log10(mu_deviation) )) +
-  geom_point() +
-  geom_smooth() +
-  facet_wrap(~Beff, scales = "free") +
-  theme_bw()
-
-plot(BEF_output$mono_cor, BEF_output$mono_PI_range)
-
 # calculate accuracy metrics
 BEF_output_sum <- 
   BEF_output %>%
@@ -107,25 +108,19 @@ BEF_output_sum <-
   rename(BE1 = Beff)
 print(BEF_output_sum)
 
-# what is the average monoculture correlation?
-mean(BEF_output$mono_cor)
-hist(BEF_output$mono_cor)
-
 # accuracy test 1: PI_true
 
 # fit a binomial regression to model the accuracy based on the effect and the monoculture correlation
 m.dat <- 
   list(BE = as.integer(as.factor(BEF_output$Beff)),
-       C = BEF_output$mono_cor,
-       INT = ifelse(BEF_output$PI_true == TRUE, 1, 0) )
+       INT = ifelse(BEF_output$PI_obs_true == TRUE, 1, 0) )
 
 m1 <- ulam(
   alist(
     INT ~ dbinom( 1 , p ),
-    logit(p) <- a[BE] + b[BE]*C,
+    logit(p) <- a[BE],
     
-    a[BE] ~ dnorm( 0 , 2),
-    b[BE] ~ dnorm(0, 2)
+    a[BE] ~ dnorm( 0 , 2)
     
   ) , data = m.dat , chains = 4, cores = 4 )
 
@@ -133,36 +128,35 @@ m1 <- ulam(
 precis( m1 , depth = 2 )
 traceplot( m1 )
 
-saveRDS(m1, file = here("results/stan_model_m1.rds"))
-
 # set-up a data.frame of data to simulate
-
-# choose the correlations
-cor.in <- c(0.1, 0.9)
-
-m1.pred <- expand.grid(C = cor.in,
-                       BE = unique(as.integer(as.factor(BEF_output$Beff))))
+m1.pred <- expand.grid(BE = unique(as.integer(as.factor(BEF_output$Beff))))
 
 # use sim to simulate observations for this data.frame
 m1.sim <- link(fit = m1, data = m1.pred)
 
-# summarise these data
-m1.pred$mu <- apply(m1.sim, 2, mean)
-m1.pred$PI_low <- apply(m1.sim, 2, function(x) PI(samples = x, prob = 0.90)[1] )  
-m1.pred$PI_high <- apply(m1.sim, 2, function(x) PI(samples = x, prob = 0.90)[2] )
+# process into a data.frame
 
-# add the labels
-m1.pred$BE1 <- rep(levels(as.factor(BEF_output$Beff))[m.dat$BE[1:11]], each = length(cor.in))
+# samples to plot
+n <- 500
+
+m1.post <- m1.sim[,1][sample(x = 1:nrow(m1.sim), n)]
+for(i in 2:ncol(m1.sim)) {
+  m1.post <- c(m1.post, m1.sim[,i][sample(x = 1:nrow(m1.sim), n)] )
+}
+
+m1.post <- data.frame(BE1 = rep(levels(as.factor(BEF_output$Beff))[m.dat$BE[1:11]], each = n),
+                      Value = m1.post)
 
 # plot the results
 ggplot() +
-  geom_errorbar(data = m1.pred %>% mutate(C = as.character(C)), 
-                mapping = aes(x = BE1, ymin = PI_low, ymax = PI_high, 
-                              colour = C),
-                width = 0,
-                position = position_dodge(width = 0.75)) +
+  geom_quasirandom(data = m1.post,
+                   mapping = aes(x = BE1, y = Value),
+                   alpha = 0.01, width = 0.2) +
   geom_point(data = BEF_output_sum,
-             mapping = aes(x = BE1, y = PI_true)) +
-  theme_bw()
+             mapping = aes(x = BE1, y = PI_obs_true), 
+             colour = "red") +
+  scale_y_continuous(limits = c(0, 1)) +
+  geom_hline(yintercept = 0.5, linetype = "dashed") +
+  theme_meta()
 
 ### END
