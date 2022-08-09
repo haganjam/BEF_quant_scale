@@ -20,11 +20,18 @@ library(dplyr)
 library(foreach)
 library(doParallel)
 
-# load the observed BEF values
-MC_sims2 <- readRDS(file = here("BEF_quant_scale/results/MC_sims2.rds"))
-
 # load the posterior data
 BEF_post <- readRDS(file = here("BEF_quant_scale/results/BEF_post.rds"))
+
+# remove the NA values from the posterior
+NA_remove <- sapply(BEF_post, function(x) any( is.na(x[["Value"]]) ) )
+
+# load the observed BEF values
+MC_sims2 <- readRDS(file = here("BEF_quant_scale/results/MC_sims2.rds")) 
+
+# remove the NAs
+BEF_post <- BEF_post[NA_remove]
+MC_sims2 <- MC_sims2[NA_remove]
 
 # set-up a parallel for-loop
 n.cores <- 10
@@ -72,12 +79,12 @@ BEF_sum_list <- foreach(
   # calculate the overall monoculture error
   
   # summarise the posterior distribution into a mean and PI range
-  mu_m <- apply(MC_sims2[[i]] [["MC.x.pred"]], 2, function(x) mean(x) )
+  mu_m <- apply(MC_sims2[[i]] [["MC.x.pred"]], 2, function(x) mean(x, na.rm = TRUE) )
   
   mu_PI <- 
     apply(MC_sims2[[i]] [["MC.x.pred"]], 2, function(z) {
       
-      range_out <- quantile(z, 0.95) - quantile(z, 0.05)
+      range_out <- quantile(z, 0.95, na.rm = TRUE) - quantile(z, 0.05, na.rm = TRUE)
       
       return(range_out)
       
@@ -94,7 +101,7 @@ BEF_sum_list <- foreach(
   BEF_sum[["prop_wide_mono"]] <- sum(ifelse(mu_PI > 100, 1, 0))/length(mu_PI)
   
   # calculate the maximum monoculture range size from the mean as a percentage
-  BEF_sum[["max_mono_width"]] <- max(mu_PI)
+  BEF_sum[["max_mono_width"]] <- max(mu_PI, na.rm = TRUE)
   
   # reorder the columns
   BEF_sum <- 
