@@ -57,8 +57,8 @@ BEF_sum_list <- foreach(
       BEF_post[[i]] %>% 
         group_by(Beff) %>%
         summarise(mu = mean(Value, na.rm = TRUE),
-                  PI_low = round( quantile(Value, prob = 0.05), 2),
-                  PI_high = round( quantile(Value, prob = 0.95), 2) ),
+                  PI_low = round( quantile(Value, prob = 0.05, na.rm = TRUE), 2),
+                  PI_high = round( quantile(Value, prob = 0.95, na.rm = TRUE), 2) ),
       
       rename(MC_sims2[[i]] [["BEF_obs"]], Value_obs = Value ), 
       
