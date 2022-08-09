@@ -34,6 +34,8 @@ BEF_output <- readRDS(here("results/BEF_output.rds"))
 head(BEF_output)
 names(BEF_output)
 
+hist(BEF_output$max_mono_width)
+
 # check the summary statistics and variable structures
 summary(BEF_output)
 str(BEF_output)
@@ -45,16 +47,6 @@ View(BEF_output)
 hist(BEF_output$mu)
 range(BEF_output$mu)
 mean(BEF_output$mu)
-
-# remove the major, major outliers
-BEF_output$cond <- (BEF_output$mu < quantile(BEF_output$mu, 0.99)) & (BEF_output$mu > quantile(BEF_output$mu, 0.01))
-
-BEF_output <- 
-  BEF_output %>%
-  group_by(model_ID) %>%
-  mutate(outliers = ifelse(any(cond == FALSE), 1, 0)) %>%
-  filter(outliers != 1) %>%
-  select(-cond)
 
 # check the summary variable
 summary(BEF_output)
@@ -81,7 +73,7 @@ summary(BEF_output)
 
 # is there a relationship between monoculture correlation and mu deviation
 ggplot(data = BEF_output,
-       mapping = aes(x = log10(mono_error), y = (mu_deviation) )) +
+       mapping = aes(x = prop_wide_mono, y = log10(mu_deviation) )) +
   geom_point() +
   geom_smooth() +
   facet_wrap(~Beff, scales = "free") +
