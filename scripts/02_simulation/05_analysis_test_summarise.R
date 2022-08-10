@@ -20,6 +20,9 @@ library(dplyr)
 library(foreach)
 library(doParallel)
 
+
+# uncertainty in monoculture and initial relative abundance
+
 # load the posterior data
 BEF_post <- readRDS(file = here("BEF_quant_scale/results/BEF_post.rds"))
 
@@ -54,9 +57,7 @@ BEF_sum_list <- foreach(
   # load the dplyr package
   library(dplyr)
   
-  # set-up the PI function from the rethinking package
-  
-  
+  # generate summary statistics
   BEF_sum <- 
     
     full_join(
@@ -119,7 +120,62 @@ BEF_sum_list <- foreach(
 BEF_output <- dplyr::bind_rows(BEF_sum_list, .id = "model_ID")
 
 # output this as a .rds file
-# save this as an RDS file
 saveRDS(object = BEF_output, file = here("BEF_quant_scale/results/BEF_output.rds"))
+
+
+# uncertainty in initial relative abundance
+
+# load the posterior data
+BEF_post2 <- readRDS(file = here("BEF_quant_scale/results/BEF_post2.rds"))
+
+# load the observed BEF values
+MC_sims2 <- readRDS(file = here("BEF_quant_scale/results/MC_sims2.rds"))
+
+BEF_sum_list2 <- foreach(
+  
+  i = 1:length(MC_sims2)
+  
+) %dopar% {
+  
+  # load the dplyr package
+  library(dplyr)
+  
+  # generate summary statistics
+  BEF_sum2 <- 
+    
+    full_join(
+      
+      BEF_post2[[i]] %>% 
+        group_by(Beff) %>%
+        summarise(mu = mean(Value, na.rm = TRUE),
+                  PI_low = round( quantile(Value, prob = 0.05, na.rm = TRUE), 2),
+                  PI_high = round( quantile(Value, prob = 0.95, na.rm = TRUE), 2) ),
+      
+      rename(MC_sims2[[i]] [["BEF_obs"]], Value_obs = Value ), 
+      
+      by = "Beff"
+      
+    )
+  
+  # add the identifer variables  
+  BEF_sum2 <- bind_cols( MC_sims2[[i]] [["MC.x.ids"]], BEF_sum2)
+  
+  # reorder the columns
+  BEF_sum2 <- 
+    
+    BEF_sum2 %>%
+    select(t_steps, dispersal, start_abun, optima, niche_breadth, inter_comp,
+           Beff, Value_obs, mu,
+           PI_low, PI_high)
+  
+  return(BEF_sum2) 
+  
+}
+
+# bind this list into a data.frame that can be analysed
+BEF_output2 <- dplyr::bind_rows(BEF_sum_list2, .id = "model_ID")
+
+# output this as a .rds file
+saveRDS(object = BEF_output2, file = here("BEF_quant_scale/results/BEF_output2.rds"))
 
 ### END
