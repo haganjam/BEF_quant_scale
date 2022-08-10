@@ -28,7 +28,6 @@ library(dplyr)
 library(ggplot2)
 library(ggbeeswarm)
 library(rethinking)
-library(viridis)
 
 # load relevant functions
 source(here("scripts/Function_plotting_theme.R"))
@@ -141,17 +140,6 @@ m1.post$BE <- factor(m1.post$BE,
 BEF_output_sum$BE <- factor(BEF_output_sum$BE,
                             levels = c("LC", "LS", "TC", "TS", "NBE", "NO", "IT", "AS", "TI", "SI", "ST"))
 
-# set-up the colour palette
-v.col <- c(c("black", "brown"), 
-           viridis(option = "C", n = 4, alpha = 1, begin = 0, end = 0.4),
-           viridis(option = "C", n = 5, alpha = 1, begin = 0.5, end = 1))
-names(v.col) <- c("NBE", "NO", "LC", "LS", "TC", "TS", "IT", "AS", "TI", "SI", "ST")
-
-# get the correct order
-eff_in <- c("LC", "LS", "TC", "TS", "NBE", "NO", "IT", "AS", "TI", "SI", "ST")
-v.col.sel <- v.col[ names(v.col) %in% eff_in ]
-v.col.sel <- v.col.sel[order(match(names(v.col.sel) , eff_in))]
-
 # plot the results
 ggplot() +
   geom_quasirandom(data = m1.post,
@@ -160,7 +148,7 @@ ggplot() +
   geom_point(data = BEF_output_sum,
              mapping = aes(x = BE, y = PI_obs_true, colour = BE)) +
   scale_y_continuous(limits = c(0.3, 0.9)) +
-  scale_colour_manual(values = v.col.sel) +
+  scale_colour_manual(values = v_col_BEF()) +
   geom_hline(yintercept = 0.5, linetype = "dashed") +
   theme_meta() +
   theme(legend.position = "none")

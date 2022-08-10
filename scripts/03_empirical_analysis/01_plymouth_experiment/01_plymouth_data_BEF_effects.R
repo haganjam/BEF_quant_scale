@@ -145,22 +145,7 @@ df_unc_sum <-
   summarise(Value_m = mean(Value),
             Value_sd = sd(Value))
 
-# set-up a colour palette
-nbe.no.col <- c("black", "brown")
-names(nbe.no.col) <- c("NBE", "NO")
-v.col.sel.comp <- viridis(option = "C", n = 4, alpha = 1, begin = 0, end = 0.4)
-names(v.col.sel.comp) <- c("LC", "LS", "TC", "TS")
-v.col.ins <- viridis(option = "C", n = 5, alpha = 1, begin = 0.5, end = 1)
-names(v.col.ins) <- c("IT", "AS", "TI", "SI", "ST")
-
-# combine this colour palette
-v.col <- c(nbe.no.col, v.col.sel.comp, v.col.ins)
-
-# compare local and total complementarity and selection effects
-eff_in <- c("LC", "LS", "TC", "TS")
-v.col.sel <- v.col[ names(v.col) %in% eff_in ]
-v.col.sel <- v.col.sel[order(match(names(v.col.sel) , eff_in))]
-
+# compare total to local selection and complementarity
 p1 <- 
   ggplot(data = df_unc_sum %>%
          filter(Beff %in% eff_in)) +
@@ -170,8 +155,8 @@ p1 <-
                               ymin = Value_m - Value_sd,
                               ymax = Value_m + Value_sd),
                 width = 0) + 
-  scale_colour_manual(values = v.col.sel) +
-  scale_fill_manual(values = v.col.sel) +
+  scale_colour_manual(values = v_col_BEF(eff_in = c("LC", "LS", "TC", "TS")) ) +
+  scale_fill_manual(values = v_col_BEF(eff_in = c("LC", "LS", "TC", "TS"))) +
   ylab("Effect (cover (%) time-1)") +
   xlab(NULL) +
   theme_meta() +
@@ -179,10 +164,6 @@ p1 <-
 plot(p1)
   
 # compare net biodiversity effects, total complementarity and total selection
-eff_in <- c("NBE", "TC", "NO", "IT")
-v.col.sel <- v.col[ names(v.col) %in% eff_in ]
-v.col.sel <- v.col.sel[order(match(names(v.col.sel) , eff_in))]
-
 p2 <- 
   ggplot(data = df_unc_sum %>%
          filter(Beff %in% eff_in) %>%
@@ -195,8 +176,8 @@ p2 <-
                               ymin = Value_m - Value_sd,
                               ymax = Value_m + Value_sd),
                 width = 0) +
-  scale_colour_manual(values = v.col.sel) +
-  scale_fill_manual(values = v.col.sel) +
+  scale_colour_manual(values = v_col_BEF(eff_in = c("NBE", "TC", "NO", "IT"))) +
+  scale_fill_manual(values = v_col_BEF(eff_in = c("NBE", "TC", "NO", "IT"))) +
   ylab("Effect (cover (%) time-1)") +
   xlab(NULL) +
   theme_meta() +
@@ -204,10 +185,6 @@ p2 <-
 plot(p2)
 
 # examine the distribution of the insurance effects
-eff_in <- c("AS", "TI", "SI", "ST")
-v.col.sel <- v.col[ names(v.col) %in% eff_in ]
-v.col.sel <- v.col.sel[order(match(names(v.col.sel) , eff_in))]
-
 p3 <- 
   ggplot(data = df_unc_sum %>%
          filter(Beff %in% eff_in) %>%
@@ -220,8 +197,8 @@ p3 <-
                               ymin = Value_m - Value_sd,
                               ymax = Value_m + Value_sd),
                 width = 0) +
-  scale_colour_manual(values = v.col.sel) +
-  scale_fill_manual(values = v.col.sel) +
+  scale_colour_manual(values = v_col_BEF(eff_in = c("AS", "TI", "SI", "ST"))) +
+  scale_fill_manual(values = v_col_BEF(eff_in = c("AS", "TI", "SI", "ST"))) +
   ylab("Effect (cover (%) time-1)") +
   xlab(NULL) +
   theme_meta() +
