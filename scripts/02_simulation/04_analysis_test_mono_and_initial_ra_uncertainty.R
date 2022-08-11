@@ -1,7 +1,7 @@
 #'
 #' @title: Simulate metacommunities to test the analytical pipeline
 #' 
-#' @description: Calculates biodiversity effects when monoculture data is missing
+#' @description: Calculates biodiversity effects when monoculture data and initial relative abundance data is missing
 #' 
 #' @details: This script uses the posterior distributions generated for each missing monoculture
 #' and a distribution of starting relative abundances from the Dirichlet distribution to generate
@@ -110,49 +110,5 @@ BEF_post <- foreach(
 
 # save this as an RDS file
 saveRDS(object = BEF_post, file = here("BEF_quant_scale/results/BEF_post.rds"))
-
-
-# get biodiversity effects considering uncertainty in:
-
-# 1. initial relative abundances
-
-BEF_post2 <- foreach(
-  
-  i = 1:length(MC_sims2)
-  
-) %dopar% {
-
-  RYe_reps <- 
-    
-    apply(
-      
-      X = start_RA, 
-      
-      MARGIN = 2, 
-      
-      FUN = function(RA) {
-        
-        # calculate te biodiversity effects for each of the potential starting abundances
-        BEF_post.x <- Isbell_2018_sampler(data = x[[i]]$MC.x.NA, RYe = RA, RYe_post = FALSE)
-        names(BEF_post.x[["L.Beff"]])[names(BEF_post.x[["L.Beff"]]) == "L.Beff"] <- "Beff"
-        
-        # combine the general biodiversity effects and local effects into one data.frame
-        BEF_post.x <- rbind(BEF_post.x[["Beff"]], BEF_post.x[["L.Beff"]])
-        
-        # convert to a data.frame
-        BEF_post.x <- as.data.frame(BEF_post.x, row.names = NULL)
-        
-        return(BEF_post.x)
-        
-      } )
-  
-  output <- dplyr::bind_rows(RYe_reps, .id = "rep")
-  
-  return(output)
-  
-  }
-
-# save this as an RDS file
-saveRDS(object = BEF_post2, file = here("BEF_quant_scale/results/BEF_post2.rds"))
 
 ### END
