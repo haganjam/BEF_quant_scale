@@ -309,7 +309,7 @@ for(i in 2:nrow(m3.pred)) {
 }
 
 # replace the numbers with the effect codes
-m3.post$BE <- rep(levels(as.factor(init_dat$Beff))[m3.dat$BE[1:5]], each = n)
+m3.post$BE <- rep(levels(as.factor(init_dat$Beff))[m.dat3$BE[1:5]], each = n)
 
 # change the order of the effects
 m3.post$BE <- factor(m3.post$BE,
@@ -406,11 +406,13 @@ plot(p4)
 
 # arrange the plot
 p1234 <- 
-  ggarrange(p1, p3, p2, p4, 
+  ggarrange(p3, p1, p4, p2, 
             ncol = 2, nrow = 2,
-            widths = c(1.7, 1),
+            widths = c(1, 1.7),
             labels = c("a", "b", "c", "d"),
             font.label = list(size = 11, face = "plain"))
+
+plot(p1234)
 
 ggsave(filename = here("figures/sim_fig1.png"), p1234,
        unit = "cm", width = 20, height = 15)
