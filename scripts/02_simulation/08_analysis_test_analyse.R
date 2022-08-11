@@ -33,61 +33,51 @@ library(rethinking)
 source(here("scripts/Function_plotting_theme.R"))
 
 # load the data
-BEF_output <- readRDS(here("results/BEF_output.rds"))
-head(BEF_output)
+mono_init_dat <- readRDS(here("results/BEF_output.rds"))
+head(mono_init_dat)
 
-# check the summary statistics and variable structures
-summary(BEF_output)
-str(BEF_output)
+init_dat <- readRDS(here("results/BEF_output2.rds"))
+head(init_dat)
 
 # remove the models where the max_mono_width is less than 200
-BEF_output <- 
-  BEF_output %>%
+mono_init_dat  <- 
+  mono_init_dat  %>%
   filter(max_mono_width < 300) %>%
   filter(mono_cor > 0.7)
 
 # how many models are left over?
-length(unique(BEF_output$model_ID))
-
-# set-up variables for testing the accuracy
+length(unique(mono_init_dat$model_ID))
+length(unique(init_dat$model_ID))
 
 # set the mean range accuracy: 
 thresh <- 0.75
 
-BEF_output <- 
+# calculate the accuracy metrics
+accuracy <- 
   
-  BEF_output %>%
-  mutate(mu_deviation = round( abs((mu - Value_obs)), 5 )  ) %>%
-  mutate(mu_deviation_perc = round( abs(mu_deviation/Value_obs)*100, 5) ) %>%
-  mutate(mu_threshold = thresh) %>%
-  mutate(Value_obs_range = abs(2*thresh*Value_obs) ) %>%
-  mutate(PI_range = PI_high-PI_low) %>%
-  mutate(PI_range_true = ifelse( PI_range > Value_obs_range, FALSE, TRUE)  ) %>%
-  mutate(PI_obs_true = ifelse( (PI_low < Value_obs) & (PI_high > Value_obs), TRUE, FALSE ) ) %>%
-  mutate(PI_true = ifelse( (PI_range_true & PI_obs_true), TRUE, FALSE ))
-summary(BEF_output)
+  lapply(list(mono_init_dat, init_dat), function(BEF_output) {
+  
+  # set-up variables for testing the accuracy
+  x <- 
+    
+    BEF_output %>%
+    mutate(mu_deviation = round( abs((mu - Value_obs)), 5 )  ) %>%
+    mutate(mu_deviation_perc = round( abs(mu_deviation/Value_obs)*100, 5) ) %>%
+    mutate(mu_threshold = thresh) %>%
+    mutate(Value_obs_range = abs(2*thresh*Value_obs) ) %>%
+    mutate(PI_range = PI_high-PI_low) %>%
+    mutate(PI_range_true = ifelse( PI_range > Value_obs_range, FALSE, TRUE)  ) %>%
+    mutate(PI_obs_true = ifelse( (PI_low < Value_obs) & (PI_high > Value_obs), TRUE, FALSE ) ) %>%
+    mutate(PI_true = ifelse( (PI_range_true & PI_obs_true), TRUE, FALSE ))
+  
+  return(x) 
+  
+  } )
+  
 
-# is there a relationship between monoculture correlation and mu deviation
-ggplot(data = BEF_output,
-       mapping = aes(x = (mono_cor), y = log10(mu_deviation) )) +
-  geom_point() +
-  geom_smooth() +
-  facet_wrap(~Beff, scales = "free") +
-  theme_bw()
+## incomplete monocultures unknown initial relative abundance
 
-# calculate accuracy metrics
-BEF_output_sum <- 
-  BEF_output %>%
-  group_by(Beff) %>%
-  filter(mu_deviation_perc < quantile(mu_deviation_perc, 0.95)) %>%
-  summarise(PI_obs_true = sum(PI_obs_true)/n(),
-            PI_true = sum(PI_true)/n(),
-            mu_deviation_m = mean( log10(mu_deviation_perc) ),
-            mu_deviation_sd = sd( log10(mu_deviation_perc) )) %>%
-  rename(BE = Beff)
-print(BEF_output_sum)
-
-# accuracy test 1: PI_true
+# accuracy test 1: PI_obs_true
 
 # fit a binomial regression to model the accuracy based on the effect and the monoculture correlation
 m.dat <- 
@@ -104,8 +94,8 @@ m1 <- ulam(
   ) , data = m.dat , chains = 4, cores = 4 )
 
 # check the model outputs: Rhat values are good and traceplots look decent
-precis( m1 , depth = 2 )
-traceplot( m1 )
+# precis( m1 , depth = 2 )
+# traceplot( m1 )
 
 # set-up a data.frame of data to simulate
 m1.pred <- expand.grid(BE = unique(as.integer(as.factor(BEF_output$Beff))) )
@@ -122,7 +112,7 @@ m1.post <- bind_cols(data.frame(BE = m1.pred[1,]), m1.post)
 
 # loop over the different rows
 for(i in 2:nrow(m1.pred)) {
-
+  
   x <- data.frame(Value = m1.sim[, i][sample(x = 1:nrow(m1.sim), n)])
   y <- bind_cols(data.frame(BE = m1.pred[i,]), x)
   m1.post <- bind_rows(m1.post, y)
@@ -139,20 +129,6 @@ m1.post$BE <- factor(m1.post$BE,
 # change the order of the observed
 BEF_output_sum$BE <- factor(BEF_output_sum$BE,
                             levels = c("LC", "LS", "TC", "TS", "NBE", "NO", "IT", "AS", "TI", "SI", "ST"))
-
-# plot the results
-ggplot() +
-  geom_quasirandom(data = m1.post,
-                   mapping = aes(x = BE, y = Value, colour = BE),
-                   alpha = 0.01, width = 0.2) +
-  geom_point(data = BEF_output_sum,
-             mapping = aes(x = BE, y = PI_obs_true, colour = BE)) +
-  scale_y_continuous(limits = c(0.3, 0.9)) +
-  scale_colour_manual(values = v_col_BEF()) +
-  geom_hline(yintercept = 0.5, linetype = "dashed") +
-  theme_meta() +
-  theme(legend.position = "none")
-
 
 # model the mu deviation percentage
 
@@ -172,9 +148,8 @@ m2 <- ulam(
   ) , data = m.dat2 , chains = 4, cores = 4 )
 
 # check the model outputs: Rhat values are good and traceplots look decent
-precis( m2 , depth = 2 )
-traceplot( m2 )
-
+# precis( m2 , depth = 2 )
+# traceplot( m2 )
 
 # set-up a data.frame of data to simulate
 m2.pred <- expand.grid(BE = unique(as.integer(as.factor(BEF_output$Beff))) )
@@ -205,20 +180,37 @@ m2.post$BE <- rep(levels(as.factor(BEF_output$Beff))[m.dat2$BE[1:11]], each = n)
 m2.post$BE <- factor(m2.post$BE,
                      levels = c("LC", "LS", "TC", "TS", "NBE", "NO", "IT", "AS", "TI", "SI", "ST"))
 
-# change the order of the observed
-BEF_output_sum$BE <- factor(BEF_output_sum$BE,
-                            levels = c("LC", "LS", "TC", "TS", "NBE", "NO", "IT", "AS", "TI", "SI", "ST"))
 
-# set-up the colour palette
-v.col <- c(c("black", "brown"), 
-           viridis(option = "C", n = 4, alpha = 1, begin = 0, end = 0.4),
-           viridis(option = "C", n = 5, alpha = 1, begin = 0.5, end = 1))
-names(v.col) <- c("NBE", "NO", "LC", "LS", "TC", "TS", "IT", "AS", "TI", "SI", "ST")
+  
+  
+  
+  
+  
+# plot the results
+ggplot() +
+  geom_quasirandom(data = accuracy_output[[1]]$m1.post,
+                   mapping = aes(x = BE, y = Value, colour = BE),
+                   alpha = 0.01, width = 0.2) +
+  geom_point(data = accuracy_output[[1]]$BEF_output_sum,
+             mapping = aes(x = BE, y = PI_obs_true, colour = BE)) +
+  scale_y_continuous(limits = c(0.3, 0.9)) +
+  scale_colour_manual(values = v_col_BEF()) +
+  geom_hline(yintercept = 0.5, linetype = "dashed") +
+  theme_meta() +
+  theme(legend.position = "none")
 
-# get the correct order
-eff_in <- c("LC", "LS", "TC", "TS", "NBE", "NO", "IT", "AS", "TI", "SI", "ST")
-v.col.sel <- v.col[ names(v.col) %in% eff_in ]
-v.col.sel <- v.col.sel[order(match(names(v.col.sel) , eff_in))]
+# plot the results
+ggplot() +
+  geom_quasirandom(data = accuracy_output[[2]]$m1.post,
+                   mapping = aes(x = BE, y = Value, colour = BE),
+                   alpha = 0.01, width = 0.2) +
+  geom_point(data = accuracy_output[[2]]$BEF_output_sum,
+             mapping = aes(x = BE, y = PI_obs_true, colour = BE)) +
+  scale_y_continuous(limits = c(0.3, 0.9)) +
+  scale_colour_manual(values = v_col_BEF()) +
+  geom_hline(yintercept = 0.5, linetype = "dashed") +
+  theme_meta() +
+  theme(legend.position = "none")
 
 # plot the results
 ggplot() +
@@ -234,7 +226,7 @@ ggplot() +
                               ymax = mu_deviation_m + mu_deviation_sd,
                               colour = BE),
                 width = 0) +
-  scale_colour_manual(values = v.col.sel) +
+  scale_colour_manual(values = v_col_BEF()) +
   geom_hline(yintercept = 1.69, linetype = "dashed") + # 50% absolute deviation from observed
   theme_meta() +
   theme(legend.position = "none")
