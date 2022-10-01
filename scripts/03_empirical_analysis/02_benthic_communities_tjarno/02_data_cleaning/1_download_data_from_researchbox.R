@@ -1,0 +1,4 @@
+#folders:
+light_temperature_logger_data
+light_temperature_logger_sensor_correction_data
+raw_data
