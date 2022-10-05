@@ -3,16 +3,14 @@
 #download from research box and create file structure
 
 #1_download_data_from_researchbox
-
-#folders:
-light_temperature_logger_data
-light_temperature_logger_sensor_correction_data
-raw_data
+#not done
 
 #2_cleaning_light_sensor_correction
+#not done
 #create lm to correct light sensor with light sensor data
 
 #3_cleaning_light_temperature_logger
+#missing: check if folder structure is there
 #missing: apply sensor correction
 
 #4_cleaning_environmental_data
