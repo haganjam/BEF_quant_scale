@@ -1,3 +1,40 @@
+#'
+#' @title: Clean hobo logger data
+#' 
+#' @description: 
+#' Cleaning light temperature loggers and merging them to one file
+#' This script will also remove all times where the loggers were outside of the 
+#' water. E.g. while maintaining monocultures.
+#' 
+#' This script will require the raw hobologger data from Researchbox
+#' 
+#' @authors: Lara Martins, Benedikt Schrofner-Brunner
+#' 
+
+library(readxl)
+library(dplyr)
+library(tidyr)
+library(readr)
+library(ggplot2)
+library(here)
+library(stringr)
+library(lubridate)
+library(readr)
+
+
+
+#Load cleaning functions
+source(here("scripts/03_empirical_analysis/02_benthic_communities_tjarno/02_data_cleaning/cleaning_functions.r"))
+
+
+check.dirs()# check if directory exists
+#Get filenames from researchbox table of contents
+files=get.data.filenames("raw data")
+
+data.folder = here("data/benthic_communities_tjarno_data/ResearchBox 843/Data/")
+
+
+
 #-summarize light temp data
 #-gypsum data
 #-abiotic field measurements
@@ -7,6 +44,7 @@
 
 
 #add combined table to data/analysis_data
+
 
 
 

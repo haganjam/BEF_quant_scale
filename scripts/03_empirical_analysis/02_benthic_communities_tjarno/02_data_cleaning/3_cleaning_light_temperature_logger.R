@@ -1,12 +1,16 @@
+#'
+#' @title: Clean hobo logger data
+#' 
+#' @description: 
+#' Cleaning light temperature loggers and merging them to one file
+#' This script will also remove all times where the loggers were outside of the 
+#' water. E.g. while maintaining monocultures.
+#' 
+#' This script will require the raw hobologger data from Researchbox
+#' 
+#' @authors: Lara Martins, Benedikt Schrofner-Brunner
+#' 
 
-
-
-#This script will read  all logger data and create a merged table
-
-#This script requires:
-#-Files in /data/benthic_communities_data/light_temperature_logger_data
-
-# load relevant libraries
 library(readxl)
 library(dplyr)
 library(tidyr)
@@ -15,68 +19,22 @@ library(ggplot2)
 library(here)
 library(stringr)
 library(lubridate)
-
-
-
-
 library(readr)
-library(dplyr)
 
 #Load cleaning functions
 source(here("scripts/03_empirical_analysis/02_benthic_communities_tjarno/02_data_cleaning/cleaning_functions.r"))
 
 check.dirs()
-files=get.data.filenames("light_sensor_correction")
 
+#Get filenames from researchbox table of contents
+files=get.data.filenames("Light_Temperature_logger_data")
 
+logger.folder = here("data/benthic_communities_tjarno_data/ResearchBox 843/Data/")
 
-
-##
-
-
-# check that the correct folder is present
-if(! dir.exists(here("data/benthic_communities_tjarno_data/ResearchBox 843"))){
-  print("download the ResearchBox contents and run cleaning script 1")
-}
-
-table_of_contents <- read_csv(here("data/benthic_communities_tjarno_data/ResearchBox 843/Table of Contents ResearchBox 843 (peer-review).csv"))
-
-#get file list from researchbox dir
-table_of_contents = table_of_contents %>% filter(type=="Data",
-                                     section=="Light_Temperature_logger_data")
-files=table_of_contents$`file name`
-
-
-
-
-
-
-
-# output the cleaned csv file into the cleaned data folder
-if(!dir.exists("data/benthic_communities_tjarno_data/data_clean")){ 
-  dir.create("data/benthic_communities_tjarno_data/data_clean") 
-}
-
-
-
-#replece with here
-setwd("data/benthic_communities_data/light_temperature_logger_data")
-
-files=list.files()
-files[]
-
-#ignore codebooks
-files = files[!grepl("CODEBOOK",files)]
-
-#___________________________________________________________________________
 ### Master table ready to use
-
 hobos <- vector("list",length = length(files)) 
-# list and how long it should be
-hobos
 
-
-#start loop
+#read all excel files
 for(i in 1:length(files)){  #loop from i to the last number length()
   print(i)
   print(files[i])
@@ -84,49 +42,55 @@ for(i in 1:length(files)){  #loop from i to the last number length()
   
   if(nchar(files[i])==7){
     #do this if filename is short - differences between the old and new hobo
+    #old loggers
     
     temp_table <- read_excel(
-      paste("data/benthic_communities_data/light_temperature_logger_data/",
+      paste(logger.folder,
             files[i],sep=""), skip = 1)
     temp_table <- temp_table[ , 1:5]
     
-    colnames(temp_table) <- c("id", "date", "time", "temp", "lux")
+    
+    colnames(temp_table) <- c("id", "date", "time", "temp_C", "lux")
     temp_table[c("date","time")] <- str_split_fixed(temp_table$date," ",2)
     temp_table$site <- c(substr(files[i],1,2))
     #substr to have the first two letters of the file's name -> name of the site
     temp_table <- temp_table[,c(6,1,2,3,4,5)] #reorder the columns
     
+    temp_table$logger_version = "old"
+    
     
   } else {
     #do this if filename is long
     
-    temp_table <- read_excel(paste("data/benthic_communities_data/light_temperature_logger_data/",files[i],sep=""))
+    temp_table <- read_excel(paste(logger.folder,
+                                   files[i],sep=""))
     temp_table <- temp_table[ , 1:4]
     
-    colnames(temp_table) <- c("id", "date", "temp", "lux")
+    colnames(temp_table) <- c("id", "date", "temp_C", "lux")
     temp_table[c("date","time")] <- str_split_fixed(temp_table$date," ",2)
     temp_table <- temp_table[,c(1,2,5,3,4)]
     temp_table$site <- c(substr(files[i],1,2))
     temp_table <- temp_table[,c(6,1,2,3,4,5)]
     
+    temp_table$logger_version = "new"
+    
+    
   }
   
   # fill up the list
-  hobos[[i]] <- temp_table #write the temporary table into the master one
+  hobos[[i]] <- temp_table
   
-} #end loop
+} 
 
-#View(hobos[[3]])
-
+#join the list into one big dataframe
 hobos <- bind_rows(hobos) 
-#join the list into one big dataframe - do.call do the same thing
 
 hobos %>%
   filter(lux == "Logged")
 #get rid of the "Logged" text in the end of the datasheet
 
 hobos %>%
-  filter(temp == "Logged")
+  filter(temp_C == "Logged")
 
 hobos <- hobos[complete.cases(hobos), ] 
 #___________________________________________________________________________
@@ -143,7 +107,6 @@ hobos <-
   mutate(date_time = ymd_hms(paste(date, time, sep = " "), tz = "Europe/Stockholm") )
 #mutate is going to add new variables. Join date and time to be easier to deal with that. tz = specific time zone
 
-View(hobos)
 
 
 #Filter the time between (8h-20h) 
@@ -207,6 +170,39 @@ hobos$time[(hobos$date >= '2022-08-17') & (hobos$date <= '2022-08-31')] <- 't2'
 hobos$time[hobos$date >= '2022-09-01'] <- 't3'
 
 
-write.csv(hobos,"data/benthic_communities_data/analysis_data/light_temperatre_data_clean.csv", row.names = FALSE)
 
+#get depth of the loggers
+site_data = read_csv(here("data/benthic_communities_tjarno_data/ResearchBox 843/Data/site_data.csv"))
+site_data=site_data[c("site_id","panel_depth_m")]
+names(site_data) = c("site","depth")
+hobos=left_join(hobos,site_data)
+
+#######correct for new and old loggers - the old one is the standard######
+
+light.correction.data= read_csv(here("data/benthic_communities_tjarno_data/data_clean/light_sensor_correction_data.csv"))
+
+light.correction.data$new.trans = log(light.correction.data$new+1)
+
+mod.logger.pred = lm(log(old+1)~new.trans*depth,data=light.correction.data)
+summary(mod.logger.pred)
+
+hobos$light.transformed = log(hobos$lux+1)
+
+#prediction for log+1 transformed new logger, this needs to be transformed back wiht exp(pred)-1
+
+hobos$lux.corrected = round(exp(predict(mod.logger.pred,
+        newdata = data.frame(new.trans = hobos$light.transformed,
+                             depth = hobos$depth)))-1)
+
+#correction was also done for old loggers, those values need to be overwritten with the measured values
+hobos$lux.corrected[hobos$logger_version=="old"] = hobos$lux[hobos$logger_version=="old"]
+
+#remove unneccesary columns
+hobos = hobos %>% select(-lux,-light.transformed)
+
+write.csv(hobos,here("data/benthic_communities_tjarno_data/data_clean/light_temperature_logger_clean.csv"), row.names = FALSE)
+
+rm(list = ls())
+
+### END ###
 
