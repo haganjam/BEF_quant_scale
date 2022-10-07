@@ -1,10 +1,6 @@
 
 
 #download from research box and create file structure
-
-#1_download_data_from_researchbox
-#not done
-
 #2_cleaning_light_sensor_correction
 #not done
 #create lm to correct light sensor with light sensor data

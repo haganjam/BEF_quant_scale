@@ -17,6 +17,8 @@ require(here)
 
 # unzip the file
 unzip(zipfile = file.choose(),
-      exdir = here("data/benthic_communities_data"))
+      exdir = here("data/benthic_communities_tjarno_data"))
 ### END
+
+
 

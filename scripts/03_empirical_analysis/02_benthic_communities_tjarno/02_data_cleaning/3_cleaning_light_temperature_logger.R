@@ -1,4 +1,6 @@
 
+
+
 #This script will read  all logger data and create a merged table
 
 #This script requires:
@@ -13,6 +15,49 @@ library(ggplot2)
 library(here)
 library(stringr)
 library(lubridate)
+
+
+
+
+library(readr)
+library(dplyr)
+
+#Load cleaning functions
+source(here("scripts/03_empirical_analysis/02_benthic_communities_tjarno/02_data_cleaning/cleaning_functions.r"))
+
+check.dirs()
+files=get.data.filenames("light_sensor_correction")
+
+
+
+
+##
+
+
+# check that the correct folder is present
+if(! dir.exists(here("data/benthic_communities_tjarno_data/ResearchBox 843"))){
+  print("download the ResearchBox contents and run cleaning script 1")
+}
+
+table_of_contents <- read_csv(here("data/benthic_communities_tjarno_data/ResearchBox 843/Table of Contents ResearchBox 843 (peer-review).csv"))
+
+#get file list from researchbox dir
+table_of_contents = table_of_contents %>% filter(type=="Data",
+                                     section=="Light_Temperature_logger_data")
+files=table_of_contents$`file name`
+
+
+
+
+
+
+
+# output the cleaned csv file into the cleaned data folder
+if(!dir.exists("data/benthic_communities_tjarno_data/data_clean")){ 
+  dir.create("data/benthic_communities_tjarno_data/data_clean") 
+}
+
+
 
 #replece with here
 setwd("data/benthic_communities_data/light_temperature_logger_data")
