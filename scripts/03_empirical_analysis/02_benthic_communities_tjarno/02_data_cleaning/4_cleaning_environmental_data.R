@@ -28,6 +28,14 @@ check.dirs()# check if directory exists
 #Get filenames from researchbox table of contents
 files=get.data.filenames("raw data")
 
+
+#'TODOs
+#'Summarise Logger data
+#'Gypsum data
+#'Fieldwork measurements (secchi, temperature, )
+#'Site data (depth and lon lat)
+#'
+
 data.folder = here("data/benthic_communities_tjarno_data/ResearchBox 843/Data/")
 
 
