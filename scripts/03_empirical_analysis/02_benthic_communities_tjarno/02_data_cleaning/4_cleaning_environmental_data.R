@@ -28,6 +28,31 @@ check.dirs()# check if directory exists
 #Get filenames from researchbox table of contents
 files=get.data.filenames("raw data")
 
+abiotic_measurements_filename="abiotic_field_measurements.csv"
+
+data.folder = here("data/benthic_communities_tjarno_data/ResearchBox 843/Data/")
+cleaned.data.folder = here("data/benthic_communities_tjarno_data/data_clean/")
+
+#####Load Abiotic Measurements######
+abiotic_measurements <- read_csv(paste(data.folder,abiotic_measurements_filename,sep = ""), 
+                                       col_types = cols(Date = col_date(format = "%d/%m/%Y"), 
+                                                        Depth = col_number(), Temp. = col_number(), 
+                                                        Salinity = col_number(), Oxygen = col_number(), 
+                                                        Secchi = col_number()))
+names(abiotic_measurements) = c("date","cluster_id","site_id","panel_depth",
+                                "temperature_C_field", "salinity_ppt_field",
+                                "oxygen","secchi_depth_m","weather_comment","comment")
+
+# write t1, t2 and t3 in the table
+abiotic_measurements$time <- "" #Create the column empty
+
+abiotic_measurements$time[abiotic_measurements$date <= '2022-08-16'] <- 't1' #chose the column, search for the specific date, write the "names" of that
+abiotic_measurements$time[(abiotic_measurements$date >= '2022-08-17') & (abiotic_measurements$date <= '2022-08-31')] <- 't2'
+abiotic_measurements$time[abiotic_measurements$date >= '2022-09-01'] <- 't3'
+
+hobos$time[hobos$date <= '2022-08-10'] <- 't1' #chose the column, search for the specific date, write the "names" of that
+hobos$time[(hobos$date >= '2022-08-10') & (hobos$date <= '2022-08-22')] <- 't2'
+hobos$time[hobos$date >= '2022-08-23'] <- 't3'
 
 #'TODOs
 #'Summarise Logger data
@@ -36,7 +61,6 @@ files=get.data.filenames("raw data")
 #'Site data (depth and lon lat)
 #'
 
-data.folder = here("data/benthic_communities_tjarno_data/ResearchBox 843/Data/")
 
 
 

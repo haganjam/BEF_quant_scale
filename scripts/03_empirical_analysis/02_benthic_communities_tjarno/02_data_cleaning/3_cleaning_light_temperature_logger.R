@@ -165,9 +165,9 @@ hobos <-
 # write t1, t2 and t3 in the table
 hobos$time <- "" #Create the column empty
 
-hobos$time[hobos$date <= '2022-08-16'] <- 't1' #chose the column, search for the specific date, write the "names" of that
-hobos$time[(hobos$date >= '2022-08-17') & (hobos$date <= '2022-08-31')] <- 't2'
-hobos$time[hobos$date >= '2022-09-01'] <- 't3'
+hobos$time[hobos$date <= '2022-08-10'] <- 't1' #chose the column, search for the specific date, write the "names" of that
+hobos$time[(hobos$date >= '2022-08-10') & (hobos$date <= '2022-08-22')] <- 't2'
+hobos$time[hobos$date >= '2022-08-23'] <- 't3'
 
 
 
