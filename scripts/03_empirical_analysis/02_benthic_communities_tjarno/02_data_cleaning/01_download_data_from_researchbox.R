@@ -8,9 +8,6 @@
 #' 3. You can also unzip and add it manually to "[PROJECT]/data/benthic_communities_data"
 #' @authors: James G. Hagan (james_hagan(at)outlook.com)
 #' 
-#' 
-#' 
-
 
 # load relevant libraries
 require(here)
@@ -18,7 +15,5 @@ require(here)
 # unzip the file
 unzip(zipfile = file.choose(),
       exdir = here("data/benthic_communities_tjarno_data"))
+
 ### END
-
-
-
