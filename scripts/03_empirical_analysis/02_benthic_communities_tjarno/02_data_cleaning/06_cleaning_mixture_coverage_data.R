@@ -25,7 +25,7 @@ cov_dat <-
 
 # replace the t1, t2, t3 etc. with just tfirst and tsecond
 length(unique(cov_dat$buoy_id))*2 == nrow(cov_dat)
-cov_dat$time <- rep(c("T1", "T2"), each = length(unique(cov_dat$buoy_id)))
+cov_dat$time <- rep(c("T1", "T2"), length(unique(cov_dat$buoy_id)))
 
 # reorder the columns
 cov_dat <- 
