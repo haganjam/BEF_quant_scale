@@ -26,7 +26,6 @@ cov_dat <-
                values_to = "cover")
 
 # select the relevant columns
-names(cov_dat)
 cov_dat <- 
   cov_dat %>%
   select(buoy_id, time, species, cover)
@@ -56,7 +55,7 @@ cor.test(covT12$T1_cover, covT12$T2_cover, method = "spearman")
 cor_dist <- 
   covT12 %>%
   group_by(buoy_id) %>%
-  summarise(Spearman_r = cor(T1_cover, T2_cover))
+  summarise(Spearman_r = cor(T1_cover, T2_cover, method = "spearman"))
 
 # calculate the mean correlation
 mean(cor_dist$Spearman_r, na.rm = TRUE)
