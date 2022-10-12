@@ -5,7 +5,7 @@
 #' In the end a combined dataset for abiotic measures, flow speed, 
 #' light temperature, depth will be created
 #' 
-#' @authors: Lara Martins, Benedikt Schrofner-Brunner
+#' @authors: Lara Martins, Benedikt Schrofner-Brunner, James Hagan (james_hagan(at)outlook.com)
 #' 
 
 # load required libraries
@@ -135,7 +135,7 @@ gypsum$time <- ""
 gypsum$date_deploy <- as.Date(gypsum$date_deploy)
 
 # add labels based on the time points
-gypsum$time[gypsum$date_deploy <='2022-07-21'] <- 't1' #chose the column, search for the specific date, write the "names" of that
+gypsum$time[gypsum$date_deploy <='2022-07-21'] <- 't1' 
 gypsum$time[(gypsum$date_deploy>='2022-08-02') & (gypsum$date_deploy <= '2022-08-29')] <- 't2'
 gypsum$time[gypsum$date_deploy>='2022-08-29'] <- 't3'
 
