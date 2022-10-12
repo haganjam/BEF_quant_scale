@@ -171,4 +171,3 @@ site_dat <- right_join(site_dat, env_dat, by = c("site_id", "depth"))
 write_csv(site_dat, here("data/benthic_communities_tjarno_data/data_clean/site_env_data.csv"))
 
 ### END
-
