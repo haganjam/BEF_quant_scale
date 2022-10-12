@@ -10,7 +10,7 @@ classoption: landscape
 
 ```{r echo = FALSE, results='asis'}
 
-x <- list.files(here::here("scripts/03_empirical_analysis/02_fieldwork_2022/01_preparation/"))
+x <- list.files(here::here("scripts/03_empirical_analysis/02_benthic_communities_tjarno/01_preparation/"))
 x <- x[grepl(pattern = ".png", x)]
 x <- paste("![](", x, ")", sep = "")
 for(i in 1:length(x)) {

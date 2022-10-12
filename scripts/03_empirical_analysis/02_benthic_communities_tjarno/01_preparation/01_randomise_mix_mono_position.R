@@ -99,7 +99,7 @@ lapply( split(pan_dat, pan_dat$site_id), function(z) {
           panel.grid.major=element_blank(), panel.grid.minor=element_blank() )
   
   # export the grid to a .csv file
-  ggsave(filename = here(paste("scripts/03_empirical_analysis/02_fieldwork_2022/01_preparation/template_", 
+  ggsave(filename = here(paste("scripts/03_empirical_analysis/02_benthic_communities_tjarno/01_preparation/template_", 
                                x$site_id[1], ".png", sep = "")),
          p1, width = 29, height = 20, units = "cm", dpi = 300)
   
