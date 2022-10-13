@@ -26,6 +26,9 @@ pan_dat <- read_sheet("https://docs.google.com/spreadsheets/d/1fUn4k0SuZMr7KVWW1
                        sheet = "Sheet1")
 head(pan_dat)
 
+# remove last two rows that are only NAs
+pan_dat <- pan_dat[!is.na(pan_dat$cluster_id), ]
+
 # randomise the position of the mixtures in each cluster
 clus_lab <- pan_dat[, c(1, 2, 3, 4, 5)]
 head(clus_lab)

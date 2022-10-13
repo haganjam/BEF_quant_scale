@@ -7,8 +7,6 @@
 #' @authors: James G. Hagan (james_hagan(at)outlook.com)
 #' 
 
-# next steps: figure out how the monocultures and the mixtures match up
-
 # load required libraries
 library(dplyr)
 library(tidyr)
@@ -75,14 +73,129 @@ bio_dat$time[bio_dat$date <= '2022-08-13'] <- 't1'
 bio_dat$time[(bio_dat$date >= '2022-08-13') & (bio_dat$date <= '2022-09-01')] <- 't2'
 bio_dat$time[bio_dat$date >= '2022-09-01'] <- 't3'
 
+# add a cluster ID column
+bio_dat$cluster_id <- substr(bio_dat$panel_id, 1, 1)
+
+# add a buoy ID column
+bio_dat$buoy_id <- gsub(pattern = "(-)(.*)", replacement = "", x = bio_dat$panel_id)
+
+# check the I4 buoy
+bio_dat %>%
+  filter(buoy_id == "I4") %>%
+  filter(panel_treatment == "mixture") %>%
+  filter(time == "t2") %>%
+  View()
+
+# one of the panels was sampled too early
+bio_dat <- 
+  bio_dat %>%
+  filter(laser_id != 519)
+
 # reorder the columns and arrange the data
 bio_dat <- 
   bio_dat %>%
-  select(time, date, laser_id, panel_id,
-         measurement_no, measurement_id, 
+  select(cluster_id, buoy_id, time,
          panel_treatment, OTU,
-         dry_weight_g_cl, comment) %>%
-  arrange(time, date, panel_treatment, panel_id)
+         dry_weight_g_cl) %>%
+  arrange(cluster_id, buoy_id, time, panel_treatment, OTU)
+
+# split the data into mixtures and monocultures
+mix_dat <- 
+  bio_dat %>%
+  filter(panel_treatment == "mixture") %>%
+  select(-panel_treatment)
+
+mono_dat <- 
+  bio_dat %>%
+  filter(panel_treatment == "mono") %>%
+  select(-panel_treatment)
+
+# process the mixture data
+OTU_names <- unique(mix_dat$OTU)
+OTU_names <- OTU_names[!is.na(OTU_names)]
+
+# why would there be an NA in the OTU column?
+mix_dat %>%
+  filter(is.na(OTU))
+
+mix_dat <- 
+  
+  lapply( split(mix_dat, paste(mix_dat$buoy_id, mix_dat$time, sep = "_")), function(x) {
+  
+  # get any missing OTUs
+  y <- OTU_names[!(OTU_names %in% x$OTU)]
+  
+  # create a data.frame with missing OTUs with zero abundance
+  z <- 
+    tibble(cluster_id = x$cluster_id[1],
+           buoy_id = x$buoy_id[1],
+           time = x$time[1],
+           OTU = y,
+           dry_weight_g_cl = rep(0, times = length(y)))
+  
+  # bind the missing OTU data to the full dataset
+  df <- bind_rows(x, z)
+  
+  # return the data.frame
+  return(df)
+  
+})
+
+# bind back into a data.frame
+mix_dat <- bind_rows(mix_dat)
+
+# check the summary of the data
+summary(mix_dat)
+
+# check how complete are the data?
+# probably need to remove I5 and J4 (not the end of the world)
+mix_dat %>%
+  group_by(cluster_id) %>%
+  summarise(n = length(unique(buoy_id)))
+  
+mix_dat %>%
+  group_by(cluster_id, buoy_id) %>%
+  summarise(n = length(unique(time))) %>%
+  View()
+
+# rename the dry weight column
+
+
+# process the monoculture data
+mono_dat <- 
+  
+  lapply( split(mono_dat, paste(mono_dat$buoy_id, mono_dat$time, sep = "_")), function(x) {
+    
+    # get any missing OTUs
+    y <- OTU_names[!(OTU_names %in% x$OTU)]
+    
+    # create a data.frame with missing OTUs with zero abundance
+    z <- 
+      tibble(cluster_id = x$cluster_id[1],
+             buoy_id = x$buoy_id[1],
+             time = x$time[1],
+             OTU = y,
+             dry_weight_g_cl = rep(NA, times = length(y)))
+    
+    # bind the missing OTU data to the full dataset
+    df <- bind_rows(x, z)
+    
+    # return the data.frame
+    return(df)
+    
+  })
+
+# bind back into a data.frame
+mono_dat <- bind_rows(mono_dat)
+
+# check the summary of the data
+summary(mono_dat)
+
+# rename the dry weight g column to M
+mono_dat <- 
+  mono_dat %>%
+  rename(M = dry_weight_g_cl)
+
 
 
 
