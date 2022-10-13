@@ -78,8 +78,8 @@ hobo_dat <-
   group_by(site_id, depth, time) %>%
   summarise(temp_C_m = mean(temp_C, na.rm = TRUE),
             temp_C_cv = (sd(temp_C, na.rm = TRUE)/mean(temp_C, na.rm = TRUE))*100,
-            temp_C_max = min(temp_C, na.rm = TRUE),
-            temp_C_min = max(temp_C, na.rm = TRUE),
+            temp_C_max = max(temp_C, na.rm = TRUE),
+            temp_C_min = min(temp_C, na.rm = TRUE),
             lux_m = mean(lux.corrected, na.rm = TRUE),
             lux_cv = (sd(lux.corrected, na.rm = TRUE)/mean(temp_C, na.rm = TRUE))*100,
             lux_max = max(lux.corrected, na.rm = TRUE),

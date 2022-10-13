@@ -12,33 +12,97 @@ library(readr)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
+library(ggpubr)
 library(here)
 library(vegan)
 
+# load plotting theme
+source(here("scripts/Function_plotting_theme.R"))
+
 # load the cleaned environmental data
 env_dat <- read_csv(here("data/benthic_communities_tjarno_data/data_clean/site_env_data.csv"))
+
+# change the depth treatment to a heterogeneity variable
+env_dat$heterogeneity <-  ifelse(env_dat$depth_treatment == "alternating", "Heterogeneous", "Homogeneous")
 
 # choose the relevant columns
 names(env_dat)
 
 env_dat <- 
   env_dat %>%
-  select(cluster_id, site_id, time, euclidian_dispersion_layer,
+  select(cluster_id, site_id, time, heterogeneity, euclidian_dispersion_layer,
+         exposure_layer, depth_vis_layer,
          panel_depth_m_measured, distance_between_panel_and_seabeed_m,
-         temp_C_m, temp_C_cv, temp_C_max, temp_C_min, temp_field_C_m,
+         temp_C_m, temp_C_cv, temp_C_max, temp_C_min,
          lux_m, lux_cv, lux_max,
-         sal_field_ppt_m, oxy_field_m, secchi_field_m,
+         sal_field_ppt_m, 
+         secchi_field_m,
          reduction_g_hour_m)
 
 # summarise across the time points
 env_dat_m <- 
   env_dat %>%
-  group_by(cluster_id, site_id) %>%
-  summarise(across(.cols = names(env_dat)[-c(1:3)], ~mean(., na.rm = TRUE)),
+  group_by(cluster_id, site_id, heterogeneity) %>%
+  summarise(across(.cols = names(env_dat)[-c(1:4)], ~mean(., na.rm = TRUE)),
             .groups = "drop")
 
+# check the distribution of the different variables
+env_dat_m %>%
+  pivot_longer(cols = names(env_dat_m)[-c(1:4)],
+               names_to = "env_var",
+               values_to = "value") %>%
+  ggplot(data = .,
+         mapping = aes(x = value)) +
+  geom_histogram() +
+  facet_wrap(~env_var, scales = "free") +
+  theme_meta()
+
+# run a PCA on these data
+pca.x <- 
+  prcomp(reformulate(termlabels = names(env_dat_m[,-c(1:4)])),
+         data = as_tibble(apply(env_dat_m[,-c(1:4)], 2, scale)), 
+         scale = FALSE, center = FALSE)
+
+# check the summary statistics
+summary(pca.x)
+
+# check the biplot
+biplot(pca.x)
+
+# plot the first two axes
+pca_df <- as_tibble(pca.x$x[,c(1, 2)])
+
+# add the cluster_id information
+pca_df$cluster_id <- env_dat_m$cluster_id
+
+# add the heterogeneous or homogeneous treatment
+pca_df$heterogeneity <- env_dat_m$heterogeneity
+
+# check how many sites there are per cluster
+pca_df %>%
+  group_by(heterogeneity, cluster_id) %>%
+  summarise(n = n())
+
+# plot the PC plot
+p1 <- ggplot() +
+  geom_point(data = pca_df, 
+             mapping = aes(x = PC1, y = PC2, colour = cluster_id, shape = heterogeneity),
+             size = 2.5, alpha = 0.75) +
+  scale_colour_viridis_d(option = "C", begin = 0, end = 1) +
+  # geom_label(data = pca_df, 
+             # mapping = aes(x = PC1, y = PC2, label = cluster_id)) +
+  #scale_shape_manual(values = c(1, 2)) +
+  guides(colour = "none") +
+  theme_meta() +
+  xlab("PC1 (45%)") +
+  ylab("PC2 (33%)") +
+  theme(legend.position = "right",
+        legend.title = element_blank(),
+        legend.key = element_rect(fill = NA))
+plot(p1)
+
 # generate a Euclidean distance matrix
-env_d <- dist(apply(env_dat_m[,-c(1,2)], 2, scale), method = "euclidean")
+env_d <- dist(apply(env_dat_m[,-c(1:4)], 2, scale), method = "euclidean")
 
 # multivariate dispersion
 env_d <- betadisper(d = env_d, group = env_dat_m$cluster_id)
@@ -49,9 +113,10 @@ env_dat_m$distance_centroid <- env_d$distances
 # does this correlate with the originally implemented centroid distances
 env_dispersion <- 
   env_dat_m %>%
-  group_by(cluster_id) %>%
+  group_by(heterogeneity, cluster_id) %>%
   summarise(GIS_dispersion = mean(euclidian_dispersion_layer),
-            field_dispersion = mean(distance_centroid))
+            field_dispersion = mean(distance_centroid),
+            .groups = "drop")
 
 # plot the relationship
 plot(env_dispersion$GIS_dispersion, env_dispersion$field_dispersion)
@@ -60,25 +125,35 @@ abline(a = 0, b = 1)
 # examine the spearman correlation which tests for monotonic relationships
 cor(env_dispersion$GIS_dispersion, env_dispersion$field_dispersion, method = "spearman")
 
-# run a PCA on these data
-pca.x <- 
-  prcomp(reformulate(termlabels = names(env_dat_m[,-c(1:3)])),
-         data = as_tibble(apply(env_dat_m[,-c(1:3)], 2, scale)), 
-         scale = FALSE, center = FALSE)
-summary(pca.x)
+# compare the multivariate dispersion between homogeneous and heterogeneous treatments
+env_dispersion_s <- 
+  env_dispersion %>%
+  group_by(heterogeneity) %>%
+  summarise(d_m = mean(field_dispersion),
+            d_sd = sd(field_dispersion))
 
-# plot the first two axes
-pca_df <- as_tibble(pca.x$x[,c(1, 2)])
+p2 <- 
+  ggplot() +
+  geom_jitter(data = env_dispersion,
+              mapping = aes(x = heterogeneity, y = field_dispersion), 
+              width = 0.1, shape = 1, size = 2, stroke = 0.6) +
+  geom_point(data = env_dispersion_s,
+             mapping = aes(x = heterogeneity, y = d_m ),
+             colour = "red", size = 2.5) +
+  geom_errorbar(data = env_dispersion_s,
+             mapping = aes(x = heterogeneity, ymin = d_m-d_sd, ymax = d_m+d_sd ),
+             width = 0,
+             colour = "red", size = 0.5) +
+  xlab("") +
+  ylab("Multivariate dispersion") +
+  theme_meta()
+plot(p2)
 
-# add the cluster_id information
-pca_df$cluster_id <- env_dat_m$cluster_id
+# arrange the plots
+p12 <- 
+  ggarrange(p2, p1, ncol = 2, nrow = 1,
+          widths = c(1, 2.1), labels = c("a", "b"),
+          font.label = list(face = "plain", size = 11))
+plot(p12)
 
-# plot the PC plot
-ggplot(data = pca_df, 
-       mapping = aes(x = PC1, y = PC2, colour = cluster_id)) +
-  geom_point() +
-  scale_colour_viridis_d() +
-  theme_classic()
-
-
-
+### END
