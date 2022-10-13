@@ -60,3 +60,25 @@ abline(a = 0, b = 1)
 # examine the spearman correlation which tests for monotonic relationships
 cor(env_dispersion$GIS_dispersion, env_dispersion$field_dispersion, method = "spearman")
 
+# run a PCA on these data
+pca.x <- 
+  prcomp(reformulate(termlabels = names(env_dat_m[,-c(1:3)])),
+         data = as_tibble(apply(env_dat_m[,-c(1:3)], 2, scale)), 
+         scale = FALSE, center = FALSE)
+summary(pca.x)
+
+# plot the first two axes
+pca_df <- as_tibble(pca.x$x[,c(1, 2)])
+
+# add the cluster_id information
+pca_df$cluster_id <- env_dat_m$cluster_id
+
+# plot the PC plot
+ggplot(data = pca_df, 
+       mapping = aes(x = PC1, y = PC2, colour = cluster_id)) +
+  geom_point() +
+  scale_colour_viridis_d() +
+  theme_classic()
+
+
+
