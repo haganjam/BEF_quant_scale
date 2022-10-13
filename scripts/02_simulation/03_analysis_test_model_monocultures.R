@@ -51,7 +51,7 @@ my.cluster <- parallel::makeCluster(
 doParallel::registerDoParallel(cl = my.cluster)
 
 # compile the stan model
-m1 <- rstan::stan_model(here::here("BEF_quant_scale/scripts/02_simulation/missing_monoculture_glm.stan"))
+m1 <- rstan::stan_model(here::here("BEF_quant_scale/scripts/02_simulation/analysis_test_NAmonocultureGLM.stan"))
 
 MC.x.pred <- foreach(
   
