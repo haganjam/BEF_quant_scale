@@ -159,7 +159,9 @@ mix_dat %>%
   View()
 
 # rename the dry weight column
-
+mix_dat <- 
+  mix_dat %>%
+  rename(Y = dry_weight_g_cl)
 
 # process the monoculture data
 mono_dat <- 
@@ -196,6 +198,15 @@ mono_dat <-
   mono_dat %>%
   rename(M = dry_weight_g_cl)
 
+# remove the incomplete data from the mix_dat data.frame
+mix_dat <- 
+  mix_dat %>%
+  filter( !(buoy_id %in% c("I5", "J4")) )
 
+# join the monoculture data
+bio_dat <- left_join(mix_dat, mono_dat, by = c("cluster_id", "buoy_id", "time", "OTU"))
 
+# write this into a .csv file
+write_csv(x = bio_dat, file = here("data/benthic_communities_tjarno_data/data_clean/biomass_data.csv"))
 
+### END
