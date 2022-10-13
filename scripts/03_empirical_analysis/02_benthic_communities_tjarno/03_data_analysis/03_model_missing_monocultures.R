@@ -81,9 +81,17 @@ v <- bio_env[complete.cases(bio_env), ]
 head(v)
 dim(v)
 
+# check the distribution of the response variables
+hist(sqrt(v$M))
+min(v$M)
+v$Y[v$Y >0] %>% min()
+hist(log(0.005 + v$M))
+
+hist(log(0.0005 + v$Y))
+
 train.d <- 
-  list(M = (v$M - mean(v$M))/sd(v$M),
-       Y = (v$Y - mean(v$Y))/sd(v$Y),
+  list(M = sqrt(v$M),
+       Y = log(1 + v$Y),
        TMP = (v$temp_C_m - mean(v$temp_C_m))/sd(v$temp_C_m),
        LUX = (v$lux_m - mean(v$lux_m))/sd(v$lux_m), 
        D = v$depth_m,
@@ -117,7 +125,8 @@ traceplot(m1)
 
 # plot the observed data versus the modelled data
 post <- sim(m1)
-plot((v$M - mean(v$M))/sd(v$M), apply(post, 2, mean))
+dev.off()
+plot(sqrt(v$M), apply(post, 2, mean))
 abline(a = 0, b = 1)
 
 # fit the model with two additional interaction terms
@@ -214,19 +223,62 @@ post <- sim(m4)
 plot((v$M - mean(v$M))/sd(v$M), apply(post, 2, mean))
 abline(a = 0, b = 1)
 
-# compare the models using PSIS
-compare(m1, m2, m3, m4, func = PSIS)
 
-# the additional interaction terms didn't do much
+# temperature and depth only with full interactions using a student's t-distribution
+m5 <- 
+  ulam(
+    alist(M ~ dstudent(2 , u, sigma),
+          
+          u <- aS[S] + b_YS[S]*Y + b_TS[S]*TMP + b_DS[S]*D + b_YTS[S]*Y*TMP + b_YDS[S]*Y*D + b_TDS[S]*TMP*D,
+          
+          b_YTS[S] ~ normal( 0 , 1 ),
+          b_YDS[S] ~ normal( 0 , 1 ),
+          b_TDS[S] ~ normal( 0 , 1 ),
+          b_YS[S] ~ normal( 0 , 1 ),
+          b_TS[S] ~ normal( 0 , 1 ),
+          b_DS[S] ~ normal( 0, 1 ),
+          
+          aS[S] ~ normal( 0 , 2 ),
+          
+          sigma ~ dexp(1)
+          
+    ),
+    data = train.d, chains = 4, log_lik = TRUE)
 
-# check the outlying points
-post <- sim(m1)
+# check the precis output
+precis( m5, depth = 2 )
+
+# check the traceplots
+traceplot(m5)
+dev.off()
+
+# plot the observed data versus the modeled data
+post <- sim(m5)
 plot((v$M - mean(v$M))/sd(v$M), apply(post, 2, mean))
 abline(a = 0, b = 1)
 
-x1 <- (v$M - mean(v$M))/sd(v$M)
-x2 <- apply(post, 2, mean)
+# compare the models using PSIS: m5 is the best by far
+compare(m1, m2, m3, m4, m5, func = PSIS)
 
-v[(x1 < 0) & (x2 > 0.8), ] %>% View()
+# plot a proper fit to sample plot
+mu <- apply(post, 2, mean)
+PI <- apply(post, 2, PI, 0.90)
+PI_low <- apply(PI, 2, function(x) x[1])
+PI_high <- apply(PI, 2, function(x) x[2])
+
+# pull this information into a data.frame
+m5_df <- tibble(species = v$OTU,
+                obs = (v$M - mean(v$M))/sd(v$M),
+                mu = mu,
+                PI_low = PI_low,
+                PI_high = PI_high)
+head(m5_df)
+
+ggplot(data = m5_df,
+       mapping = aes(x = obs, y = mu, colour = species)) +
+  geom_point(size = 1.5, shape = 1) +
+  geom_errorbar(mapping = aes(x = obs, ymin = PI_low, ymax = PI_high)) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
+  theme_meta()
 
 
