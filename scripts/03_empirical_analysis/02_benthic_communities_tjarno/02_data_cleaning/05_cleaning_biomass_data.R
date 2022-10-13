@@ -43,8 +43,51 @@ bio_dat <-
   bio_dat %>%
   mutate(dry_weight_g_cl = if_else(dry_weight_g_cl < 0, 0, dry_weight_g_cl))
 
-# select relevant rows
+# load the imageJ cover data
+cov_mono <- read_csv(here("data/benthic_communities_tjarno_data/ResearchBox 843/Data/cover_imageJ.csv"))
+
+# check if the number of unique laser_id is the same as the number of rows
+length(unique(cov_mono$laser_id)) == nrow(cov_mono)
+
+# which units are replicated?
+multiples <- 
+  cov_mono %>%
+  group_by(laser_id) %>%
+  summarise(n = n()) %>%
+  filter(n > 1) %>%
+  pull(laser_id)
+
+# there are clearly duplicates
+cov_mono %>%
+  filter(laser_id %in% multiples) %>%
+  View()
+
+# remove the duplicates using distinct()
+cov_mono <- 
+  distinct(cov_mono)
+
+# convert the cover_percent to a numeric variable
+cov_mono$cover_percent <- as.numeric(cov_mono$cover_percent)
+
+# test if this worked
+length(unique(cov_mono$laser_id)) == nrow(cov_mono)
+
 bio_dat <- 
+  left_join(bio_dat, 
+            select(cov_mono, laser_id, cover_percent),
+            by = "laser_id"
+            )
+
+# calculate the area-corrected dry weights
+DW <- bio_dat$dry_weight_g_cl*(1/bio_dat$cover_percent)
+
+# replace the the dry weights if no NA
+bio_dat$dry_weight_g_cl <- ifelse(!is.na(DW), 
+                                  DW, 
+                                  bio_dat$dry_weight_g_cl)
+
+# select relevant rows
+bio_dat <-
   bio_dat %>%
   select(laser_id, panel_id, panel_treatment, OTU, 
          measurement_no, measurement_id, date,
