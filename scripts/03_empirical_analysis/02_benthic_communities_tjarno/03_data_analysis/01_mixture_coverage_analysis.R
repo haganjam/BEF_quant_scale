@@ -49,6 +49,7 @@ covT12 <- full_join(covT1, covT2, by = c("buoy_id", "species"))
 
 # examine the relationship between covT1 and covT2
 plot(covT12$T1_cover, covT12$T2_cover)
+abline(a = 0, b = 1)
 cor.test(covT12$T1_cover, covT12$T2_cover, method = "spearman")
 
 # correlation within each buoy
