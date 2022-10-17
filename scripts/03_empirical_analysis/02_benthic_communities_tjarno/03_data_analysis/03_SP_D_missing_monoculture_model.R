@@ -329,6 +329,4 @@ abline(0, 1)
 compare(m.D1, m.D2, m.D3, m.D4, 
         m.D5, m.D6, m.D7, m.D8, func = PSIS)
 
-
-
-
+### END
