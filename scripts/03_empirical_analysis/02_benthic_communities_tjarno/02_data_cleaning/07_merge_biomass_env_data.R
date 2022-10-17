@@ -69,7 +69,7 @@ ggplot(data = bio_env_RA,
        mapping = aes(x = RA)) +
   geom_histogram() +
   facet_wrap(~OTU, scales = "free") +
-  theme_meta()
+  theme_bw()
 
 bio_env_RA %>%
   filter(OTU %in% c("Bumpi", "Asci", "Hydro") , RA > 0.1) %>%
@@ -90,11 +90,8 @@ bio_env <-
   bio_env %>%
   filter(OTU != "Asci")
 
-# get the complete cases
-bio_env_M <- bio_env[complete.cases(bio_env), ]
-
 # check the distribution of the monoculture data
-bio_env_M %>%
+bio_env %>%
   ggplot(data = .,
          mapping = aes(x = M)) +
   geom_histogram() +
@@ -102,10 +99,10 @@ bio_env_M %>%
   theme_bw()
 
 # how are the variables correlated?
-names(bio_env_M)
-pairs(bio_env_M[, c(4, 5, 6, 10, 15, 16)])
+names(bio_env)
+pairs(bio_env[, c(4, 5, 6, 10, 15, 16)])
 
-ggplot(data = bio_env_M,
+ggplot(data = bio_env,
        mapping = aes(x = Y, y = M, colour = OTU)) +
   geom_point() +
   facet_wrap(~OTU, scales = "free") +
@@ -123,9 +120,6 @@ pca_env <- bind_cols(bio_env[,c(1:3)], as_tibble(pca.x$x)[,c(1:2)] )
 
 # bind the monoculture and mixture data to the pca_env data
 pca_env <- bind_cols(pca_env, bio_env[,c(14:16)])
-
-# get only the complete cases from the pca_env data
-pca_env <- pca_env[complete.cases(pca_env),]
 
 # write out the pca_env_data
 write_csv(x = pca_env, here("data/benthic_communities_tjarno_data/data_clean/biomass_env_analysis_data.csv"))

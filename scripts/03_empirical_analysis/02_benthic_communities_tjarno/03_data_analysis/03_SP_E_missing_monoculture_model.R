@@ -1,5 +1,5 @@
 #'
-#' @title: Bumpi: Model the missing monocultures
+#' @title: Seasq: Model the missing monocultures
 #' 
 #' @description: This script attemps to model the missing monocultures
 #' for the Seasq species after preliminary data analysis showed that a single

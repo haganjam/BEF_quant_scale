@@ -249,6 +249,18 @@ mix_dat <-
 # join the monoculture data
 bio_dat <- left_join(mix_dat, mono_dat, by = c("cluster_id", "buoy_id", "time", "OTU"))
 
+# in a few rare cases, there were multiple monocultures per site
+# we average those here (e.g. see A5 where two bryo monocultures are present)
+bio_dat %>% 
+  filter(buoy_id == "A5")
+
+bio_dat <- 
+  bio_dat %>%
+  group_by(cluster_id, buoy_id, time, OTU) %>%
+  summarise(Y = mean(Y, na.rm = TRUE),
+            M = mean(M, na.rm = TRUE),
+            .groups = "drop")
+
 # write this into a .csv file
 write_csv(x = bio_dat, file = here("data/benthic_communities_tjarno_data/data_clean/biomass_data.csv"))
 
