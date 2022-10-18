@@ -29,8 +29,8 @@ v <- v[complete.cases(v),]
 # make a data.list with the training data
 bryo <- 
   list(M = v$M,
-       Y = scale(v$Y),
-       Y2 = scale(v$Y)^2,
+       Y = (v$Y),
+       Y2 = (v$Y)^2,
        PC1 = v$PC1,
        PC2 = v$PC2
   )

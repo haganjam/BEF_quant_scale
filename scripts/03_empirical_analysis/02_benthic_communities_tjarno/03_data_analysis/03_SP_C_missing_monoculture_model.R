@@ -29,8 +29,8 @@ v <- v[complete.cases(v),]
 # make a data.list with the training data
 bumpi <- 
   list(M = v$M,
-       Y = scale(v$Y),
-       Y2 = scale(v$Y)^2,
+       Y = (v$Y),
+       Y2 = (v$Y)^2,
        PC1 = v$PC1
   )
 
@@ -136,5 +136,14 @@ dev.off()
 # compare the three models
 compare(m.C1, m.C2, m.C3, func = PSIS)
 compare(m.C1, m.C2, m.C3, func = WAIC)
+
+# sample from the m.C3 model
+post <- rethinking::extract.samples(m.C3)
+
+# write this posterior distribution list as a .rds object
+saveRDS(post, here("results/SP_C_monoculture_posterior.rds"))
+
+# save the model object as a .rds object
+saveRDS(m.C3, here("results/SP_C_model_object.rds")) 
 
 ### END
