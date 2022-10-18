@@ -23,6 +23,9 @@ data <- read_csv(here("data/benthic_communities_tjarno_data/data_clean/biomass_e
 # create a v data.frame with the relevant data
 v <- data[data$OTU %in% c("Bryo"), ]
 
+# remove NAs from the monoculture column
+v <- v[complete.cases(v),]
+
 # make a data.list with the training data
 bryo <- 
   list(M = v$M,
@@ -305,5 +308,14 @@ compare(m.B1, m.B2, m.B3, m.B4,
 compare(m.B1, m.B2, m.B3,m.B4, 
         m.B5, m.B6, m.B7, m.B8,
         func = WAIC)
+
+# sample from the m.B2 model
+post <- rethinking::extract.samples(m.B2)
+
+# write this posterior distribution list as a .rds object
+saveRDS(post, here("results/SP_B_monoculture_posterior.rds"))
+
+# save the model object as a .rds object
+saveRDS(m.B2, here("results/SP_B_model_object.rds")) 
 
 ### END
