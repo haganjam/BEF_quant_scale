@@ -23,6 +23,9 @@ data <- read_csv(here("data/benthic_communities_tjarno_data/data_clean/biomass_e
 # create a v data.frame with the relevant data
 v <- data[data$OTU %in% c("Seasq"), ]
 
+# remove NAs from the monoculture column
+v <- v[complete.cases(v),]
+
 # make a data.list with the training data
 seasq <- 
   list(M = v$M,
@@ -133,27 +136,13 @@ dev.off()
 compare(m.E1, m.E2, m.E3, func = PSIS)
 compare(m.E1, m.E2, m.E3, func = WAIC)
 
-# plot the observed and modeled data with error
-post <- sim(m.E2)
-mu <- apply(post, 2, mean)
-PI_low <- apply(post, 2, function(x) PI(x, 0.90)[1] )
-PI_high <- apply(post, 2, function(x) PI(x, 0.90)[2] )
+# sample from the m.E1 model
+post <- rethinking::extract.samples(m.E1)
 
-# are any mu values less than zero?
-min(mu)
+# write this posterior distribution list as a .rds object
+saveRDS(post, here("results/SP_E_monoculture_posterior.rds"))
 
-# plot predictions with error
-tibble(obs = seasq$M,
-       mu = mu,
-       PI_low = PI_low,
-       PI_high = PI_high) %>%
-  ggplot( data = .,
-          mapping = aes(x = obs, y = mu)) +
-  geom_point() +
-  geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
-  geom_errorbar(mapping = aes(x = obs, 
-                              ymin = PI_low,
-                              ymax = PI_high)) +
-  theme_meta()
+# save the model object as a .rds object
+saveRDS(m.E1, here("results/SP_E_model_object.rds")) 
 
 ### END

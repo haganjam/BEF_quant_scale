@@ -20,7 +20,6 @@ library(rethinking)
 
 # load the analysis data
 data <- read_csv(here("data/benthic_communities_tjarno_data/data_clean/biomass_env_analysis_data.csv"))
-View(data)
 
 # pivot mixture data longer
 mix <- 
@@ -328,5 +327,14 @@ abline(0, 1)
 # based on these models, model 6 is the best
 compare(m.D1, m.D2, m.D3, m.D4, 
         m.D5, m.D6, m.D7, m.D8, func = PSIS)
+
+# sample from the m.D6 model
+post <- rethinking::extract.samples(m.D6)
+
+# write this posterior distribution list as a .rds object
+saveRDS(post, here("results/SP_D_monoculture_posterior.rds"))
+
+# save the model object as a .rds object
+saveRDS(m.D6, here("results/SP_D_model_object.rds")) 
 
 ### END
