@@ -360,45 +360,72 @@ compare(m.A1, m.A2, m.A3, m.A4,
 
 # sample from the m.A3 model
 post <- rethinking::extract.samples(m.A3)
-post
-
-View(data)
 
 # assign input variables to the names
 Barn_NA <- 
   data %>%
   filter(OTU == "Barn", is.na(M))
 
+# extract the variable names
 var_names <- names(m.A3@data)
 var_names <- var_names[var_names != "M"]
 
-for(i in var_names) {
-  
-  assign(x = i, Barn_NA[[i]])
-  
-}
-
-# assign the parameter values to the names
+# extract the parameter names
 post_names <- names(post)
-post_samp <- sapply(post, function(x) sample(x, 1) )
 names(post_samp) <- NULL
 
-# write a loop and assign a sample from the posterior distribution to a parameter name
-for (j in 1:length(post_names)) {
+# extract the correct distribution
+dist <- gsub(pattern = "d", replacement = "r", x = m.A3@formula[[1]][[3]] )
+dist <- paste0(dist[1], "(", dist[2], ",", dist[3], ")")
+
+# choose how many samples to draw from the posterior
+n_samp <- 100
+
+# get these predictions for n samples
+Barn_post <- 
   
-  assign(x = post_names[j], value = post_samp[j])
+  sapply(1:n_samp, function(x) {
   
-}
+  for(j in var_names) {
+    
+    assign(x = j, Barn_NA[[j]])
+    
+  }
+  
+  # take a sample from the posterior distribution
+  sample_id <- sample(x = 1:length(post$bY), 1)
+  
+  # assign the parameter values to the names
+  post_samp <- sapply(post, function(x) x[sample_id] )
+  
+  # write a loop and assign a sample from the posterior distribution to a parameter name
+  for (k in 1:length(post_names)) {
+    
+    assign(x = post_names[k], value = post_samp[k])
+    
+  }
+  
+  # calculate mu: set-up the expression
+  form <- parse(text = m.A3@formula[[2]][[3]])
+  
+  # evaluate the expression
+  u <- eval(form)
+  
+  # run the u values through the distribution
+  dist <- parse(text = dist )
+  M1 <- eval(dist)
+  
+  # if the value is less than zero then set it to zero
+  M1 <- ifelse(M1 < 0, 0, M1)
+  
+  return(M1)
+  
+} )
 
-# calculate mu: set-up the expression
-form <- parse(text = m.A3@formula[[2]][[3]])
+# write this as a .rds object
+saveRDS(Barn_post, here("results/SP_A_monoculture_posterior.rds"))
 
-# evaluate the expression
-u <- eval(form)
+which( (is.na(data[["M"]])) & (data[["OTU"]] == "Barn") )
 
-# run the 
-dist <- parse(text = m.A3@formula[[1]][[3]])
-gsub(pattern = "d", replacement = "r", x = m.A3@formula[[1]][[3]] )
-eval(dist)
 
 ### END
