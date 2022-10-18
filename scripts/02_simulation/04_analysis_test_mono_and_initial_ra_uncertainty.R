@@ -84,7 +84,7 @@ BEF_post <- foreach(
             
             FUN = function(RA) {
               
-              # calculate te biodiversity effects for each of the potential starting abundances
+              # calculate the biodiversity effects for each of the potential starting abundances
               BEF_post.x <- Isbell_2018_sampler(data = MC.x.post, RYe = RA, RYe_post = FALSE)
               names(BEF_post.x[["L.Beff"]])[names(BEF_post.x[["L.Beff"]]) == "L.Beff"] <- "Beff"
               
