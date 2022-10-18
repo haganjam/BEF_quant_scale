@@ -23,6 +23,9 @@ data <- read_csv(here("data/benthic_communities_tjarno_data/data_clean/biomass_e
 # create a v data.frame with the relevant data
 v <- data[data$OTU %in% c("Barn"), ]
 
+# remove NAs from the monoculture column
+v <- v[complete.cases(v),]
+
 # make a data.list with the training data
 barn <- 
   list(M = v$M,
@@ -354,5 +357,48 @@ compare(m.A1, m.A2, m.A3, m.A4,
 compare(m.A1, m.A2, m.A3, m.A4,
         m.A5, m.A6, m.A7, m.A8,
         func = WAIC)
+
+# sample from the m.A3 model
+post <- rethinking::extract.samples(m.A3)
+post
+
+View(data)
+
+# assign input variables to the names
+Barn_NA <- 
+  data %>%
+  filter(OTU == "Barn", is.na(M))
+
+var_names <- names(m.A3@data)
+var_names <- var_names[var_names != "M"]
+
+for(i in var_names) {
+  
+  assign(x = i, Barn_NA[[i]])
+  
+}
+
+# assign the parameter values to the names
+post_names <- names(post)
+post_samp <- sapply(post, function(x) sample(x, 1) )
+names(post_samp) <- NULL
+
+# write a loop and assign a sample from the posterior distribution to a parameter name
+for (j in 1:length(post_names)) {
+  
+  assign(x = post_names[j], value = post_samp[j])
+  
+}
+
+# calculate mu: set-up the expression
+form <- parse(text = m.A3@formula[[2]][[3]])
+
+# evaluate the expression
+u <- eval(form)
+
+# run the 
+dist <- parse(text = m.A3@formula[[1]][[3]])
+gsub(pattern = "d", replacement = "r", x = m.A3@formula[[1]][[3]] )
+eval(dist)
 
 ### END
