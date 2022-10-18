@@ -14,6 +14,7 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(here)
+library(ggpubr)
 
 # load the plotting theme
 source(here("scripts/Function_plotting_theme.R"))
@@ -68,7 +69,8 @@ SP.x <- cor.test(covT12$T1_cover, covT12$T2_cover, method = "spearman")
 print(SP.x)
 
 # plot a proper correlation plot
-ggplot(data = covT12,
+p1 <- 
+  ggplot(data = covT12,
        mapping = aes(x = T1_cover, y = T2_cover, colour = Species)) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
   geom_point(size = 2, alpha =0.7) +
@@ -89,9 +91,11 @@ tot_cov <-
 
 # what is the correlation?
 SP.y <- cor(tot_cov$T1_tot_cover, tot_cov$T2_tot_cover, method = "spearman")
+cor.test(tot_cov$T1_tot_cover, tot_cov$T2_tot_cover, method = "spearman")
 
 # plot a proper correlation plot
-ggplot(data = tot_cov,
+p2 <- 
+  ggplot(data = tot_cov,
        mapping = aes(x = T1_tot_cover, y = T2_tot_cover)) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
   geom_point(size = 2, alpha =0.7) +
@@ -103,6 +107,12 @@ ggplot(data = tot_cov,
   theme(legend.position = "top",
         legend.key = element_rect(fill = NA))
 
+p12 <- 
+  ggarrange(p1, p2, ncol = 2, nrow = 1, common.legend = TRUE,
+            labels =c("a", "b"), font.label = list(face = "plain", size = 11))
+
+ggsave(filename = here("figures/figS3.png"), p12,
+       unit = "cm", width = 20, height = 10)
 
 # correlation within each buoy
 cor_dist <- 
@@ -112,6 +122,7 @@ cor_dist <-
 
 # calculate the mean correlation
 mean(cor_dist$Spearman_r, na.rm = TRUE)
+sd(cor_dist$Spearman_r, na.rm = TRUE)
 hist(cor_dist$Spearman_r)
 
 # make a proper histogram

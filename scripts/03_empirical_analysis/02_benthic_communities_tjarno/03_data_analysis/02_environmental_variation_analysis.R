@@ -94,8 +94,8 @@ p1 <- ggplot() +
   #scale_shape_manual(values = c(1, 2)) +
   guides(colour = "none") +
   theme_meta() +
-  xlab("PC1 (45%)") +
-  ylab("PC2 (33%)") +
+  xlab("PC1 (38%)") +
+  ylab("PC2 (32%)") +
   theme(legend.position = "right",
         legend.title = element_blank(),
         legend.key = element_rect(fill = NA))
@@ -149,11 +149,17 @@ p2 <-
   theme_meta()
 plot(p2)
 
+# do a t.test()
+t.test(field_dispersion ~ heterogeneity, data = env_dispersion)
+
 # arrange the plots
 p12 <- 
   ggarrange(p2, p1, ncol = 2, nrow = 1,
-          widths = c(1, 2.1), labels = c("a", "b"),
-          font.label = list(face = "plain", size = 11))
+          widths = c(1, 1.25), labels = c("a", "b"),
+          font.label = list(face = "plain", size = 11), common.legend = TRUE)
 plot(p12)
+
+ggsave(filename = here("figures/figS4.png"), p12,
+       unit = "cm", width = 20, height = 10)
 
 ### END
