@@ -1,7 +1,7 @@
 #'
 #' @title: Bumpi: Model the missing monocultures
 #' 
-#' @description: This script attemps to model the missing monocultures
+#' @description: This script attempts to model the missing monocultures
 #' for the Bumpi species after preliminary data analysis showed that a single
 #' monoculture would not be suitable for all species.
 #' 
@@ -22,6 +22,9 @@ data <- read_csv(here("data/benthic_communities_tjarno_data/data_clean/biomass_e
 
 # create a v data.frame with the relevant data
 v <- data[data$OTU %in% c("Bumpi"), ]
+
+# remove NAs from the monoculture column
+v <- v[complete.cases(v),]
 
 # make a data.list with the training data
 bumpi <- 
