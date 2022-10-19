@@ -51,6 +51,9 @@ BEF_eff <- foreach(
   
 ) %dopar% { 
   
+  # load the dplyr package
+  library(dplyr)
+  
   # add monoculture predictions from one sample into the data.frame
   for(j in 1:length(sp_mono)) {
     
@@ -107,7 +110,6 @@ BEF_eff <- foreach(
   return(BEF_eff)
   
   }
-
 
 # bind into a data.frame
 BEF_eff <- 
