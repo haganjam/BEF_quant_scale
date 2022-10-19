@@ -52,7 +52,7 @@ BEF_eff <- foreach(
 ) %dopar% { 
   
   # add monoculture predictions from one sample into the data.frame
-  for(j in 1:length(sp)) {
+  for(j in 1:length(sp_mono)) {
     
     data_M[which( (is.na(data_M[["M"]])) & (data_M[["species"]] == j) ), ][["M1"]] <- sp_mono[[j]][,i]
     
