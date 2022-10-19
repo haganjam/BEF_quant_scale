@@ -1,10 +1,9 @@
 #'
-#' @title: Calculate the BEF effects using the modelled monoculture data
+#' @title: Calculate the BEF effects using the modeled monoculture data
 #' 
 #' @description: This script uses the samples from the posterior distributions of
-#' the best monoculture models of each species to fill in the missing monoculture data
-#' and then calculates Isbell et al.'s (2018) biodiversity effects using all the variation
-#' in the modelled monocultures along with the uncertainty from the Dirichlet distribution.
+#' the best monoculture models of each species to fill in the missing monoculture data.
+#' An object containing these monoculture predictions is then outputted as a .rds file.
 #' 
 #' @authors: James G. Hagan (james_hagan(at)outlook.com)
 #'
@@ -12,13 +11,8 @@
 # load the required libraries
 library(readr)
 library(dplyr)
-library(tidyr)
-library(ggplot2)
 library(here)
-
-# load the relevant functions
-source(here("scripts/01_partition_functions/02_isbell_2018_partition.R"))
-source(here("scripts/Function_plotting_theme.R"))
+library(rethinking)
 
 # load the analysis data
 data <- read_csv(here("data/benthic_communities_tjarno_data/data_clean/biomass_env_analysis_data.csv"))
@@ -50,7 +44,7 @@ files_post <- files[grepl(pattern = "posterior", x = files )]
 files_mod <- files[grepl(pattern = "model_object", x = files )]
 
 # choose how many samples to draw from the posterior
-n_samp <- 100
+n_samp <- 1000
 
 sp_mono <- vector("list", length = length(sp))
 names(sp_mono) <- sp
@@ -132,9 +126,10 @@ all(data %>%
       pull(n) == sapply(sp_mono, nrow)
     ) 
 
-# remove the unnecessary columns in the data data.frame and put data in correct format
-names(data)
+# save the monoculture predictions as a .rds file
+saveRDS(object = sp_mono, file = here("results/benthic_mono_pred.rds"))
 
+# remove the unnecessary columns in the data data.frame and put data in correct format
 data_M <- 
   data %>%
   select(cluster_id, buoy_id, time, OTU, M, Y) %>%
@@ -144,63 +139,17 @@ data_M <-
          species = as.integer(as.factor(species))) %>%
   group_by(cluster_id) %>%
   mutate(sample = as.integer(as.factor(paste0(place, time))) ) %>%
-  select(cluster_id, sample, place, time, species, M, Y)
+  ungroup() %>%
+  select(cluster_id, sample, place, time, species, M, Y) %>%
+  mutate(M1 = M)
+
+# save the monoculture predictions as a .rds file
+saveRDS(object = data_M, file = here("results/benthic_BEF_data.rds"))
 
 # generate 100 different Dirichlet distribution
 start_RA <- sapply(1:100, function(x) gtools::rdirichlet(n = 1, rep(3, length(unique(data_M$species))) ) )
 
+# save the Dirichlet distribution
+saveRDS(object = start_RA, file = here("results/benthic_start_RA.rds"))
 
-# loop over all the different monoculture predictions
-
-# sp_mono[[j]][,1] <- 1 needs to be an i and we need to loop over the columns in the monoculture predictions
-
-# add monoculture predictions from one sample into the data.frame
-for(j in 1:length(sp)) {
-
-  data_M[which( (is.na(data_M[["M"]])) & (data_M[["species"]] == j) ), ][["M"]] <- sp_mono[[j]][,1]
-  
-}
-
-# split the data by cluster_id
-clus_df <- split(data_M[, -1], data_M$cluster_id)
-
-BEF.x <- 
-  
-  lapply(clus_df, function(data_in) {
-  
-  RYe_reps <- 
-    
-    apply(
-      
-      X = start_RA, 
-      
-      MARGIN = 2, 
-      
-      FUN = function(RA) {
-        
-        # calculate the biodiversity effects for each of the potential starting abundances
-        BEF_post.x <- Isbell_2018_sampler(data = data_in, RYe = RA, RYe_post = FALSE)
-        names(BEF_post.x[["L.Beff"]])[names(BEF_post.x[["L.Beff"]]) == "L.Beff"] <- "Beff"
-        
-        # combine the general biodiversity effects and local effects into one data.frame
-        BEF_post.x <- rbind(BEF_post.x[["Beff"]], BEF_post.x[["L.Beff"]])
-        
-        # convert to a data.frame
-        BEF_post.x <- as.data.frame(BEF_post.x, row.names = NULL)
-        
-        return(BEF_post.x)
-        
-      } )
-  
-  # bind into a data.frame
-  return(bind_rows(RYe_reps, .id = "RA"))
-  
-} )
-
-# bind the rows from the different clusters
-bind_rows(BEF.x, .id = "cluster_id")
-
-
-
-
-
+### END
