@@ -162,4 +162,7 @@ plot(p12)
 ggsave(filename = here("figures/figS4.png"), p12,
        unit = "cm", width = 20, height = 10)
 
+# output the multivariate dispersion into an .rds file
+saveRDS(object = env_dispersion, file = here("results/benthic_env_dispersion.rds"))
+
 ### END

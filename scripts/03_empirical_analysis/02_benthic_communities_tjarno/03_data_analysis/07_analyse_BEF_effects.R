@@ -10,6 +10,7 @@
 
 # load relevant libraries
 library(dplyr)
+library(tidyr)
 library(ggplot2)
 library(ggpubr)
 library(here)
@@ -176,10 +177,80 @@ plot(p123)
 ggsave(filename = here("figures/ben_fig1.png"), p123,
        unit = "cm", width = 20, height = 7)
 
+# load in the environmental dispersion data
+env_disp <- readRDS(file = here("results/benthic_env_dispersion.rds"))
+head(env_disp)
+
+# using the original data, subset NBE and IT and calculate proportion of IT
+BEF_env <- 
+  BEF_trim %>%
+  filter(Beff == c("IT")) %>%
+  select(-Beff) %>%
+  rename(IT = Value)
+dim(BEF_env)
+
+BEF_env <- 
+  BEF_env %>%
+  group_by(cluster_id) %>%
+  summarise(IT_m = round(mean(IT), 3),
+            PI_low = rethinking::HPDI(IT, 0.90)[1],
+            PI_high = rethinking::HPDI(IT, 0.90)[2])
 
 
+# join the env_disp data to the BEF_pool data
+BEF_env <- full_join(env_disp, BEF_env, by = "cluster_id")
 
+# plot the relationship between environmental dispersion and proportion of the insurance effect
+ggplot(data = BEF_env) +
+  geom_point(mapping = aes(x = field_dispersion, y = IT_m), size = 2) +
+  geom_errorbar(mapping = aes(x = field_dispersion, 
+                              ymin = PI_low,
+                              ymax = PI_high), width = 0) +
+  ylab("IT (g time-1)") +
+  xlab("Multivariate dispersion") +
+  theme_meta()
 
+# load the analysis data
+data <- read_csv(here("data/benthic_communities_tjarno_data/data_clean/biomass_env_analysis_data.csv"))
+head(data)
+
+# were there differences in diversity between clusters?
+data %>%
+  select(-M) %>%
+  group_by(cluster_id, OTU) %>%
+  summarise(Y = round(mean(Y), 3) ) %>%
+  mutate(SR_mix = (sum(Y > 0)) ) %>%
+  ggplot(data = .,
+         mapping = aes(x = cluster_id, y = Y, colour = OTU)) +
+  geom_point(position = position_dodge(0.75)) +
+  theme_meta() +
+  theme(legend.position = "top")
+
+data %>%
+  select(-Y) %>%
+  filter(!is.na(M)) %>%
+  group_by(cluster_id, OTU) %>%
+  summarise(M = round(mean(M), 3) ) %>%
+  mutate(SR_mono = (sum(M > 0)) ) %>%
+  ggplot(data = .,
+         mapping = aes(x = cluster_id, y = SR_mono, colour = OTU)) +
+  geom_point(position = position_dodge(0.75)) +
+  theme_meta() +
+  theme(legend.position = "top")
+
+data %>%
+  select(-Y) %>%
+  filter(!is.na(M)) %>%
+  group_by(cluster_id, OTU) %>%
+  summarise(M = round(mean(M), 3) ) %>%
+  mutate(SR_mono = (sum(M > 0)) ) %>%
+  ggplot(data = .,
+         mapping = aes(x = cluster_id, y = M, colour = OTU)) +
+  geom_point(position = position_dodge(0.75)) +
+  theme_meta() +
+  theme(legend.position = "top")
+
+# quantify temporal turnover etc.
 
 
 
