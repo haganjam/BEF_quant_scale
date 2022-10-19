@@ -26,7 +26,7 @@ data_M <- readRDS(here("BEF_quant_scale/results/benthic_BEF_data.rds"))
 start_RA <- readRDS(here("BEF_quant_scale/results/benthic_start_RA.rds"))
 
 # load the monoculture prediction data
-sp_mono <- readRDS(file = here("BEF_quant_scale/results/monoculture_predictions.rds"))
+sp_mono <- readRDS(file = here("BEF_quant_scale/results/benthic_mono_pred.rds"))
 
 # check how many samples from the posterior distribution there are
 n_samp <- (sapply(sp_mono, function(x) ncol(x)))
