@@ -11,9 +11,13 @@
 # load relevant libraries
 library(dplyr)
 library(tidyr)
+library(readr)
 library(ggplot2)
 library(ggpubr)
+library(betapart)
+library(vegan)
 library(here)
+library(corrplot)
 
 # load plotting theme
 source(here("scripts/Function_plotting_theme.R"))
@@ -76,6 +80,9 @@ BEF_trim %>%
 BEF_dat %>%
   filter(cluster_id == "A", Beff == "NBE")
 
+
+# what is the magnitude of different biodiversity effects?
+
 # summarise the data into a pooled estimate
 BEF_pool <- 
   BEF_trim %>%
@@ -84,7 +91,7 @@ BEF_pool <-
             PI_low = rethinking::HPDI(Value, 0.90)[1],
             PI_high = rethinking::HPDI(Value, 0.90)[2], .groups = "drop")
 
-# is the median within the percentile interval 90
+# is the mean within the percentile interval 90
 BEF_pool %>%
   mutate(within_PI = if_else((Value_m > PI_low) & (Value_m < PI_high), 1, 0 )) %>%
   filter(within_PI != 1) %>%
@@ -93,11 +100,13 @@ BEF_pool %>%
 # compare total to local selection and complementarity
 
 # which effects to plot
-eff_in <- c("LC", "LS", "TC", "TS")
+eff_in <- c("LC", "TC", "LS", "TS")
 
 # plot the effects
 p1 <- 
-  ggplot(data = BEF_pool %>% filter(Beff %in% eff_in) ) +
+  ggplot(data = BEF_pool %>% 
+           filter(Beff %in% eff_in) %>%
+           mutate(Beff = factor(Beff, levels = eff_in) )) +
   geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
   geom_point(mapping = aes(x = Beff, y = Value_m, 
                            colour = Beff, fill = Beff, group = cluster_id),
@@ -126,7 +135,7 @@ p2 <-
   geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
   geom_point(mapping = aes(x = Beff, y = Value_m, 
                            colour = Beff, fill = Beff, group = cluster_id),
-             position = position_dodge(0.75), size = 2) +
+             position = position_dodge(0.75), size = 2.5) +
   geom_errorbar(mapping = aes(x = Beff, ymin = PI_low, ymax = PI_high,
                               colour = Beff, group = cluster_id),
                 width = 0, position = position_dodge(0.75))  +
@@ -151,7 +160,7 @@ p3 <-
   geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
   geom_point(mapping = aes(x = Beff, y = Value_m, 
                            colour = Beff, fill = Beff, group = cluster_id),
-             position = position_dodge(0.75), size = 2) +
+             position = position_dodge(0.75), size = 2.5) +
   geom_errorbar(mapping = aes(x = Beff, ymin = PI_low, ymax = PI_high,
                               colour = Beff, group = cluster_id),
                 width = 0, position = position_dodge(0.75)) +
@@ -177,31 +186,42 @@ plot(p123)
 ggsave(filename = here("figures/ben_fig1.png"), p123,
        unit = "cm", width = 20, height = 7)
 
+# check the correlations among these different effects
+BEF_pool %>%
+  select(cluster_id, Beff, Value_m) %>%
+  pivot_wider(id_cols = "cluster_id",
+              names_from = "Beff",
+              values_from = "Value_m") %>%
+  select(-cluster_id) %>%
+  cor() %>%
+  corrplot(method = c("ellipse"))
+
+
+# do insurance effects depend on environmental heterogeneity?
+
 # load in the environmental dispersion data
 env_disp <- readRDS(file = here("results/benthic_env_dispersion.rds"))
 head(env_disp)
 
 # using the original data, subset NBE and IT and calculate proportion of IT
-BEF_env <- 
+IT_env <- 
   BEF_trim %>%
   filter(Beff == c("IT")) %>%
   select(-Beff) %>%
   rename(IT = Value)
-dim(BEF_env)
 
-BEF_env <- 
-  BEF_env %>%
+IT_env <- 
+  IT_env %>%
   group_by(cluster_id) %>%
   summarise(IT_m = round(mean(IT), 3),
             PI_low = rethinking::HPDI(IT, 0.90)[1],
             PI_high = rethinking::HPDI(IT, 0.90)[2])
 
-
 # join the env_disp data to the BEF_pool data
-BEF_env <- full_join(env_disp, BEF_env, by = "cluster_id")
+IT_env <- full_join(env_disp, IT_env, by = "cluster_id")
 
-# plot the relationship between environmental dispersion and proportion of the insurance effect
-ggplot(data = BEF_env) +
+# plot the relationship between environmental dispersion and the insurance effect
+ggplot(data = IT_env) +
   geom_point(mapping = aes(x = field_dispersion, y = IT_m), size = 2) +
   geom_errorbar(mapping = aes(x = field_dispersion, 
                               ymin = PI_low,
@@ -210,47 +230,199 @@ ggplot(data = BEF_env) +
   xlab("Multivariate dispersion") +
   theme_meta()
 
+cor.test(IT_env$field_dispersion, IT_env$IT_m, method = "spearman")
+
+ggplot(data = IT_env) +
+  geom_point(mapping = aes(x = GIS_dispersion, y = IT_m), size = 2) +
+  geom_errorbar(mapping = aes(x = GIS_dispersion, 
+                              ymin = PI_low,
+                              ymax = PI_high), width = 0) +
+  ylab("IT (g time-1)") +
+  xlab("Multivariate dispersion") +
+  theme_meta()
+
+cor.test(IT_env$GIS_dispersion, IT_env$IT_m, method = "spearman")
+
+
+# does spatial or temporal beta-diversity affect the magnitude of insurance effects?
+
 # load the analysis data
 data <- read_csv(here("data/benthic_communities_tjarno_data/data_clean/biomass_env_analysis_data.csv"))
 head(data)
 
-# were there differences in diversity between clusters?
-data %>%
+# quantify community metrics
+
+# convert the data to a wide format
+data_wide <- 
+  data %>%
   select(-M) %>%
-  group_by(cluster_id, OTU) %>%
-  summarise(Y = round(mean(Y), 3) ) %>%
-  mutate(SR_mix = (sum(Y > 0)) ) %>%
-  ggplot(data = .,
-         mapping = aes(x = cluster_id, y = Y, colour = OTU)) +
-  geom_point(position = position_dodge(0.75)) +
+  pivot_wider(id_cols = c("cluster_id", "buoy_id", "time", "PC1", "PC2"),
+              names_from = "OTU",
+              values_from = "Y")
+
+# get species by site matrix
+com <- 
+  data_wide %>%
+  select(Barn, Bryo, Bumpi, Hydro, Seasq)
+  
+# get a site only matrix
+site <- 
+  data_wide %>%
+  select(cluster_id, buoy_id, time, PC1, PC2)
+
+# make a list of the community matrix with and without Barnacles
+com_list <- list(com, com[, names(com) != "Barn"])
+
+# make an output list
+IT_env_beta <- vector("list", length = length(com_list))
+
+for(i in 1:length(com_list)) {
+  
+  # calculate spatial beta-diversity within clusters
+  beta_spat <- 
+    
+    split(com_list[[i]], paste0(site$cluster_id, site$time)) %>%
+    
+    lapply(., function(sp_mat) {
+      
+      # calculate abundance-based multi-site beta-diversity
+      x <- beta.multi.abund(x = sp_mat, index.family = "bray")
+      
+      # calculate presence-absence based multi-site beta-diversity
+      y <- beta.multi(x = vegan::decostand(sp_mat, "pa") )
+      
+      # pull into a data.frame
+      df <- tibble(S.beta_bray_bal = x$beta.BRAY.BAL,
+                   S.beta_bray_gra = x$beta.BRAY.GRA,
+                   S.beta_bray = x$beta.BRAY,
+                   S.beta_sor_turn = y$beta.SIM,
+                   S.beta_sor_nes = y$beta.SNE,
+                   S.beta_sor = y$beta.SOR)
+      
+      return(df)
+      
+    } )
+  
+  # summarise the average spatial beta diversity across time for each cluster
+  beta_spat_df <- 
+    bind_cols(site %>%
+                select(cluster_id, time) %>%
+                distinct(), 
+              bind_rows(beta_spat)
+    ) %>%
+    group_by(cluster_id) %>%
+    summarise(across(.cols = starts_with("S.beta"), mean, na.rm = TRUE),
+              .groups = "drop") %>%
+    arrange(cluster_id)
+  
+  
+  # calculate temporal beta-diversity within clusters
+  beta_temp <- 
+    
+    split(com_list[[i]], paste0(site$cluster_id, site$buoy_id)) %>%
+    
+    lapply(., function(sp_mat) {
+      
+      # calculate abundance-based multi-site beta-diversity
+      x <- beta.multi.abund(x = sp_mat, index.family = "bray")
+      
+      # calculate presence-absence based multi-site beta-diversity
+      y <- beta.multi(x = vegan::decostand(sp_mat, "pa") )
+      
+      # pull into a data.frame
+      df <- tibble(T.beta_bray_bal = x$beta.BRAY.BAL,
+                   T.beta_bray_gra = x$beta.BRAY.GRA,
+                   T.beta_bray = x$beta.BRAY,
+                   T.beta_sor_turn = y$beta.SIM,
+                   T.beta_sor_nes = y$beta.SNE,
+                   T.beta_sor = y$beta.SOR)
+      
+      return(df)
+      
+    } )
+  
+  # summarise the average spatial beta diversity across time for each cluster
+  beta_temp_df <- 
+    bind_cols(site %>%
+                select(cluster_id, buoy_id) %>%
+                distinct(), 
+              bind_rows(beta_temp)
+    ) %>%
+    group_by(cluster_id) %>%
+    summarise(across(.cols = starts_with("T.beta"), mean, na.rm = TRUE),
+              .groups = "drop") %>%
+    arrange(cluster_id)
+  
+  
+  # add spatial and temporal beta diversity to the IT_env data
+  beta_env_df <- 
+    left_join(IT_env, 
+              full_join(beta_spat_df, beta_temp_df, by = "cluster_id"),
+              by = "cluster_id"
+    )
+  
+  # add the IT_env_beta to a list
+  IT_env_beta[[i]] <- beta_env_df
+  
+}
+
+# correlation among different beta-diversity components and total insurance effects
+IT_env_beta[[1]][, -c(1:2)] %>%
+  cor(method = "spearman") %>%
+  corrplot(corr = ., method = "ellipse")
+
+IT_env_beta[[2]][, -c(1:2)] %>%
+  cor(method = "spearman") %>%
+  corrplot(corr = ., method = "ellipse")
+
+# how does spatial beta diversity without barnacles correlate with insurance effects?
+plot(IT_env_beta[[2]]$S.beta_sor, IT_env_beta[[2]]$IT_m)
+cor.test(IT_env_beta[[2]]$S.beta_sor, IT_env_beta[[2]]$IT_m, method = "spearman")
+
+# how does spatial beta diversity without barnacles correlate with environmental dispersion?
+plot(IT_env_beta[[2]]$GIS_dispersion, IT_env_beta[[2]]$S.beta_sor)
+cor.test(IT_env_beta[[2]]$GIS_dispersion, IT_env_beta[[2]]$S.beta_sor, method = "spearman")
+range(IT_env_beta[[2]]$S.beta_sor)
+
+# how does spatial beta diversity with barnacles correlate with environmental dispersion?
+plot(IT_env_beta[[1]]$GIS_dispersion, IT_env_beta[[1]]$S.beta_sor)
+cor.test(IT_env_beta[[1]]$GIS_dispersion, IT_env_beta[[1]]$S.beta_sor, method = "spearman")
+range(IT_env_beta[[1]]$S.beta_sor)
+
+
+# what is the beta diversity like when we exclude barnacles?
+
+# compare beta diversity with and without barnacles
+compare_beta <- 
+  bind_rows(IT_env_beta[[1]] %>%
+            select(contains("beta")) %>%
+            mutate(barn_pa = "present"),
+          IT_env_beta[[2]] %>%
+            select(contains("beta")) %>%
+            mutate(barn_pa = "absent")) %>%
+  pivot_longer(cols = contains("beta"),
+               names_to = "beta_metric",
+               values_to = "value")
+
+ggplot(data = compare_beta,
+       mapping = aes(x = beta_metric, y = value, fill = barn_pa)) +
+  geom_col(position = position_dodge(width = 0.5), width = 0.5) +
   theme_meta() +
-  theme(legend.position = "top")
-
-data %>%
-  select(-Y) %>%
-  filter(!is.na(M)) %>%
-  group_by(cluster_id, OTU) %>%
-  summarise(M = round(mean(M), 3) ) %>%
-  mutate(SR_mono = (sum(M > 0)) ) %>%
-  ggplot(data = .,
-         mapping = aes(x = cluster_id, y = SR_mono, colour = OTU)) +
-  geom_point(position = position_dodge(0.75)) +
-  theme_meta() +
-  theme(legend.position = "top")
-
-data %>%
-  select(-Y) %>%
-  filter(!is.na(M)) %>%
-  group_by(cluster_id, OTU) %>%
-  summarise(M = round(mean(M), 3) ) %>%
-  mutate(SR_mono = (sum(M > 0)) ) %>%
-  ggplot(data = .,
-         mapping = aes(x = cluster_id, y = M, colour = OTU)) +
-  geom_point(position = position_dodge(0.75)) +
-  theme_meta() +
-  theme(legend.position = "top")
-
-# quantify temporal turnover etc.
+  theme(axis.text.x = element_text(angle = 90))
 
 
+# were barnacles present everywhere and how abundant were they?
+
+# barnacles present at x percentage of sites
+sum(com$Barn>0)/nrow(com)*100
+
+# on average, they are this abundant
+Barn_RA <- com$Barn/apply(com, 1, sum)
+mean(Barn_RA, na.rm = TRUE)
+sd(Barn_RA, na.rm = TRUE)
+
+# in this proportion of sites-time points, they made up more than 90% of the functioning
+sum(Barn_RA > 0.90, na.rm = TRUE)/length(Barn_RA)
+
+### END
 
