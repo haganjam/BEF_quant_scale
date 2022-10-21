@@ -37,7 +37,6 @@ extirp_prob <- 0.00001
 
 # maximum growth parameters
 max_r <- 5
-K_max <- NA
 
 # set-up parameters for the competition matrices
 int_min1 <- 0.05*0
@@ -46,24 +45,22 @@ int_max1 <- 0.05*1
 int_max2 <- 0.05*1.5
 intra <- 0.05*1
 
-# set-up the type of Lotka-Volterra competition
-comp <- "Beverton_Holt"
-
 # landscape parameters
 
 # generate a random landscape
-n1 <- 5
-n2 <- 4
+n1 <- 4
+n2 <- 5
 assertthat::assert_that(assertthat::see_if( (n1*n2) == patches ),
                         msg = "change the n1 and n2 values so that their product matches the patches")
 
 # using the number of patches, set-up a random evenly spread landscape
-t1 <- round(seq(25, 100, length.out = 5), 0)
-t2 <- round(seq(25, 100, length.out = 4), 0)
+t1 <- round(seq(25, 25*4, length.out = n1), 0)
+t2 <- round(seq(25, 25*5, length.out = n2), 0)
 t12 <- expand.grid(t1, t2)
 
 # pull these evenly spaced patches into a data.frame
 landscape.x <- data.frame(x = t12[[1]], y = t12[[2]])
+plot(landscape.x)
 
 # generate a random dispersal matrix using the landscape.x landscape
 dispersal.x <- dispersal_matrix(landscape = landscape.x, torus = TRUE, kernel_exp = 0.1, plot = FALSE)
@@ -91,8 +88,7 @@ MC_sims <-
       data.frame(species = 1:species,
                  optima = optima,
                  env_niche_breadth = env_niche_breadth[[x]],
-                 max_r = max_r,
-                 K_max = K_max
+                 max_r = max_r
       )
     
     # generate the competition matrices
@@ -117,7 +113,7 @@ MC_sims <-
     # simulate environmental variables
     
     # randomly draw an autocorrelation value between 300 and 500
-    autocorr <- round(runif(1, 300, 500), 0)
+    autocorr <- round(runif(1, 100, 500), 0)
     
     # use the env_generate() function to generate a landscape of environmental variables
     env_var <- 
@@ -139,7 +135,6 @@ MC_sims <-
                        timesteps = timesteps, 
                        start_abun = start_abun,
                        extirp_prob = extirp_prob,
-                       comp = comp,
                        landscape = landscape.x, disp_mat = dispersal.x, env.df = env_var, 
                        env_traits.df = sp_att, 
                        int_mat = comp_mat
