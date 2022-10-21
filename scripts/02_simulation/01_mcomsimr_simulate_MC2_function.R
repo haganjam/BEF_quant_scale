@@ -55,31 +55,14 @@ simulate_MC2 <- function(patches, species, dispersal = 0.01, timesteps = 1200,
     # we use the equation 3 to determine the realised growth rate
     # of each species (col) in each patch (row)
     r <- env_traits.df$max_r*exp(-(t((env_traits.df$optima - matrix(rep(env, each = species), nrow = species, ncol = patches))/(2*env_traits.df$env_niche_breadth)))^2)
-    r <- r + rnorm(n = length(r), mean = 0, sd = 0.01)
     r <- ifelse(r < 0, 0, r)
     
-    # we use equation 3 to determine the realised carrying capacity
-    # of each species (col) in each patch (row)
-    K <- env_traits.df$K_max*exp(-(t((env_traits.df$optima - matrix(rep(env, each = species), nrow = species, ncol = patches))/(2*env_traits.df$env_niche_breadth)))^2)
-    K <- K + rnorm(n = length(K), mean = 0, sd = 2)
-    K <- ifelse(K <= 0, 1, K)
-    
     # here we implement the difference equation
-    if (comp == "Beverton_Holt") {
-      N_hat <- N*r/(1+N%*%int_mat)
-    } else if (comp == "Lotka_Volterra") {
-      N_hat <- N + ((N*r) * (1 - ((N %*% int_mat)/K) ))
-    } else {
-      stop("Choose a supported competition structure")
-    }
+    N_hat <- N*r/(1+N%*%int_mat)
     
-    # add noise from a normal distribution to these data
-    if (any(N_hat == 0) ) {
-      N_hat[N_hat == 0] <- 0 
-    } 
-    N_hat[N_hat > 0] <- rpois(n = length(N_hat[N_hat > 0]), lambda = (N_hat[N_hat > 0]))
+    # add noise from a poisson distribution to the data
     N_hat[N_hat < 0] <- 0
-    N_hat <- round(N_hat, 0)
+    N_hat <- matrix(rpois(n = species*patches, lambda = N_hat), ncol = species, nrow = patches)
     
     E <- matrix(rbinom(n = patches * species, size = N_hat, prob = rep(dispersal, each = patches)), nrow = patches, ncol = species)
     dispSP <- colSums(E)
