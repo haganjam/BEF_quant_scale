@@ -8,7 +8,6 @@ library(mcomsimr)
 library(here)
 source(here("scripts/01_partition_functions/02_isbell_2018_partition.R"))
 
-
 #' Modified version of the simulate_MC function from the mcomsimr package (Thompson et al. 2020, Ecology Letters)
 # https://github.com/plthompson/mcomsimr
 
@@ -29,7 +28,6 @@ source(here("scripts/01_partition_functions/02_isbell_2018_partition.R"))
 simulate_MC2 <- function(patches, species, dispersal = 0.01, timesteps = 1200,
                          start_abun = 150,
                          extirp_prob = 0,
-                         comp = "Beverton_Holt",
                          landscape, disp_mat, env.df, env_traits.df, int_mat, meas_error = 5){
   
   # load the dplyr library
