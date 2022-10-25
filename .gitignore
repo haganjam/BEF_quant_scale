@@ -16,6 +16,7 @@
 *.png
 *.docx
 *.tif
+*.pdf
 
 # Example code in package build process
 *-Ex.R

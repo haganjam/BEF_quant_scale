@@ -111,7 +111,7 @@ p12 <-
   ggarrange(p1, p2, ncol = 2, nrow = 1, common.legend = TRUE,
             labels =c("a", "b"), font.label = list(face = "plain", size = 11))
 
-ggsave(filename = here("figures/figS3.png"), p12,
+ggsave(filename = here("figures/figS6.png"), p12,
        unit = "cm", width = 20, height = 10)
 
 # correlation within each buoy
