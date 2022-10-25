@@ -5,13 +5,14 @@
 #' 
 #' @details: This script simulates example metacommunities and plots the mixtures,
 #' monocultures along with environments with different levels of environmental
-#' autocorrelation (Fig. S1, S2 and S3)
+#' autocorrelation (Fig. S1, S2, S3 and S4)
 #' 
 #' @authors: James G. Hagan (james_hagan(at)outlook.com)
 
 # load relevant packages
 library(ggplot2)
 library(dplyr)
+library(tidyr)
 library(here)
 
 # load the metacommunity simulation and data-processing functions
@@ -189,5 +190,89 @@ plot(p3)
 
 ggsave(filename = here("figures/figS3.png"), p3, dpi = 350,
        units = "cm", width = 18, height = 10)
+
+# plot the samples from the Dirichlet distribution that we used
+start_RA <- readRDS(here("results/MC_sims_start_RA.rds"))
+head(start_RA)
+
+# convert to a tibble
+start_RA <- as_tibble(start_RA)
+names(start_RA) <- as.character(1:ncol(start_RA))
+
+start_RA_obs <- 
+  start_RA %>%
+  pivot_longer(cols = everything(),
+               names_to = "sample",
+               values_to = "proportion") %>%
+  arrange(sample)
+
+# add a species column
+start_RA_obs$species <- rep(1:5, 100)
+
+# add the dirichlet distribution parameter
+start_RA_obs$alpha <- 3
+
+# simulate different alpha distributions from the dirichlet distribution
+alpha <- c(1, 2, 4, 5, 6)
+start_RA_sim <- 
+  
+  lapply(alpha, function(alpha_in) {
+  
+  df_list <-
+    
+    lapply(1:100, function(x) {
+      
+      df <- tibble(sample = as.character(x),
+                   proportion = as.vector(gtools::rdirichlet(n = 1, rep(3,  5) )),
+                   species = (1:5))
+      
+    } )
+  
+  # bind rows and add the alpha value
+  df_list <- bind_rows(df_list)
+  df_list$alpha <- alpha_in
+  
+  # arrange by sample
+  df_list <- 
+    df_list %>%
+    arrange(sample)
+  
+  return(df_list)
+  
+} )
+
+# bind into a data.frame
+start_RA_sim <- bind_rows(start_RA_sim)
+
+# bind these simulations to the observed or used data
+start_RA <- bind_rows(start_RA_obs, start_RA_sim)
+
+# add a column specifying that three is the used value
+start_RA <- 
+  start_RA %>%
+  mutate(RA_in = as.character(if_else(alpha == 3, 1, 0)) )
+
+# plot the data
+p4 <- 
+  ggplot(data = start_RA,
+       mapping = aes(x = species, y = proportion, group = sample,
+                     colour = RA_in)) +
+  geom_line(alpha = 0.3) +
+  facet_wrap(~alpha) +
+  ylab(expression(paste("Initial proportion (RY"[E], ")"))) +
+  xlab("Species") +
+  scale_colour_manual(values = c("grey", "red")) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  theme_meta() +
+  theme(legend.position = "none")
+plot(p4)
+
+ggsave(filename = here("figures/figS4.png"), p4, dpi = 350,
+       units = "cm", width = 18, height = 16)
+
+# check some of the summary statistics
+start_RA %>%
+  group_by(alpha) %>%
+  summarise(nzero = range(proportion))
 
 ### END
