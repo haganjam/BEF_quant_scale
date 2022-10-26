@@ -40,7 +40,7 @@ head(mono_init_dat)
 init_dat <- readRDS(here("results/BEF_output2.rds"))
 head(init_dat)
 
-# Table S1: calculate the range of observed biodiversity effects observed
+# Table S2: calculate the range of observed biodiversity effects observed
 mono_init_dat %>%
   group_by(Beff) %>%
   summarise(min_value = min(Value_obs),
