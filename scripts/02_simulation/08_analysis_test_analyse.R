@@ -40,6 +40,14 @@ head(mono_init_dat)
 init_dat <- readRDS(here("results/BEF_output2.rds"))
 head(init_dat)
 
+# Table S1: calculate the range of observed biodiversity effects observed
+mono_init_dat %>%
+  group_by(Beff) %>%
+  summarise(min_value = min(Value_obs),
+            max_value = max(Value_obs),
+            mean_value = mean(Value_obs),
+            sd_value = sd(Value_obs))
+
 # remove the models where the max_mono_width is less than 200
 mono_init_dat  <- 
   mono_init_dat  %>%
@@ -49,17 +57,6 @@ mono_init_dat  <-
 # how many models are left over?
 length(unique(mono_init_dat$model_ID))
 length(unique(init_dat$model_ID))
-
-# calculate the range of each of the biodiversity effects observed in the simulations
-mono_init_dat %>%
-  group_by(Beff) %>%
-  summarise(min_value = min(Value_obs),
-            max_value = max(Value_obs))
-
-init_dat %>%
-  group_by(Beff) %>%
-  summarise(min_value = min(Value_obs),
-            max_value = max(Value_obs))
 
 # set the mean range accuracy: 
 thresh <- 0.75
