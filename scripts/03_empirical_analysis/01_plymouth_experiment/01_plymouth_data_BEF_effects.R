@@ -146,6 +146,7 @@ df_unc_sum <-
             Value_sd = sd(Value))
 
 # compare total to local selection and complementarity
+eff_in <- c("LC", "TC", "LS", "TS")
 p1 <- 
   ggplot(data = df_unc_sum %>%
          filter(Beff %in% eff_in)) +
@@ -155,8 +156,8 @@ p1 <-
                               ymin = Value_m - Value_sd,
                               ymax = Value_m + Value_sd),
                 width = 0) + 
-  scale_colour_manual(values = v_col_BEF(eff_in = c("LC", "LS", "TC", "TS")) ) +
-  scale_fill_manual(values = v_col_BEF(eff_in = c("LC", "LS", "TC", "TS"))) +
+  scale_colour_manual(values = v_col_BEF(eff_in = eff_in) ) +
+  scale_fill_manual(values = v_col_BEF(eff_in = eff_in)) +
   ylab("Effect (cover (%) time-1)") +
   xlab(NULL) +
   theme_meta() +
@@ -164,6 +165,7 @@ p1 <-
 plot(p1)
   
 # compare net biodiversity effects, total complementarity and total selection
+eff_in <- c("NBE", "TC", "NO", "IT")
 p2 <- 
   ggplot(data = df_unc_sum %>%
          filter(Beff %in% eff_in) %>%
@@ -176,8 +178,8 @@ p2 <-
                               ymin = Value_m - Value_sd,
                               ymax = Value_m + Value_sd),
                 width = 0) +
-  scale_colour_manual(values = v_col_BEF(eff_in = c("NBE", "TC", "NO", "IT"))) +
-  scale_fill_manual(values = v_col_BEF(eff_in = c("NBE", "TC", "NO", "IT"))) +
+  scale_colour_manual(values = v_col_BEF(eff_in = eff_in)) +
+  scale_fill_manual(values = v_col_BEF(eff_in = eff_in)) +
   ylab("Effect (cover (%) time-1)") +
   xlab(NULL) +
   theme_meta() +
@@ -185,6 +187,7 @@ p2 <-
 plot(p2)
 
 # examine the distribution of the insurance effects
+eff_in <- c("AS", "TI", "SI", "ST")
 p3 <- 
   ggplot(data = df_unc_sum %>%
          filter(Beff %in% eff_in) %>%
@@ -197,8 +200,8 @@ p3 <-
                               ymin = Value_m - Value_sd,
                               ymax = Value_m + Value_sd),
                 width = 0) +
-  scale_colour_manual(values = v_col_BEF(eff_in = c("AS", "TI", "SI", "ST"))) +
-  scale_fill_manual(values = v_col_BEF(eff_in = c("AS", "TI", "SI", "ST"))) +
+  scale_colour_manual(values = v_col_BEF(eff_in = eff_in)) +
+  scale_fill_manual(values = v_col_BEF(eff_in = eff_in)) +
   ylab("Effect (cover (%) time-1)") +
   xlab(NULL) +
   theme_meta() +
@@ -212,7 +215,7 @@ p123 <-
             font.label = list(size = 11, face = "plain"))
 plot(p123)
 
-ggsave(filename = here("figures/ply_fig1.png"), p123,
+ggsave(filename = here("figures/fig4.png"), p123,
        unit = "cm", width = 20, height = 7)
 
 # why does local complementarity not vary with the RYe
@@ -280,7 +283,7 @@ p12 <-
   ggarrange(p1, p2, legend.grob = legend, labels = c("a", "b"),
             font.label = list(size = 11, face = "plain"))
 
-ggsave(filename = here("figures/ply_fig2.png"), p12,
+ggsave(filename = here("figures/fig5.png"), p12,
        unit = "cm", width = 13, height = 8)
 
 ### END
