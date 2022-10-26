@@ -50,6 +50,17 @@ mono_init_dat  <-
 length(unique(mono_init_dat$model_ID))
 length(unique(init_dat$model_ID))
 
+# calculate the range of each of the biodiversity effects observed in the simulations
+mono_init_dat %>%
+  group_by(Beff) %>%
+  summarise(min_value = min(Value_obs),
+            max_value = max(Value_obs))
+
+init_dat %>%
+  group_by(Beff) %>%
+  summarise(min_value = min(Value_obs),
+            max_value = max(Value_obs))
+
 # set the mean range accuracy: 
 thresh <- 0.75
 
@@ -86,7 +97,6 @@ init_dat <- accuracy[[2]]
 mono_init_sum <- 
   mono_init_dat %>%
   group_by(Beff) %>%
-  filter(mu_deviation_perc < quantile(mu_deviation_perc, 0.95)) %>%
   summarise(PI_obs_true = sum(PI_obs_true)/n(),
             PI_true = sum(PI_true)/n(),
             mu_deviation_m = mean( log10(mu_deviation_perc) ),
@@ -96,7 +106,7 @@ print(mono_init_sum)
 
 # reorder the levels
 mono_init_sum$BE <- factor(mono_init_sum$BE,
-                           levels = c("LC", "LS", "TC", "TS", "NBE", "NO", "IT", "AS", "TI", "SI", "ST"))
+                           levels = c("LC", "TC", "LS", "TS", "NBE", "NO", "IT", "AS", "TI", "SI", "ST"))
 
 
 # accuracy test 1: PI_obs_true
@@ -146,7 +156,7 @@ m1.post$BE <- rep(levels(as.factor(mono_init_dat$Beff))[m.dat$BE[1:11]], each = 
 
 # change the order of the effects
 m1.post$BE <- factor(m1.post$BE,
-                     levels = c("LC", "LS", "TC", "TS", "NBE", "NO", "IT", "AS", "TI", "SI", "ST"))
+                     levels = c("LC", "TC", "LS", "TS", "NBE", "NO", "IT", "AS", "TI", "SI", "ST"))
 
 # plot the results
 p1 <- 
@@ -218,7 +228,7 @@ m2.post$BE <- rep(levels(as.factor(mono_init_dat$Beff))[m.dat2$BE[1:11]], each =
 
 # change the order of the effects
 m2.post$BE <- factor(m2.post$BE,
-                     levels = c("LC", "LS", "TC", "TS", "NBE", "NO", "IT", "AS", "TI", "SI", "ST"))
+                     levels = c("LC", "TC", "LS", "TS", "NBE", "NO", "IT", "AS", "TI", "SI", "ST"))
 
 # plot the results
 p2 <- 
@@ -414,7 +424,7 @@ p1234 <-
 
 plot(p1234)
 
-ggsave(filename = here("figures/sim_fig1.png"), p1234,
+ggsave(filename = here("figures/fig1.png"), p1234, dpi = 400,
        unit = "cm", width = 20, height = 15)
 
 ### END
