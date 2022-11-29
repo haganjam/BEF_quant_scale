@@ -109,6 +109,15 @@ ply_dat %>%
   pull(proportion_focal) %>%
   summary()
 
+# get summary statistics of species cover
+ply_part %>%
+  group_by(place, time) %>%
+  summarise(Y = sum(Y)) %>% 
+  pull(Y) %>%
+  mean()
+
+mean(ply_part$M)
+
 # convert the place and times to integers
 ply_part <- 
   ply_part %>%

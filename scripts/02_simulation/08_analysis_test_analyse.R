@@ -96,8 +96,8 @@ mono_init_sum <-
   group_by(Beff) %>%
   summarise(PI_obs_true = sum(PI_obs_true)/n(),
             PI_true = sum(PI_true)/n(),
-            mu_deviation_m = mean( log10(mu_deviation_perc) ),
-            mu_deviation_sd = sd( log10(mu_deviation_perc) )) %>%
+            mu_deviation_m = log10( mean(mu_deviation_perc) ),
+            mu_deviation_sd = log10( sd(mu_deviation_perc) )) %>%
   rename(BE = Beff)
 print(mono_init_sum)
 
