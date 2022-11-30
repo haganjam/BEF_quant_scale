@@ -248,6 +248,29 @@ ggsave(filename = here("figures/fig4.png"), p123,
 # formula uses average change in relative yield and average relative yield is the same
 apply(dr, 2, mean)
 
+# can we explain these effects?
+
+# LC and TC are high whereas LS and TS are low 
+# this implies that local complementarity is important
+
+# calculate proportion of species overyielding
+OY <- 
+  apply(dr, 2, function(x) {
+   ply_part$Y - ply_part$M*x
+} )
+
+OY <- sapply(OY, function(x) x)
+
+# make a histogram of these numbers
+OY_df <- tibble(species = rep(ply_part$species, 100), OY = OY)
+OY_df <- arrange(OY_df, species)
+summary(OY_df)
+
+# only 1% of species across times and places and integrated over random
+# expected relative yields underyielded
+sum(OY_df$OY < 0)/nrow(OY_df)
+
+
 # check the correlation between relative yield and monoculture yields
 
 # make a legend
@@ -312,6 +335,33 @@ p12 <-
 ggsave(filename = here("figures/fig5.png"), p12,
        unit = "cm", width = 13, height = 8)
 
+
+# BES talk figures
+
+# plot of the NBE effect and total complementarity and selection
+# compare total to local selection and complementarity
+eff_in <- c("NBE", "TC", "TS")
+p.BES1 <- 
+  ggplot(data = df_unc_sum %>%
+           filter(Beff %in% eff_in)) +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
+  geom_col(mapping = aes(x = Beff, y = Value_m, colour = Beff, fill = Beff), 
+           width = 0.3) +
+  geom_errorbar(mapping = aes(x = Beff, 
+                              ymin = Value_m - Value_sd,
+                              ymax = Value_m + Value_sd),
+                width = 0) + 
+  scale_colour_manual(values = v_col_BEF(eff_in = eff_in) ) +
+  scale_fill_manual(values = v_col_BEF(eff_in = eff_in)) +
+  ylab("Effect (%, cover)") +
+  xlab(NULL) +
+  theme_meta() +
+  theme(legend.position = "none")
+plot(p.BES1)
+
+ggsave(filename = here("figures/fig_BES1.png"), p.BES1,
+       unit = "cm", width = 7, height = 7)
+
 # make a plot of difference in mixture and monocultures across all times and places
 psum <- 
   ply_part %>%
@@ -320,7 +370,7 @@ psum <-
   summarise(M = mean(M),
             Y = sum(Y), .groups = "drop")
 
-p.BES1 <- 
+p.BES2 <- 
   ggplot(data = ply_part %>% filter(place == 1, time == 1)) +
   geom_point(mapping = aes(x = 1, y = M),
              position = position_dodge2(width = c(0.1, 0, 0.1, 0))) +
@@ -331,12 +381,12 @@ p.BES1 <-
   ylab("Species cover (%)") +
   xlab("Species richness") +
   theme_meta()
-plot(p.BES1)
+plot(p.BES2)
 
-ggsave(filename = here("figures/fig_BES1.png"), p.BES1,
+ggsave(filename = here("figures/fig_BES2.png"), p.BES2,
        unit = "cm", width = 7, height = 8)
 
-p.BES2 <- 
+p.BES3 <- 
   ply_part %>%
   group_by(place, time) %>%
   summarise(M = mean(M),
@@ -353,7 +403,44 @@ p.BES2 <-
   xlab("") +
   theme_meta()
 
-ggsave(filename = here("figures/fig_BES2.png"), p.BES2,
+ggsave(filename = here("figures/fig_BES3.png"), p.BES3,
        unit = "cm", width = 11, height = 8)
+
+# plot a histogram of the overyielding of species
+p.BES4 <- 
+  ggplot(data = OY_df, 
+         mapping = aes(x = OY)) +
+  geom_histogram(alpha = 0.75, colour = "white") +
+  geom_vline(xintercept = 0, linetype = "dashed", size = 0.75, colour = "red") +
+  # scale_fill_viridis_d(begin = 0.1, end = 0.9, option = "C") +
+  ylab("Count") +
+  xlab("Overyielding") +
+  theme_meta() +
+  theme(legend.position = "none")
+
+ggsave(filename = here("figures/fig_BES4.png"), p.BES4,
+       unit = "cm", width = 12, height = 7)
+
+# plot covariance between monoculture and relative abundance
+p.BES5 <- 
+  ply_part %>%
+  group_by(sample) %>%
+  mutate(rel_abun = Y/sum(Y)) %>%
+  group_by(sample, species) %>%
+  summarise(M = mean(M),
+            rel_abun = mean(rel_abun)) %>%
+  ggplot(data = .,
+         mapping = aes(x = M, y = rel_abun, colour = species)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_colour_viridis_d(begin = 0.1, end = 0.9, option = "C") +
+  ylab("Relative abundance") +
+  xlab("Monoculture (%, cover)") +
+  theme_meta()  +
+  theme(legend.position = "none",
+        plot.title = element_text(size = 12, hjust = 0.5))
+
+ggsave(filename = here("figures/fig_BES5.png"), p.BES5,
+       unit = "cm", width = 10, height = 8)
 
 ### END
