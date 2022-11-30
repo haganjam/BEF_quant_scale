@@ -118,6 +118,23 @@ ply_part %>%
 
 mean(ply_part$M)
 
+# calculate the net biodiversity effect as a test
+ply_part %>%
+  mutate(RYO = ifelse(M == 0, 0, Y/M)) %>%
+  mutate(NBE = (RYO-0.25)*M ) %>%
+  pull(NBE) %>%
+  sum()
+
+# calculate difference in mean and monoculture across times and places
+# this approximates the NBE which gives confidence in the explanation
+ply_part %>%
+  group_by(place, time) %>%
+  summarise(M = mean(M),
+            Y = sum(Y)) %>%
+  mutate(D = Y-M) %>%
+  pull(D) %>%
+  sum()
+
 # convert the place and times to integers
 ply_part <- 
   ply_part %>%
@@ -167,7 +184,7 @@ p1 <-
                 width = 0) + 
   scale_colour_manual(values = v_col_BEF(eff_in = eff_in) ) +
   scale_fill_manual(values = v_col_BEF(eff_in = eff_in)) +
-  ylab("Effect (cover (%) time-1)") +
+  ylab("Effect (%, cover)") +
   xlab(NULL) +
   theme_meta() +
   theme(legend.position = "none")
@@ -189,7 +206,7 @@ p2 <-
                 width = 0) +
   scale_colour_manual(values = v_col_BEF(eff_in = eff_in)) +
   scale_fill_manual(values = v_col_BEF(eff_in = eff_in)) +
-  ylab("Effect (cover (%) time-1)") +
+  ylab("Effect (%, cover)") +
   xlab(NULL) +
   theme_meta() +
   theme(legend.position = "none")
@@ -211,7 +228,7 @@ p3 <-
                 width = 0) +
   scale_colour_manual(values = v_col_BEF(eff_in = eff_in)) +
   scale_fill_manual(values = v_col_BEF(eff_in = eff_in)) +
-  ylab("Effect (cover (%) time-1)") +
+  ylab("Effect (%, cover)") +
   xlab(NULL) +
   theme_meta() +
   theme(legend.position = "none")
@@ -294,5 +311,49 @@ p12 <-
 
 ggsave(filename = here("figures/fig5.png"), p12,
        unit = "cm", width = 13, height = 8)
+
+# make a plot of difference in mixture and monocultures across all times and places
+psum <- 
+  ply_part %>%
+  filter(place == 1, time == 1) %>%
+  group_by(place, time) %>%
+  summarise(M = mean(M),
+            Y = sum(Y), .groups = "drop")
+
+p.BES1 <- 
+  ggplot(data = ply_part %>% filter(place == 1, time == 1)) +
+  geom_point(mapping = aes(x = 1, y = M),
+             position = position_dodge2(width = c(0.1, 0, 0.1, 0))) +
+  geom_point(mapping = aes(x = 1, psum$M), colour = "red") +
+  geom_point(mapping = aes(x = 4, psum$Y), colour = "red") +
+  scale_y_continuous(limits = c(-2, 41)) +
+  scale_x_continuous(limits = c(0.8, 4.5)) +
+  ylab("Species cover (%)") +
+  xlab("Species richness") +
+  theme_meta()
+plot(p.BES1)
+
+ggsave(filename = here("figures/fig_BES1.png"), p.BES1,
+       unit = "cm", width = 7, height = 8)
+
+p.BES2 <- 
+  ply_part %>%
+  group_by(place, time) %>%
+  summarise(M = mean(M),
+            Y = sum(Y), .groups = "drop") %>%
+  mutate(D = (Y - M)) %>%
+  ggplot(data = .) +
+  geom_segment(mapping = aes(x = time, xend = time,
+                             y = 0, yend = D), colour = "red") +
+  scale_x_continuous(breaks = c(1, 2, 3), limits = c(0.75, 3.25)) +
+  scale_y_continuous(limits = c(-2.5, 40)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  facet_wrap(~place) +
+  ylab("Cover difference (%)") +
+  xlab("") +
+  theme_meta()
+
+ggsave(filename = here("figures/fig_BES2.png"), p.BES2,
+       unit = "cm", width = 11, height = 8)
 
 ### END

@@ -576,6 +576,14 @@ The error created using the different expected relative yield samples is relativ
 
 The rest of the effects do not respond to it. For example, local complementary is calculated as an average change in relative yield. Any simplex distribution must have the same average because it is the same number of samples that all add up to one.
 
+## How do we interpret a net biodiversity effect (NBE) of, for example, 100?
+
+The NBE represents the sum of the deviation of the mixture from the expected monocultures summed across all times and places. Therefore, if we have a net biodiversity effect of 100, it means that going from 1 to X species results in an increase in functioning of 100 across all times and places.
+
+Therefore, if we calculate the difference between the mixture biomass and the average monoculture at each time-place combination and sum up these differences, we get to the net biodiversity effect. This, however, assumes that all species in mixture have an equal relative yield (i.e. RYE = 1/n species). This may not be the case which is why there can be minor deviations.
+
+See the *01_plymout_data_BEF_effects.R* script for an example of this calculation.
+
 
 
 
