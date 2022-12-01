@@ -1,17 +1,8 @@
 
-# Function to simulate BEF experiments using metacommunity models
+#' @title Functions to simulate BEF experiments using metacommunity models
 
-# load the mcomsimr package
-library(mcomsimr)
-
-# load key functions
-library(here)
-source(here("scripts/01_partition_functions/02_isbell_2018_partition.R"))
-
-#' Modified version of the simulate_MC function from the mcomsimr package (Thompson et al. 2020, Ecology Letters)
+#' @description Modified version of the simulate_MC function from the mcomsimr package (Thompson et al. 2020, Ecology Letters)
 # https://github.com/plthompson/mcomsimr
-
-# args
 
 #' @param patches number of patches to simulate
 #' @param species number of species to simulate
@@ -24,6 +15,13 @@ source(here("scripts/01_partition_functions/02_isbell_2018_partition.R"))
 #' @param env.df optional dataframe with environmental conditions with columns: env1, patch, time
 #' @param env_optima optional values of environmental optima, should be a vector of length species
 #' @param int_mat optional externally generated competition matrix
+
+# load the mcomsimr package
+library(mcomsimr)
+
+# load key functions
+library(here)
+source(here("scripts/01_partition_functions/02_isbell_2018_partition.R"))
 
 simulate_MC2 <- function(patches, species, dispersal = 0.01, timesteps = 1200,
                          start_abun = 150,

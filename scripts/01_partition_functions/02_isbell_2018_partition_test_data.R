@@ -1,5 +1,11 @@
 
-## Create test data
+#'
+#' @title Test data presented in Isbell et al. (2018, Ecology Letters)
+#' 
+#' @description Digitise the examples presented in Isbell et al. (2018, Ecology Letters)
+#' in order to test whether the partition functions calculate the correct effects. The
+#' comments correspond to the location in the original paper
+#' 
 
 # table 1A
 t1a <- data.frame(sample = c(1,1,2,2),
