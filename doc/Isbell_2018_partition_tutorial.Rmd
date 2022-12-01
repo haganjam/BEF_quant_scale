@@ -1,0 +1,69 @@
+---
+title: "How to calculate biodiversity effects across space and time (sensu Isbell et al. 2018, Ecology Letters)"
+output:
+html_notebook: default
+---
+
+### Introduction
+
+The field of biodiversity-ecosystem functioning (BEF) studies the relationship between biological diversity and different ecosystem processes or functions (primary productivity, nutrient cycling etc.), (reviewed in Cardinale *et al.* 2012). One of the key tools in the BEF researcher's toolbox is the partition proposed by Loreau and Hector (2001, *Nature*). This partition allows researchers to decompose a net biodiversity effect (i.e. the difference in mixture functioning relative to the expected functioning based only on monoculture yields and initial relative proportions or, relative expected yields, RYe) into two effects:
+
++ 1. The complementarity effect which describes processes related to facilitation and niche partitioning between species. This allows all species, on average, to perform better in mixture than in monoculture.
+
++ 2. The selection effect which describes the effect of biodiversity that comes from high functioning, dominant species being more likely to be present in a given community.
+
+This partition has been very useful in the BEF field for helping to identify mechanisms driving biodiversity effects. However, this method generally only looks at the effect of biodiversity in single patches. It does not account for biodiversity effects that can arise at larger scales of space and time. For example, a single species may dominate a patch (i.e. strong selection effect) but if different species dominate different patches, we can get a complementarity effect arising at larger spatial scales.
+
+### Isbell et al.'s (2018, *Ecology Letters*) extension
+
+Given the scale limitations of Loreau and Hector's (2001, *Nature*), Isbell et al. (2018, *Ecology Letters*) developed an extension of this method that calculates a net biodiversity effect across many times and places. This large-scale net biodiversity effect is then partitioned into a number of different effects that describe how biodiversity can effect ecosystem functioning at different scales of space and time. In Isbell et al.'s (2018, *Ecology Letters*) partition, the net biodiversity effect (NBE) is partitioned into:
+
++ 1. Total complementarity (TS)
+
++ 2. Total selection (TS)
+
+TS is then further partitioned into two different effects
+
++ 1. Non-random overyielding (NO)
+
++ 2. Total insurance (IT)
+
+Finally, IT is then partitioned into four different effects
+
++ 1. Average selection (AS)
+
++ 2. Spatial insurance (SI)
+
++ 3. Temporal insurance (TI)
+
++ 4. Spatio-temporal insurance (ST
+
+For descriptions of these different effects, see Isbell et al. (2018, *Ecology Letters*) or Hagan et al. (in prep.).
+
+Currently, *general code* for calculating these effects has not been developed (Isbell et al. 2018 included code for calculating these effects in specific cases). Therefore, we provide a script that contains functions that can calculate these effects for any number of species across any number of times and places:
+
++ 01_isbell_2018_partition.R
+
+In addition, the script includes an extension proposed by Hagan et al. (in prep.) to incorporate uncertainty in expected relative yields (RYe) using samples from a Dirichlet distribution. This is a tutorial that explains how to use the functions in this script.
+
+### How to use the functions?
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+plot(cars)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
