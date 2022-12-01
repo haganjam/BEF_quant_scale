@@ -410,13 +410,14 @@ ggsave(filename = here("figures/fig_BES3.png"), p.BES3,
 p.BES4 <- 
   ggplot(data = OY_df, 
          mapping = aes(x = OY)) +
-  geom_histogram(alpha = 0.75, colour = "white") +
+  geom_histogram(alpha = 0.3, colour = "white") +
   geom_vline(xintercept = 0, linetype = "dashed", size = 0.75, colour = "red") +
   # scale_fill_viridis_d(begin = 0.1, end = 0.9, option = "C") +
   ylab("Count") +
   xlab("Overyielding") +
   theme_meta() +
   theme(legend.position = "none")
+plot(p.BES4)
 
 ggsave(filename = here("figures/fig_BES4.png"), p.BES4,
        unit = "cm", width = 12, height = 7)
@@ -431,7 +432,7 @@ p.BES5 <-
             rel_abun = mean(rel_abun)) %>%
   ggplot(data = .,
          mapping = aes(x = M, y = rel_abun, colour = species)) +
-  geom_point() +
+  geom_point(size = 1.8) +
   geom_smooth(method = "lm", se = FALSE) +
   scale_colour_viridis_d(begin = 0.1, end = 0.9, option = "C") +
   ylab("Relative abundance") +
@@ -439,6 +440,7 @@ p.BES5 <-
   theme_meta()  +
   theme(legend.position = "none",
         plot.title = element_text(size = 12, hjust = 0.5))
+plot(p.BES5)
 
 ggsave(filename = here("figures/fig_BES5.png"), p.BES5,
        unit = "cm", width = 10, height = 8)

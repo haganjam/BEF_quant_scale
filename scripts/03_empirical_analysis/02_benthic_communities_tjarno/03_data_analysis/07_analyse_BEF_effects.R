@@ -119,7 +119,7 @@ p1 <-
              label.size = NA, alpha = 0, size = 2) +
   scale_colour_manual(values = v_col_BEF(eff_in = eff_in )) +
   scale_fill_manual(values = v_col_BEF(eff_in = eff_in)) +
-  ylab("Effect (g time-1)") +
+  ylab("Effect (g)") +
   xlab(NULL) +
   theme_meta() +
   theme(legend.position = "none")
@@ -144,7 +144,7 @@ p2 <-
              label.size = NA, alpha = 0, size = 2) +
   scale_colour_manual(values = v_col_BEF(eff_in = eff_in )) +
   scale_fill_manual(values = v_col_BEF(eff_in = eff_in )) +
-  ylab("Effect (g time-1)") +
+  ylab("Effect (g)") +
   xlab(NULL) +
   theme_meta() +
   theme(legend.position = "none")
@@ -169,7 +169,7 @@ p3 <-
              label.size = NA, alpha = 0, size = 2) +
   scale_colour_manual(values = v_col_BEF(eff_in = eff_in )) +
   scale_fill_manual(values = v_col_BEF(eff_in = eff_in )) +
-  ylab("Effect (g (%) time-1)") +
+  ylab("Effect (g)") +
   xlab(NULL) +
   theme_meta() +
   theme(legend.position = "none")
@@ -204,45 +204,84 @@ env_disp <- readRDS(file = here("results/benthic_env_dispersion.rds"))
 head(env_disp)
 
 # using the original data, subset NBE and IT and calculate proportion of IT
-IT_env <- 
+SI_env <- 
   BEF_trim %>%
-  filter(Beff == c("IT")) %>%
+  filter(Beff == c("SI")) %>%
   select(-Beff) %>%
-  rename(IT = Value)
+  rename(SI = Value)
 
-IT_env <- 
-  IT_env %>%
+SI_env <- 
+  SI_env %>%
   group_by(cluster_id) %>%
-  summarise(IT_m = round(mean(IT), 3),
-            PI_low = rethinking::HPDI(IT, 0.90)[1],
-            PI_high = rethinking::HPDI(IT, 0.90)[2])
+  summarise(SI_m = round(mean(SI), 3),
+            PI_low = rethinking::HPDI(SI, 0.90)[1],
+            PI_high = rethinking::HPDI(SI, 0.90)[2])
 
 # join the env_disp data to the BEF_pool data
-IT_env <- full_join(env_disp, IT_env, by = "cluster_id")
+SI_env <- full_join(env_disp, SI_env, by = "cluster_id")
 
 # plot the relationship between environmental dispersion and the insurance effect
-ggplot(data = IT_env) +
-  geom_point(mapping = aes(x = field_dispersion, y = IT_m), size = 2) +
+p.BES7 <- 
+  ggplot(data = SI_env) +
+  geom_point(mapping = aes(x = field_dispersion, y = SI_m), size = 2) +
   geom_errorbar(mapping = aes(x = field_dispersion, 
                               ymin = PI_low,
                               ymax = PI_high), width = 0) +
-  ylab("IT (g time-1)") +
+  ylab("SI (g)") +
   xlab("Multivariate dispersion") +
   theme_meta()
 
-cor.test(IT_env$field_dispersion, IT_env$IT_m, method = "spearman")
+ggsave(filename = here("figures/fig_BES7.png"), p.BES7,
+       unit = "cm", width = 9, height = 7)
 
-ggplot(data = IT_env) +
-  geom_point(mapping = aes(x = GIS_dispersion, y = IT_m), size = 2) +
+cor.test(IT_env$field_dispersion, SI_env$SI_m, method = "spearman")
+
+ggplot(data = SI_env) +
+  geom_point(mapping = aes(x = GIS_dispersion, y = SI_m), size = 2) +
   geom_errorbar(mapping = aes(x = GIS_dispersion, 
                               ymin = PI_low,
                               ymax = PI_high), width = 0) +
-  ylab("IT (g time-1)") +
+  ylab("IT (g)") +
   xlab("Multivariate dispersion") +
   theme_meta()
 
-cor.test(IT_env$GIS_dispersion, IT_env$IT_m, method = "spearman")
+cor.test(IT_env$GIS_dispersion, SI_env$SI_m, method = "spearman")
 
+
+# BES talk figures
+
+# summarise the data into a pooled estimate
+BEF_pool2 <- 
+  BEF_trim %>%
+  group_by(Beff) %>%
+  summarise(Value_m = round(mean(Value), 2),
+            PI_low = rethinking::HPDI(Value, 0.90)[1],
+            PI_high = rethinking::HPDI(Value, 0.90)[2], .groups = "drop")
+
+# compare net biodiversity effects, total complementarity and total selection
+eff_in <- c("NBE", "TC", "NO", "IT")
+p.BES6 <- 
+  ggplot(data = BEF_pool2 %>%
+           filter(Beff %in% eff_in) %>%
+           mutate(Beff = factor(Beff, levels = eff_in))
+  ) +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
+  geom_point(mapping = aes(x = Beff, y = Value_m, 
+                           colour = Beff, fill = Beff),
+             position = position_dodge(0.75), size = 2.5) +
+  geom_errorbar(mapping = aes(x = Beff, ymin = PI_low, ymax = PI_high,
+                              colour = Beff),
+                width = 0, position = position_dodge(0.75))  +
+  scale_colour_manual(values = v_col_BEF(eff_in = eff_in )) +
+  scale_fill_manual(values = v_col_BEF(eff_in = eff_in )) +
+  ylab("Effect (g)") +
+  xlab(NULL) +
+  theme_meta() +
+  theme(legend.position = "none")
+plot(p.BES6)
+
+ggsave(filename = here("figures/fig_BES6.png"), p.BES6,
+       unit = "cm", width = 7, height = 7)
 
 # does spatial or temporal beta-diversity affect the magnitude of insurance effects?
 
