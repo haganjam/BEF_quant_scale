@@ -12,7 +12,7 @@ test.data <- readRDS(file = here("data/Isbell_test_data.rds"))
 ans.data <- readRDS(file = here("data/Isbell_test_data_solutions.rds"))
 
 # load the functions
-source(here("scripts/01_partition_functions/02_isbell_2018_partition.R"))
+source(here("scripts/01_partition_functions/01_isbell_2018_partition.R"))
 
 # run the test
 results <- vector(length = length(test.data))
