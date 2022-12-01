@@ -355,7 +355,7 @@ Isbell_2018_part <- function(data, RYe) {
 #' 
 #' 
 
-Isbell_2018_sampler <- function(data, RYe, RYe_post = FALSE, N = 100, alpha_par = 4) {
+Isbell_2018_sampler <- function(data, RYe_post = FALSE, N = 100, alpha_par = 4, RYe) {
   
   if (!RYe_post) {
     

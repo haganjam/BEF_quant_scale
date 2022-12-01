@@ -40,30 +40,166 @@ Finally, IT is then partitioned into four different effects
 
 For descriptions of these different effects, see Isbell et al. (2018, *Ecology Letters*) or Hagan et al. (in prep.).
 
-Currently, *general code* for calculating these effects has not been developed (Isbell et al. 2018 included code for calculating these effects in specific cases). Therefore, we provide a script that contains functions that can calculate these effects for any number of species across any number of times and places:
+Currently, *general code* for calculating these effects has not been developed (Isbell et al. 2018 included code for calculating these effects in specific cases). Therefore, we provide a script that contains a function that can calculate these effects for any number of species across any number of times and places:
 
 + 01_isbell_2018_partition.R
 
-In addition, the script includes an extension proposed by Hagan et al. (in prep.) to incorporate uncertainty in expected relative yields (RYe) using samples from a Dirichlet distribution. This is a tutorial that explains how to use the functions in this script.
+In addition, the script includes an extension proposed by Hagan et al. (in prep.) to incorporate uncertainty in expected relative yields (RYe) using samples from a Dirichlet distribution. This is a tutorial that explains how to use this script.
 
 ### How to use the functions?
 
-
-
-
-
-
-
-
-
-
+The script contains several functions that need to be loaded. This can be done by simply downloading the script and running the functions so that they are loaded into the R environment. Otherwise, if the script is saved in the working directory, one can use the *source() function* to call the functions from a clean script, e.g.:
 
 ```{r}
-plot(cars)
+
+# source("working_directory/01_isbell_2018_partition.R)
+source("C:/Users/james/Documents/github/BEF_quant_scale/scripts/01_partition_functions/01_isbell_2018_partition.R")
+
 ```
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
++ source("working_directory/01_isbell_2018_partition.R)
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+The main function used to calculate the biodiversity effects is: 
+
+```{r}
+
+# Isbell_2018_sampler(data, RYe_post = FALSE, N = 100, RYe, alpha_par = 4)
+
+```
+
+There are five arguments in the function. The argument **data** is the dataset on which to calculate the biodiversity effects. This data.frame must have five columns:
+
++ 1. sample - unique sample id for each place x time combination
++ 2. place - place from which data were collected (i.e. a code)
++ 3. time - time at which data were collected (i.e. a code)
++ 4. species - species name or code
++ 5. M - monoculture yield of the species at the specific time x place combination
++ 6. Y - mixture yield of the species at the specific time x place combination
+
+Importantly, the time variable is simply a different time not an actual date. Therefore, a typical time-variable might be 1, 2 and 3 representing three different time points. In addition, all species' names need to be present at all times and places in the data even if their monoculture or mixture functioning is zero.
+
+Here is an example of a dataset that would be accepted by isbell_2018_sampler() which comes from Table 2 in Isbell et al. (2018, *Ecology Letters*).
+
+```{r}
+
+df_template <- 
+  
+  data.frame(sample = rep(c(1:4), each = 2),
+             time = c(1,1,1,1,2,2,2,2), 
+             place = c(1,1,2,2,1,1,2,2), 
+             species = c(1,2,1,2,1,2,1,2),
+             M = c(100,50,50,100,100,50,50,100), 
+             Y = c(100,0,0,100,100,0,0,100))
+
+print(df_template)  
+
+```
+
+The next argument is **RYe_post** is a *TRUE* or *FALSE* argument. If *TRUE*, the function will calculate a distribution of each biodiversity effect where each different value assumes a different set of RYe values from a Dirichlet distribution. The number of samples to draw from the Dirichlet distribution is given by the **N** argument and the argument **alpha_par** is the alpha parameter in the Dirichlet distribution which determines the skewness of the distribution. An example of a set of 100 samples from the Dirichlet distribution with an alpha value of four for three species is given below. Each line is one sample and the numbers sum to one.
+
+
+This can be useful because, often, we don't know the expected relative yields. This method allows us to still calculate the biodiversity effects whilst incorporating uncertainty in the RYe values.
+
+If **RYe_post** = *FALSE*, then we need to provide RYe values directly into the **RYe** argument. For each species, we need one of these values and, overall, the values must sum to one. 
+
+```{r}
+
+# load the relevant packages
+require(ggplot2)
+require(gtools)
+require(tidyr)
+require(dplyr)
+
+# draw samples from the Dirichlet distribution
+species <- 3
+p1 <- 
+  lapply(1:100, function(x) {
+  
+  x <- gtools::rdirichlet(n = 1, rep(4,  species) )
+  x.df <- as.data.frame(x)
+  names(x.df) <- paste0("sp.", 1:species)
+  return(x.df)
+  
+  } ) %>%
+  bind_rows(., .id = "id") %>%
+  pivot_longer(cols = c("sp.1", "sp.2", "sp.3"),
+               names_to = "species",
+               values_to = "RYe") %>%
+  ggplot(data = .,
+         mapping = aes(x = species, y = RYe, group = id)) +
+  geom_line(alpha = 0.3) +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
+  scale_x_discrete(expand = c(0.03, 0.03)) +
+  ylab(expression(RY[E])) +
+  xlab("") +
+  theme_classic() +
+  theme(axis.text = element_text(colour = "black", size = 14),
+        axis.title = element_text(size = 16))
+
+plot(p1)
+
+```
+
+Now that we know how to use the *isbell_2018_sampler()* function, we will use it to calculate the biodiversity effects on some example data assuming known and unknown RYe values.
+
+First, we define a dataset (Isbell et al. 2018, Table 2) with two species at two times and two places.
+
+```{r}
+df_test1 <- 
+  data.frame(sample = rep(c(1:4), each = 2), 
+                  time=c(1,1,1,1,2,2,2,2), 
+                  place=c(1,1,2,2,1,1,2,2), 
+                  species=c(1,2,1,2,1,2,1,2),
+                  M=c(100,50,100,50,50,100,50,100), 
+                  Y=c(100,0,100,0,0,100,0,100))
+```
+
+To start with, we assume equal RYe values for the two species (i.e. 0.5 and 0.5) and we use the isbell_2018_sampler function to calculate the biodiversity effects. We add df_test1 to the **data** argument and c(0.5, 0.5) to the **RYe** argument because we set **RYe_post** = FALSE because we know the RYe values.
+
+```{r}
+
+df_test1_out <- Isbell_2018_sampler(data = df_test1, 
+                                    RYe_post = FALSE, 
+                                    RYe = c(0.5, 0.5))
+
+```
+
+Let's view the output of the function. First, we can view the effects proposed by Isbell et al. (2018, *Ecology Letters*).
+
+```{r}
+print(df_test1_out$Beff)
+```
+
+In this example data, the net biodiversity effect is 100 and it is completely explained by temporal insurance effects. The reason for this is that two different species dominate at the times where they are highest functioning in monoculture.
+
+Second, we view the sum of local complementarity and local selection effects as calculated per Loreau and Hector (2001):
+
+```{r}
+print(df_test1_out$L.Beff)
+```
+
+Next, we assume that we don't know the RYe. Therefore, instead of a single biodiversity effect, we will get a distribution of each effect. Here, we set **RYe_post** as TRUE, **N** = 100 and **alpha_par** as 4.
+
+```{r}
+
+df_test1_out2 <- Isbell_2018_sampler(data = df_test1, 
+                                    RYe_post = TRUE, 
+                                    N = 100,
+                                    alpha_par = 4)
+
+```
+
+The output we get now is a data.frame with a column for sample. This column corresponds to a sample from the Dirichlet distribution. Now, instead of simply viewing the data in a table, we can plot it as a histogram.
+
+```{r}
+require(ggplot2)
+
+ggplot(data = df_test1_out2,
+       mapping = aes(x = round(Value,3), fill = Beff)) +
+  geom_histogram() +
+  facet_wrap(~Beff, scales = "free") +
+  theme_classic()
+
+```
+
