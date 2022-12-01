@@ -18,7 +18,7 @@ library(foreach)
 library(doParallel)
 
 # load the relevant functions
-source(here("BEF_quant_scale/scripts/01_partition_functions/02_isbell_2018_partition.R"))
+source(here("BEF_quant_scale/scripts/01_partition_functions/01_isbell_2018_partition.R"))
 
 # read in the data
 MC_sims2 <- readRDS(file = here("BEF_quant_scale/results/MC_sims2.rds"))
