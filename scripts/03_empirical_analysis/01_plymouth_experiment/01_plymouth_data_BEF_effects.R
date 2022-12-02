@@ -12,7 +12,7 @@ library(viridis)
 library(ggpubr)
 
 # set script to call partition functions from
-source(here("scripts/01_partition_functions/02_isbell_2018_partition.R"))
+source(here("scripts/01_partition_functions/01_isbell_2018_partition.R"))
 source(here("scripts/Function_plotting_theme.R"))
 
 # read in the data
@@ -72,6 +72,9 @@ ply_sum <-
             bifurcaria_bifurcata = mean(bifurcaria_bifurcata, na.rm = TRUE),
             fucus_serratus = mean(fucus_serratus, na.rm = TRUE),
             laminaria_digitata = mean(laminaria_digitata, na.rm = TRUE), .groups = "drop")
+
+# sort out the month variables which don't seem to sort properly
+ply_sum$month <- factor(ply_sum$month, levels = c("March", "July", "September"))
 
 ply_mix <- 
   ply_sum %>%
@@ -334,6 +337,80 @@ p12 <-
 
 ggsave(filename = here("figures/fig5.png"), p12,
        unit = "cm", width = 13, height = 8)
+
+
+# plotting the raw data mixtures and monocultures
+ply_part_M <- 
+  ply_part %>%
+  mutate(SR = 1) %>%
+  rename(Cover = M) %>%
+  select(sample, place, time, SR, species, Cover)
+  
+ply_part_Y <- 
+  ply_part %>%
+  group_by(sample, place, time) %>%
+  summarise(Cover = sum(Y), .groups = "drop") %>%
+  mutate(SR = 4,
+         species = "mixture") %>%
+  select(sample, place, time, SR, species, Cover)
+
+ply_part_sum <- 
+  bind_rows(ply_part_M, ply_part_Y) %>%
+  arrange(sample, place, time, SR, species, Cover)
+
+# make a legend
+legend2 <- ply_part_sum[1:5, ]
+legend2$species <- factor(legend2$species)
+levels(legend2$species) <- list("B.bifurcata" = "bifurcaria_bifurcata",
+                                "F. serratus" = "fucus_serratus",
+                                "L. digitata" = "laminaria_digitata",
+                                "S. muticum" = "sargassum_muticum",
+                                "Mixture (4 sp.)" = "mixture")
+legend2 <- 
+  get_legend( 
+    ggplot(data = legend2,
+           mapping = aes(x = SR, y = Cover, colour = species)) +
+      geom_point(size = 2) +
+      scale_colour_viridis_d(begin = 0.1, end = 0.9, option = "C") +
+      theme_bw() +
+      theme(legend.position = "right")
+  )
+plot(legend2)
+
+# convert species to factor for plotting
+ply_part_sum$species <- factor(ply_part_sum$species)
+levels(ply_part_sum$species) <- list("B.bifurcata" = "bifurcaria_bifurcata",
+                                "F. serratus" = "fucus_serratus",
+                                "L. digitata" = "laminaria_digitata",
+                                "S. muticum" = "sargassum_muticum",
+                                "Mixture (4 sp.)" = "mixture")
+
+# convert place 1 and 2 into actual places
+ply_part_sum$place <- ifelse(ply_part_sum$place == 1, "Challaborough", "Kingsand")
+ply_part_sum$time2 <- factor(ply_part_sum$time)
+levels(ply_part_sum$time2) <- c("Mar", "Jul", "Sep")
+
+p1 <- 
+  ggplot() +
+  geom_point(data = ply_part_sum,
+             mapping = aes(x = time2, y = Cover, colour = species)) +
+  geom_line(data = ply_part_sum,
+            mapping = aes(x = time, y = Cover, colour = species)) +
+  scale_colour_viridis_d(begin = 0.1, end = 0.9, option = "C") +
+  ylab("Cover (%)") +
+  #scale_x_continuous(breaks = c(1, 2, 3)) +
+  facet_wrap(~place) +
+  theme_meta() +
+  theme(legend.position = "none")
+  
+plot(p1)
+
+p1 <- 
+  ggarrange(p1, legend2, widths = c(2.5, 0.5),
+            font.label = list(size = 11, face = "plain"))
+
+ggsave(filename = here("figures/figS9.png"), p1,
+       unit = "cm", width = 20, height = 8)
 
 
 # BES talk figures
