@@ -377,7 +377,7 @@ Isbell_2018_sampler <- function(data, RYe_post = FALSE, N = 100, alpha_par = 4, 
     for (i in 1:N) {
       
       RYe <- gtools::rdirichlet(n = 1, alpha = rep(alpha_par, n_unique(data$species)))
-      RYe <- round(sapply(RYe, function(x) x), 1)
+      RYe <- sapply(RYe, function(x) x)
       
       x <- Isbell_2018_part(data = data, RYe = RYe)
       

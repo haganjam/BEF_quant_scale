@@ -57,9 +57,6 @@ source("C:/Users/james/Documents/github/BEF_quant_scale/scripts/01_partition_fun
 
 ```
 
-
-+ source("working_directory/01_isbell_2018_partition.R)
-
 The main function used to calculate the biodiversity effects is: 
 
 ```{r}
@@ -182,11 +179,24 @@ print(df_test1_out$L.Beff)
 Next, we assume that we don't know the RYe. Therefore, instead of a single biodiversity effect, we will get a distribution of each effect. Here, we set **RYe_post** as TRUE, **N** = 100 and **alpha_par** as 4.
 
 ```{r}
+# create a test dataset
+df.test2 <- 
+  expand.grid(species = c(1, 2, 3),
+              place = c(1, 2),
+              time = c(1, 2, 3))
 
-df_test1_out2 <- Isbell_2018_sampler(data = df_test1, 
+# rearrange the columns
+df.test2 <- df.test2[, c(3, 2, 1)]
+
+# add monoculture and mixture values
+df.test2$M <- round(rnorm(n = nrow(df.test2), 100, 10), 0)
+df.test2$Y <- round(rnorm(n = nrow(df.test2), 80, 10), 0)                 
+
+df_test2_out <- Isbell_2018_sampler(data = df_test2, 
                                     RYe_post = TRUE, 
                                     N = 100,
                                     alpha_par = 4)
+print(df_test2_out)
 
 ```
 
@@ -195,11 +205,12 @@ The output we get now is a data.frame with a column for sample. This column corr
 ```{r}
 require(ggplot2)
 
-ggplot(data = df_test1_out2,
-       mapping = aes(x = round(Value,3), fill = Beff)) +
+ggplot(data = df_test2_out,
+       mapping = aes(x = Value, fill = Beff)) +
   geom_histogram() +
   facet_wrap(~Beff, scales = "free") +
   theme_classic()
 
 ```
 
+As you can see from this set of histograms, we now have a histogram of biodiversity effects. These reflect differences in the value depending on the expected relative yield. However, you can also see that four effects: NO, SI, TC and TI have flat histograms. This is because these specific effects do not depend on the RYe value and so will always only have one value.
