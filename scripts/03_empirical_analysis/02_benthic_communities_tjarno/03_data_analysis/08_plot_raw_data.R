@@ -20,6 +20,9 @@ data_M <-
 # load the monoculture prediction data
 sp_mono <- readRDS(file = here("results/benthic_mono_pred.rds"))
 
+# check if any monoculture predictions are zero
+lapply(sp_mono, function(x) {any((x < 0) == TRUE)} )
+
 # summarise into a mean and standard deviation
 sp_mu <- 
   lapply(sp_mono, function(data) {
@@ -77,6 +80,11 @@ levels(data_comb$species) <- list("Barn" = "Barn",
                                   "Mixture (5 sp.)" = "Mixture (5 sp.)"
                                  )
 
+# remove cluster F from the analysis
+data_comb <- 
+  data_comb %>%
+  filter(cluster_id != "F")
+
 # make a legend
 legend <- data_comb[1:6, ]
 
@@ -91,29 +99,53 @@ legend <-
   )
 plot(legend)
 
-# plot one cluster 1
+# plot the raw data of the different clusters
 
-c_id <- "A"
+data_comb %>%
+  group_by(cluster_id) %>%
+  summarise(n = length(unique(place)) )
 
-p1 <- 
-  ggplot(data = data_comb %>% filter(cluster_id == c_id),
-         mapping = aes(x = time, y = biomass_mu, colour = species)) +
-  geom_point(position = position_dodge(width = 0.5)) +
-  geom_errorbar(mapping = aes(x = time, 
-                              ymin = (biomass_mu - biomass_sd),
-                              ymax = (biomass_mu + biomass_sd),
-                              colour = species),
-                width = 0, position = position_dodge(width = 0.5)) +
-  scale_colour_viridis_d(begin = 0.1, end = 0.9, option = "C") +
-  ylab("Biomass (g)") +
-  xlab("2-weeks") +
-  ggtitle(paste0("Cluster - ", c_id)) +
-  scale_x_continuous(breaks = c(1, 2, 3)) +
-  facet_wrap(~place) +
-  theme_meta() +
-  theme(legend.position = "none",
-        plot.title = element_text(size = 11, hjust = 0.5))
-plot(p1)
+# get a vector of the unique cluster ids
+c_id <- unique(data_comb$cluster_id)
 
+for(i in 1:length(c_id)) {
+  
+  df_sub <- data_comb %>% filter(cluster_id == c_id[i])
+  
+  p1 <- 
+    ggplot(data = df_sub,
+           mapping = aes(x = time, y = biomass_mu, colour = species)) +
+    geom_line(position = position_dodge(width = 0.5), alpha = 0.5) +
+    geom_point(position = position_dodge(width = 0.5), size = 2) +
+    geom_errorbar(mapping = aes(x = time, 
+                                ymin = (biomass_mu - biomass_sd),
+                                ymax = (biomass_mu + biomass_sd),
+                                colour = species),
+                  width = 0, position = position_dodge(width = 0.5)) +
+    scale_colour_viridis_d(begin = 0.1, end = 0.9, option = "C") +
+    ylab("Biomass (g)") +
+    xlab("2-weeks") +
+    ggtitle(paste0("Cluster - ", c_id[i])) +
+    scale_x_continuous(breaks = c(1, 2, 3)) +
+    facet_wrap(~place, nrow = 2, ncol = 3) +
+    theme_meta() +
+    theme(legend.position = "none",
+          plot.title = element_text(size = 11, hjust = 0.5))
+  
+  # save this plot
+  if (length(unique(df_sub$place)) > 3) {
+    
+    ggsave(filename = here(paste0("figures/", "raw_clus_", c_id[i], ".png")), p1,
+           unit = "cm", width = 20, height = 14)
+    
+  } else {
+    
+    ggsave(filename = here(paste0("figures/", "raw_clus_", c_id[i], ".png")), p1,
+           unit = "cm", width = 20, height = 7)
+    
+  }
+  
+  
+}
 
-
+### END

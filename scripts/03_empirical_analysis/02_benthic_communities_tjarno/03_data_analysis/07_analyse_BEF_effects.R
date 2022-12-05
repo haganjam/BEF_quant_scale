@@ -97,6 +97,11 @@ BEF_pool %>%
   filter(within_PI != 1) %>%
   View()
 
+# remove cluster F because it only had two usable sites
+BEF_pool <- 
+  BEF_pool %>%
+  filter(cluster_id != "F")
+
 # compare total to local selection and complementarity
 
 # which effects to plot
@@ -205,47 +210,42 @@ head(env_disp)
 
 # using the original data, subset NBE and IT and calculate proportion of IT
 SI_env <- 
-  BEF_trim %>%
+  BEF_pool %>%
   filter(Beff == c("SI")) %>%
   select(-Beff) %>%
-  rename(SI = Value)
-
-SI_env <- 
-  SI_env %>%
-  group_by(cluster_id) %>%
-  summarise(SI_m = round(mean(SI), 3),
-            PI_low = rethinking::HPDI(SI, 0.90)[1],
-            PI_high = rethinking::HPDI(SI, 0.90)[2])
+  rename(SI = Value_m)
 
 # join the env_disp data to the BEF_pool data
-SI_env <- full_join(env_disp, SI_env, by = "cluster_id")
+SI_env <- right_join(env_disp, SI_env, by = "cluster_id")
 
 # plot the relationship between environmental dispersion and the insurance effect
 p.BES7 <- 
   ggplot(data = SI_env) +
-  geom_point(mapping = aes(x = field_dispersion, y = SI_m), size = 2) +
+  geom_point(mapping = aes(x = field_dispersion, y = SI), size = 2) +
   geom_errorbar(mapping = aes(x = field_dispersion, 
                               ymin = PI_low,
                               ymax = PI_high), width = 0) +
   ylab("SI (g)") +
   xlab("Multivariate dispersion") +
   theme_meta()
+plot(p.BES7)
 
 ggsave(filename = here("figures/fig_BES7.png"), p.BES7,
        unit = "cm", width = 9, height = 7)
 
-cor.test(IT_env$field_dispersion, SI_env$SI_m, method = "spearman")
 
-ggplot(data = SI_env) +
-  geom_point(mapping = aes(x = GIS_dispersion, y = SI_m), size = 2) +
-  geom_errorbar(mapping = aes(x = GIS_dispersion, 
+ggplot(data = SI_env %>% filter(cluster_id != "H")) +
+  geom_point(mapping = aes(x = field_dispersion, y = SI), size = 2) +
+  geom_errorbar(mapping = aes(x = field_dispersion, 
                               ymin = PI_low,
                               ymax = PI_high), width = 0) +
-  ylab("IT (g)") +
+  geom_smooth(mapping = aes(x = field_dispersion, y = SI), method = "lm") +
+  ylab("SI (g)") +
   xlab("Multivariate dispersion") +
   theme_meta()
 
-cor.test(IT_env$GIS_dispersion, SI_env$SI_m, method = "spearman")
+x <- SI_env %>% filter(cluster_id != "H")
+cor.test(x$field_dispersion, x$SI, method = "spearman")
 
 
 # BES talk figures

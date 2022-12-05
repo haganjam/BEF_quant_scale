@@ -46,6 +46,11 @@ env_dat_m <-
   summarise(across(.cols = names(env_dat)[-c(1:4)], ~mean(., na.rm = TRUE)),
             .groups = "drop")
 
+# remove cluster F because we only had two patches
+env_dat_m <- 
+  env_dat_m %>%
+  filter(cluster_id != "F")
+
 # check the distribution of the different variables
 env_dat_m %>%
   pivot_longer(cols = names(env_dat_m)[-c(1:4)],
@@ -103,6 +108,7 @@ plot(p1)
 
 # generate a Euclidean distance matrix
 env_d <- dist(apply(env_dat_m[,-c(1:4)], 2, scale), method = "euclidean")
+names(env_dat_m[,-c(1:4)])
 
 # multivariate dispersion
 env_d <- betadisper(d = env_d, group = env_dat_m$cluster_id)
