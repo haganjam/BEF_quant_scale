@@ -165,7 +165,7 @@ lines(pred_dat$Y, apply(post, 2, mean))
 
 # plot the observed versus predicted data
 post <- sim(m.A3)
-plot(apply(post, 2, mean), barn$M)
+plot(apply(post, 2, mean), barn$M, ylab = "Predicted", xlab = "Observed")
 abline(0, 1)
 
 # model4
