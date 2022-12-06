@@ -99,6 +99,9 @@ legend <-
   )
 plot(legend)
 
+ggsave(filename = here("figures/fig_BESlegend.png"), legend,
+       width = 4, height = 6, unit = "cm")
+
 # plot the raw data of the different clusters
 
 data_comb %>%
@@ -147,5 +150,44 @@ for(i in 1:length(c_id)) {
   
   
 }
+
+# plot the covariance between monoculture functioning and relative abundance
+cov_RA_M <- 
+  data_M %>%
+  filter(cluster_id != "F") %>%
+  mutate(species = as.character(species)) %>%
+  rename(biomass_mu = M_mu,
+         biomass_sd = M_sd) %>%
+  select(cluster_id, sample, place, time, species, Y, biomass_mu, biomass_sd)
+
+# calculate relative abundance in mixture
+cov_RA_M <- 
+  cov_RA_M %>%
+  group_by(cluster_id, place, time, sample) %>%
+  mutate(Y_total = sum(Y)) %>%
+  ungroup() %>%
+  mutate(RA = Y/Y_total) %>%
+  select(cluster_id, sample, place, time, species, RA, biomass_mu, biomass_sd)
+head(cov_RA_M)
+summary(cov_RA_M)
+
+p.BES10 <- 
+  ggplot(data = cov_RA_M %>% filter(cluster_id == "C"),
+       mapping = aes(x = (biomass_mu), y = RA, colour = species)) +
+  geom_point(size = 1.9, shape = 16, alpha = 0.95) +
+  geom_errorbarh(mapping = aes(xmin = biomass_mu-biomass_sd,
+                               xmax = biomass_mu+biomass_sd,
+                               y = RA, colour = species),
+                 size = 0.25, alpha = 0.5) +
+  scale_colour_viridis_d(begin = 0.1, end = 0.74, option = "C") +
+  ylab("Relative abundance") +
+  xlab("Monoculture (g)") +
+  theme_meta()  +
+  theme(legend.position = "none",
+        plot.title = element_text(size = 12, hjust = 0.5))
+plot(p.BES10)
+
+ggsave(filename = here("figures/fig_BES10.png"), p.BES10,
+       unit = "cm", width = 10, height = 8)
 
 ### END
