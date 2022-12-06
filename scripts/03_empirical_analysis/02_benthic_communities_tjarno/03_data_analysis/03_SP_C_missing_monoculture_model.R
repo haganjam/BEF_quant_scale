@@ -146,4 +146,27 @@ saveRDS(post, here("results/SP_C_monoculture_posterior.rds"))
 # save the model object as a .rds object
 saveRDS(m.C3, here("results/SP_C_model_object.rds")) 
 
+# make a plot of the observed and predicted values
+source(here("scripts/Function_plotting_theme.R"))
+pred <- sim(m.C3)
+df.pred <- data.frame(M_obs = bumpi$M,
+                      M_pred_mu = apply(pred, 2, mean),
+                      M_pred_PIlow = apply(pred, 2, PI)[1,],
+                      M_pred_PIhigh = apply(pred, 2, PI)[2,])
+
+p1 <- 
+  ggplot(data = df.pred,
+         mapping = aes(x = M_obs, y = M_pred_mu)) +
+  geom_point(shape = 16, alpha = 0.5) +
+  geom_errorbar(mapping = aes(x = M_obs, ymin = M_pred_PIlow, ymax = M_pred_PIhigh),
+                width = 0, alpha = 0.5, size = 0.25) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", colour = "red") +
+  ylab("Predicted monoculture (g)") +
+  xlab("Observed monoculture (g)") +
+  theme_meta()
+plot(p1)
+
+ggsave(here("figures/fig_bumpi_mono.png"), p1,
+       width = 8, height = 7, units = "cm")
+
 ### END
