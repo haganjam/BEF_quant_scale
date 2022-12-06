@@ -219,33 +219,46 @@ SI_env <-
 SI_env <- right_join(env_disp, SI_env, by = "cluster_id")
 
 # plot the relationship between environmental dispersion and the insurance effect
-p.BES7 <- 
+p.BES6a <- 
   ggplot(data = SI_env) +
   geom_point(mapping = aes(x = field_dispersion, y = SI), size = 2) +
   geom_errorbar(mapping = aes(x = field_dispersion, 
                               ymin = PI_low,
                               ymax = PI_high), width = 0) +
-  ylab("SI (g)") +
+  geom_smooth(mapping = aes(x = field_dispersion, y = SI), 
+              method = "lm", se = TRUE, alpha = 0.25,
+              size = 0.5, colour = "black") +
+  ylab("Spatial insurance (g)") +
   xlab("Multivariate dispersion") +
   theme_meta()
-plot(p.BES7)
+plot(p.BES6a)
 
-ggsave(filename = here("figures/fig_BES7.png"), p.BES7,
+ggsave(filename = here("figures/fig_BES6a.png"), p.BES6a,
        unit = "cm", width = 9, height = 7)
 
+lm.a <- lm(SI ~ field_dispersion, data = SI_env)
+summary(lm.a)
 
-ggplot(data = SI_env %>% filter(cluster_id != "H")) +
+# plot the relationship between environmental dispersion and the insurance effect
+p.BES6b <- 
+  ggplot(data = SI_env %>% filter(cluster_id != "H")) +
   geom_point(mapping = aes(x = field_dispersion, y = SI), size = 2) +
   geom_errorbar(mapping = aes(x = field_dispersion, 
                               ymin = PI_low,
                               ymax = PI_high), width = 0) +
-  geom_smooth(mapping = aes(x = field_dispersion, y = SI), method = "lm") +
-  ylab("SI (g)") +
+  geom_smooth(mapping = aes(x = field_dispersion, y = SI), 
+              method = "lm", se = TRUE, alpha = 0.25,
+              size = 0.5, colour = "red", linetype = "dashed") +
+  ylab("Spatial insurance (g)") +
   xlab("Multivariate dispersion") +
   theme_meta()
+plot(p.BES6b)
 
-x <- SI_env %>% filter(cluster_id != "H")
-cor.test(x$field_dispersion, x$SI, method = "spearman")
+lm.b <- lm(SI ~ field_dispersion, data = SI_env %>% filter(cluster_id != "H"))
+summary(lm.b)
+
+ggsave(filename = here("figures/fig_BES6b.png"), p.BES6b,
+       unit = "cm", width = 9, height = 7)
 
 
 # BES talk figures
@@ -259,8 +272,8 @@ BEF_pool2 <-
             PI_high = rethinking::HPDI(Value, 0.90)[2], .groups = "drop")
 
 # compare net biodiversity effects, total complementarity and total selection
-eff_in <- c("NBE", "TC", "NO", "IT")
-p.BES6 <- 
+eff_in <- c("NBE", "TC", "TS")
+p.BES7 <- 
   ggplot(data = BEF_pool2 %>%
            filter(Beff %in% eff_in) %>%
            mutate(Beff = factor(Beff, levels = eff_in))
@@ -278,10 +291,63 @@ p.BES6 <-
   xlab(NULL) +
   theme_meta() +
   theme(legend.position = "none")
-plot(p.BES6)
+plot(p.BES7)
 
-ggsave(filename = here("figures/fig_BES6.png"), p.BES6,
+ggsave(filename = here("figures/fig_BES7.png"), p.BES7,
        unit = "cm", width = 7, height = 7)
+
+
+# compare net biodiversity effects, total complementarity and total selection
+eff_in <- c("NBE", "TC", "NO", "IT")
+p.BES8 <- 
+  ggplot(data = BEF_pool2 %>%
+           filter(Beff %in% eff_in) %>%
+           mutate(Beff = factor(Beff, levels = eff_in))
+  ) +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
+  geom_point(mapping = aes(x = Beff, y = Value_m, 
+                           colour = Beff, fill = Beff),
+             position = position_dodge(0.75), size = 2.5) +
+  geom_errorbar(mapping = aes(x = Beff, ymin = PI_low, ymax = PI_high,
+                              colour = Beff),
+                width = 0, position = position_dodge(0.75))  +
+  scale_colour_manual(values = v_col_BEF(eff_in = eff_in )) +
+  scale_fill_manual(values = v_col_BEF(eff_in = eff_in )) +
+  ylab("Effect (g)") +
+  xlab(NULL) +
+  theme_meta() +
+  theme(legend.position = "none")
+plot(p.BES8)
+
+ggsave(filename = here("figures/fig_BES8.png"), p.BES8,
+       unit = "cm", width = 7, height = 7)
+
+# compare net biodiversity effects, total complementarity and total selection
+eff_in <- c("AS", "TI", "SI", "ST")
+p.BES9 <- 
+  ggplot(data = BEF_pool2 %>%
+           filter(Beff %in% eff_in) %>%
+           mutate(Beff = factor(Beff, levels = eff_in))
+  ) +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
+  geom_point(mapping = aes(x = Beff, y = Value_m, 
+                           colour = Beff, fill = Beff),
+             position = position_dodge(0.75), size = 2.5) +
+  geom_errorbar(mapping = aes(x = Beff, ymin = PI_low, ymax = PI_high,
+                              colour = Beff),
+                width = 0, position = position_dodge(0.75))  +
+  scale_colour_manual(values = v_col_BEF(eff_in = eff_in )) +
+  scale_fill_manual(values = v_col_BEF(eff_in = eff_in )) +
+  ylab("Effect (g)") +
+  xlab(NULL) +
+  theme_meta() +
+  theme(legend.position = "none")
+plot(p.BES9)
+
+ggsave(filename = here("figures/fig_BES9.png"), p.BES9,
+       unit = "cm", width = 7, height = 7)
+
+
 
 # does spatial or temporal beta-diversity affect the magnitude of insurance effects?
 
