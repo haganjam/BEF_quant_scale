@@ -174,6 +174,13 @@ df_unc_sum <-
   summarise(Value_m = mean(Value),
             Value_sd = sd(Value))
 
+# calculate the percentage of total complementarity due to local complementarity
+LC <- filter(df_unc_sum, Beff == "LC")[["Value_m"]]
+TS <- filter(df_unc_sum, Beff == "TS")[["Value_m"]]
+LS <- filter(df_unc_sum, Beff == "LS")[["Value_m"]]
+
+(LC/(LS - TS + LC))*100
+
 # compare total to local selection and complementarity
 eff_in <- c("LC", "TC", "LS", "TS")
 p1 <- 
