@@ -91,9 +91,12 @@ legend <- data_comb[1:6, ]
 legend <- 
   get_legend( 
     ggplot(data = legend,
-           mapping = aes(x = SR, y = biomass_mu, colour = species)) +
+           mapping = aes(x = SR, y = biomass_mu, colour = species, shape = species)) +
       geom_point(size = 2) +
-      scale_colour_viridis_d(begin = 0.1, end = 0.9, option = "C") +
+      scale_colour_manual(name = "Species/mixture",
+                          values = viridis(n = 6, begin = 0.1, end = 0.9, option = "C")) +   
+      scale_shape_manual(name = "Species/mixture",
+                         values = c(16, 16, 16, 16, 16, 8)) +
       theme_bw() +
       theme(legend.position = "right")
   )
@@ -117,7 +120,7 @@ for(i in 1:length(c_id)) {
   
   p1 <- 
     ggplot(data = df_sub,
-           mapping = aes(x = time, y = biomass_mu, colour = species)) +
+           mapping = aes(x = time, y = biomass_mu, colour = species, shape = species)) +
     geom_line(position = position_dodge(width = 0.5), alpha = 0.5) +
     geom_point(position = position_dodge(width = 0.5), size = 2) +
     geom_errorbar(mapping = aes(x = time, 
@@ -125,7 +128,10 @@ for(i in 1:length(c_id)) {
                                 ymax = (biomass_mu + biomass_sd),
                                 colour = species),
                   width = 0, position = position_dodge(width = 0.5)) +
-    scale_colour_viridis_d(begin = 0.1, end = 0.9, option = "C") +
+    scale_colour_manual(name = "Species/mixture",
+                        values = viridis(n = 6, begin = 0.1, end = 0.9, option = "C")) +   
+    scale_shape_manual(name = "Species/mixture",
+                       values = c(16, 16, 16, 16, 16, 8)) +
     ylab("Biomass (g)") +
     xlab("2-weeks") +
     ggtitle(paste0("Cluster - ", c_id[i])) +
