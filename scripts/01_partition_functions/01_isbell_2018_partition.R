@@ -31,7 +31,6 @@ install_if <- function(x) {
 install_if("dplyr")
 install_if("assertthat")
 install_if("gtools")
-library(dplyr)
 
 #'
 #' @title n_unique()
@@ -110,6 +109,8 @@ raw_cov <- function(x, y) {
   
   # calculate the raw covariance
   c12 <- sum( (c1*c2) )/length(c1)
+  
+  return(c12)
   
 }
 
@@ -278,8 +279,8 @@ Isbell_2018_part <- function(data, RYe) {
   # 2. Total complementarity (E10)
   TC <- N * mean(df$dRY) * mean(df$M)
   
-  # 3. Total selection effect (Fig. 1)
-  TS <- NBE - TC
+  # 3. Total selection effect (E2)
+  TS <- N*raw_cov(df$dRY, df$M) 
   
   # 4. Non-random overyielding (E10)
   NO <- N * raw_cov(df$d.RYoi, df$M)
@@ -295,11 +296,21 @@ Isbell_2018_part <- function(data, RYe) {
   SI_df <- merge(sm_p, sm_s)
   SI <- n_t * sum( (SI_df$d.Poi.p - SI_df$d.Poi.s)*(SI_df$M.p - SI_df$M.s) )
   
-  # 8. Spatio-temporal insurance (Fig. 1)
-  ST <- NBE - TC - NO - AS - TI - SI
+  # 8. Spatio-temporal insurance (E9)
+  ST_df <- 
+    merge(
+      merge(
+        merge(df, sm_t, by = c("time", "species")), 
+        sm_p, by = c("place", "species")), 
+      sm_s, by = "species")
   
-  # 9. Total insurance effect (Fig. 1)
-  IT <- AS + TI + SI + ST
+  # derive the terms in E9 separately      
+  ST_T1 <- with(ST_df, (d.Poi - d.Poi.t - d.Poi.p + d.Poi.s + mean(d.Poi)) )
+  ST_T2 <- with(ST_df, (M - M.t - M.p + M.s + mean(M)))
+  ST <- sum(ST_T1*ST_T2)
+  
+  # 9. Total insurance effect (E9)
+  IT <- sum( (df$d.Poi - mean(df$d.Poi))*(df$M - mean(df$M)) )
   
   # 10. Local complementarity and local selection
   LC_LS <- 
@@ -320,6 +331,22 @@ Isbell_2018_part <- function(data, RYe) {
   # 11. Local selection
   LS <- LC_LS$LS
   
+  # check the internal consistency
+  
+  # NBE = TC + TS
+  assertthat::are_equal(round(NBE, 1), round((TC + TS), 1) )
+  
+  # NBE = LC + LS
+  assertthat::are_equal(round(NBE, 1), round((LC + LS), 1) )
+  
+  # TC - LC = LS - TS
+  assertthat::are_equal(round((TC-LC), 1), round((LS - TS), 1) )
+  
+  # TS = NO + IT
+  assertthat::are_equal(round(TS, 1), round((NO + IT), 1) )
+  
+  # IT = AS + TI + SI + ST
+  assertthat::are_equal(round(IT, 1), round((AS + TI + SI + ST), 1) )
 
   # prepare output
   
