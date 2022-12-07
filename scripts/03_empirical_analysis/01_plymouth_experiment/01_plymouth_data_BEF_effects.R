@@ -291,7 +291,7 @@ legend <-
     ggplot(data = legend,
            mapping = aes(x = M, y = Y, colour = Species)) +
       geom_point(size = 2) +
-      scale_colour_viridis_d(begin = 0.1, end = 0.9, option = "C") +
+      scale_colour_viridis_d(begin = 0.1, end = 0.74, option = "C") +
       theme_bw() +
       theme(legend.position = "top")
     )
@@ -309,7 +309,7 @@ p1 <-
   geom_point() +
   ggtitle("Across places") +
   geom_smooth(method = "lm", se = FALSE) +
-  scale_colour_viridis_d(begin = 0.1, end = 0.9, option = "C") +
+  scale_colour_viridis_d(begin = 0.1, end = 0.74, option = "C") +
   ylab("Relative abundance") +
   xlab("Monoculture cover (%)") +
   theme_meta() +
@@ -330,7 +330,7 @@ p2 <-
   geom_point() +
   ggtitle("Across times") +
   geom_smooth(method = "lm", se = FALSE) +
-  scale_colour_viridis_d(begin = 0.1, end = 0.9, option = "C") +
+  scale_colour_viridis_d(begin = 0.1, end = 0.74, option = "C") +
   ylab("") +
   xlab("Monoculture cover (%)") +
   theme_meta()  +
@@ -365,32 +365,32 @@ ply_part_sum <-
   bind_rows(ply_part_M, ply_part_Y) %>%
   arrange(sample, place, time, SR, species, Cover)
 
+# convert to a factor
+ply_part_sum$species <- factor(ply_part_sum$species)
+levels(ply_part_sum$species) <- list("B.bifurcata" = "bifurcaria_bifurcata",
+                                     "F. serratus" = "fucus_serratus",
+                                     "L. digitata" = "laminaria_digitata",
+                                     "S. muticum" = "sargassum_muticum",
+                                     "Mixture (4 sp.)" = "mixture"
+                                     )
+
 # make a legend
 legend2 <- ply_part_sum[1:5, ]
-legend2$species <- factor(legend2$species)
-levels(legend2$species) <- list("B.bifurcata" = "bifurcaria_bifurcata",
-                                "F. serratus" = "fucus_serratus",
-                                "L. digitata" = "laminaria_digitata",
-                                "S. muticum" = "sargassum_muticum",
-                                "Mixture (4 sp.)" = "mixture")
 legend2 <- 
   get_legend( 
     ggplot(data = legend2,
-           mapping = aes(x = SR, y = Cover, colour = species)) +
+           mapping = aes(x = SR, y = Cover, colour = species, shape = species)) +
       geom_point(size = 2) +
-      scale_colour_viridis_d(begin = 0.1, end = 0.9, option = "C") +
+      scale_colour_manual(name = "Species/mixture",
+                          labels = c("B.bifurcata", "F. serratus", "L. digitata", "S. muticum", "Mixture (4 sp.)"),
+                          values = viridis(n = 5, begin = 0.1, end = 0.9, option = "C")) +   
+      scale_shape_manual(name = "Species/mixture",
+                         labels = c("B.bifurcata", "F. serratus", "L. digitata", "S. muticum", "Mixture (4 sp.)"),
+                         values = c(16, 16, 16, 16, 8)) +
       theme_bw() +
       theme(legend.position = "right")
   )
 plot(legend2)
-
-# convert species to factor for plotting
-ply_part_sum$species <- factor(ply_part_sum$species)
-levels(ply_part_sum$species) <- list("B.bifurcata" = "bifurcaria_bifurcata",
-                                "F. serratus" = "fucus_serratus",
-                                "L. digitata" = "laminaria_digitata",
-                                "S. muticum" = "sargassum_muticum",
-                                "Mixture (4 sp.)" = "mixture")
 
 # convert place 1 and 2 into actual places
 ply_part_sum$place <- ifelse(ply_part_sum$place == 1, "Challaborough", "Kingsand")
@@ -400,12 +400,18 @@ levels(ply_part_sum$time2) <- c("Mar", "Jul", "Sep")
 p1 <- 
   ggplot() +
   geom_point(data = ply_part_sum,
-             mapping = aes(x = time2, y = Cover, colour = species)) +
+             mapping = aes(x = time2, y = Cover, colour = species, shape = species),
+             size = 2) +
   geom_line(data = ply_part_sum,
             mapping = aes(x = time, y = Cover, colour = species)) +
-  scale_colour_viridis_d(begin = 0.1, end = 0.9, option = "C") +
+  scale_colour_manual(name = "Species/mixture",
+                      labels = c("B.bifurcata", "F. serratus", "L. digitata", "S. muticum", "Mixture (4 sp.)"),
+                      values = viridis(n = 5, begin = 0.1, end = 0.9, option = "C")) +   
+  scale_shape_manual(name = "Species/mixture",
+                     labels = c("B.bifurcata", "F. serratus", "L. digitata", "S. muticum", "Mixture (4 sp.)"),
+                     values = c(16, 16, 16, 16, 8)) +
   ylab("Cover (%)") +
-  #scale_x_continuous(breaks = c(1, 2, 3)) +
+  xlab(NULL) +
   facet_wrap(~place) +
   theme_meta() +
   theme(legend.position = "none")
@@ -518,7 +524,8 @@ p.BES5 <-
          mapping = aes(x = M, y = rel_abun, colour = species)) +
   geom_point(size = 1.8) +
   geom_smooth(method = "lm", se = FALSE) +
-  scale_colour_viridis_d(begin = 0.1, end = 0.9, option = "C") +
+  scale_colour_viridis_d(begin = 0.1, end = 0.74, option = "C") +
+  scale_y_continuous(limits = c(0, 0.85)) +
   ylab("Relative abundance") +
   xlab("Monoculture (%, cover)") +
   theme_meta()  +
