@@ -121,6 +121,23 @@ pca_env <- bind_cols(bio_env[,c(1:3)], as_tibble(pca.x$x)[,c(1:2)] )
 # bind the monoculture and mixture data to the pca_env data
 pca_env <- bind_cols(pca_env, bio_env[,c(14:16)])
 
+# calculate the total number of measurements left over after cleaning the data
+pca_env %>%
+  pull(buoy_id) %>%
+  unique() %>%
+  length()
+  
+pca_env %>%
+  group_by(cluster_id, buoy_id, time) %>%
+  summarise(n = n()) %>%
+  nrow()
+
+pca_env %>%
+  group_by(cluster_id, buoy_id, time) %>%
+  summarise(n = sum(!is.na(M))) %>%
+  pull(n) %>%
+  sum()
+
 # write out the pca_env_data
 write_csv(x = pca_env, here("data/benthic_communities_tjarno_data/data_clean/biomass_env_analysis_data.csv"))
 

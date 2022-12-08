@@ -33,6 +33,12 @@ BEF_dat <-
   BEF_dat %>%
   select(cluster_id, mono_sample, RA, Beff, Value)
 
+# check how many of each effect there are
+View(BEF_dat[1:100,])
+BEF_dat %>%
+  group_by(cluster_id, Beff) %>%
+  summarise(n = n())
+
 # check how many unique cluster_id, mono_samp and RA there are
 pre_trim <- length(unique(paste0(BEF_dat$cluster_id, BEF_dat$mono_sample, BEF_dat$RA)))
 
@@ -40,7 +46,7 @@ pre_trim <- length(unique(paste0(BEF_dat$cluster_id, BEF_dat$mono_sample, BEF_da
 head(BEF_dat)
 BEF_trim <- 
   BEF_dat %>%
-  group_by(Beff) %>%
+  group_by(cluster_id, Beff) %>%
   mutate(q99 = quantile(Value, 0.99),
          q01 = quantile(Value, 0.01)) %>%
   mutate(within_PI = if_else( (Value < q99) & (Value > q01), 1, 0 )) %>%
@@ -50,6 +56,12 @@ BEF_trim <-
   ungroup() %>%
   filter(within_PI != 1) %>%
   select(-q99, -q01, -within_PI)
+
+BEF_trim %>%
+  group_by(cluster_id, Beff) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  pull(n) %>%
+  mean()
 
 # unique cluster_id, mono_samp, RA after trimming
 post_trim <- length(unique(paste0(BEF_trim$cluster_id, BEF_trim$mono_sample, BEF_trim$RA)))
@@ -224,7 +236,7 @@ p1 <-
   geom_smooth(mapping = aes(x = field_dispersion, y = SI), 
               method = "lm", se = TRUE, alpha = 0.25,
               size = 0.5, colour = "black") +
-  annotate(geom = "text", x = 1.5, y = 3.24, label = bquote(r^2~" = "~.(r2.a) ), size = 3) +
+  annotate(geom = "text", x = 1.5, y = 3.24, label = bquote(r^2~" = "~.(r2) ), size = 3) +
   annotate(geom = "text", x = 2.2, y = 3.2, label = bquote(F[.(df1)~","~.(df2)]~" = "~.(Fst) ), size = 3) +
   annotate(geom = "text", x = 2.9, y = 3.24, label = bquote("P = "~.(pval) ), size = 3) +
   ylab("Spatial insurance (g)") +
@@ -252,7 +264,7 @@ p2 <-
   geom_smooth(mapping = aes(x = field_dispersion, y = SI), 
               method = "lm", se = TRUE, alpha = 0.25,
               size = 0.5, colour = "red", linetype = "dashed") +
-  annotate(geom = "text", x = 1.5, y = -0.46, label = bquote(r^2~" = "~.(r2.a) ), size = 3) +
+  annotate(geom = "text", x = 1.5, y = -0.46, label = bquote(r^2~" = "~.(r2) ), size = 3) +
   annotate(geom = "text", x = 2.2, y = -0.5, label = bquote(F[.(df1)~","~.(df2)]~" = "~.(Fst) ), size = 3) +
   annotate(geom = "text", x = 2.9, y = -0.46, label = bquote("P = "~.(pval) ), size = 3) +
   ylab("Spatial insurance (g)") +

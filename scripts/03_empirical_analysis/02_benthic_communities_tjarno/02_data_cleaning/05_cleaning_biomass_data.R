@@ -261,6 +261,12 @@ bio_dat <-
             M = mean(M, na.rm = TRUE),
             .groups = "drop")
 
+# check how many sites are present
+bio_dat %>%
+  pull(buoy_id) %>%
+  unique() %>%
+  length()
+
 # write this into a .csv file
 write_csv(x = bio_dat, file = here("data/benthic_communities_tjarno_data/data_clean/biomass_data.csv"))
 

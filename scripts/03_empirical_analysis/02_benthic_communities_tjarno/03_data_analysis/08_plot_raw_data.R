@@ -22,6 +22,7 @@ sp_mono <- readRDS(file = here("results/benthic_mono_pred.rds"))
 
 # check if any monoculture predictions are zero
 lapply(sp_mono, function(x) {any((x < 0) == TRUE)} )
+lapply(sp_mono, function(x) nrow(x)) %>% unlist() %>% sum() + 287 # good, it should be 615
 
 # summarise into a mean and standard deviation
 sp_mu <- 
