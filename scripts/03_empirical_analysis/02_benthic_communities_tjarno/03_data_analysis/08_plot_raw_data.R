@@ -98,7 +98,7 @@ legend <-
       scale_shape_manual(name = "Species/mixture",
                          values = c(16, 16, 16, 16, 16, 8)) +
       theme_bw() +
-      theme(legend.position = "right")
+      theme(legend.position = "bottom")
   )
 plot(legend)
 
@@ -118,6 +118,21 @@ for(i in 1:length(c_id)) {
   
   df_sub <- data_comb %>% filter(cluster_id == c_id[i])
   
+  # check the number of places
+  N_place <- length(unique(df_sub$place)) 
+  
+  # choose number of rows and columns based on the number of places
+  if (N_place == 5) {
+    NROW <- 2
+    NCOL <- 3
+  } else if(N_place == 4) {
+    NROW <- 2
+    NCOL <- 2
+  } else if(N_place == 3) {
+    NROW = 1
+    NCOL = 3
+  }
+  
   p1 <- 
     ggplot(data = df_sub,
            mapping = aes(x = time, y = biomass_mu, colour = species, shape = species)) +
@@ -136,24 +151,34 @@ for(i in 1:length(c_id)) {
     xlab("2-weeks") +
     ggtitle(paste0("Cluster - ", c_id[i])) +
     scale_x_continuous(breaks = c(1, 2, 3)) +
-    facet_wrap(~place, nrow = 2, ncol = 3) +
+    facet_wrap(~place, nrow = NROW, ncol = NCOL) +
     theme_meta() +
     theme(legend.position = "none",
           plot.title = element_text(size = 11, hjust = 0.5))
   
+  # add a legend
+  p1 <- ggarrange(p1, legend, heights = c(6, 1),
+                  nrow = 2, ncol = 1,
+                  labels = c(letters[i], ""),
+                  font.label = list(size = 11, face = "plain"))
+  
   # save this plot
-  if (length(unique(df_sub$place)) > 3) {
+  if (N_place == 5) {
     
-    ggsave(filename = here(paste0("figures/", "raw_clus_", c_id[i], ".png")), p1,
-           unit = "cm", width = 20, height = 14)
+    ggsave(filename = here(paste0("figures/", "figS9", letters[i], ".png")), p1,
+           unit = "cm", width = 21, height = 16)
     
-  } else {
+  } else if (N_place == 4) {
     
-    ggsave(filename = here(paste0("figures/", "raw_clus_", c_id[i], ".png")), p1,
-           unit = "cm", width = 20, height = 7)
+    ggsave(filename = here(paste0("figures/", "figS9", letters[i], ".png")), p1,
+           unit = "cm", width = 14, height = 16)
+    
+  } else if (N_place == 3) {
+    
+    ggsave(filename = here(paste0("figures/", "figS9", letters[i], ".png")), p1,
+           unit = "cm", width = 21, height = 8)
     
   }
-  
   
 }
 
