@@ -385,10 +385,10 @@ p1 <-
   ylab("Predicted monoculture (g)") +
   xlab("Observed monoculture (g)") +
   theme_meta()
-plot(p1)
+plot(fig_SP_A)
 
 # save as an object into the results folder
-save("p1", file = here("results/SP_A_monoculture_plot.RData"))
+saveRDS(p1, file = here("results/SP_A_monoculture_plot.rds"))
 
 # ggsave(here("figures/fig_barn_mono.png"), p1,
        # width = 8, height = 7, units = "cm")
