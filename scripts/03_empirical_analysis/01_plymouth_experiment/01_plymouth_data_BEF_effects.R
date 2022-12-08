@@ -281,71 +281,6 @@ summary(OY_df)
 sum(OY_df$OY < 0)/nrow(OY_df)
 
 
-# check the correlation between relative yield and monoculture yields
-
-# make a legend
-legend <- ply_part[1:4, ]
-legend$Species <- c("B. bifurcata", "F. serratus", "L. digitata", "S. muticum")
-legend <- 
-  get_legend( 
-    ggplot(data = legend,
-           mapping = aes(x = M, y = Y, colour = Species)) +
-      geom_point(size = 2) +
-      scale_colour_viridis_d(begin = 0.1, end = 0.74, option = "C") +
-      theme_bw() +
-      theme(legend.position = "top")
-    )
-  
-p1 <- 
-  
-  ply_part %>%
-  group_by(sample) %>%
-  mutate(rel_abun = Y/sum(Y)) %>%
-  group_by(place, species) %>%
-  summarise(M = mean(M),
-            rel_abun = mean(rel_abun), .groups = "drop") %>%
-  ggplot(data = .,
-         mapping = aes(x = M, y = rel_abun, colour = species)) +
-  geom_point() +
-  ggtitle("Across places") +
-  geom_smooth(method = "lm", se = FALSE) +
-  scale_colour_viridis_d(begin = 0.1, end = 0.74, option = "C") +
-  ylab("Relative abundance") +
-  xlab("Monoculture cover (%)") +
-  theme_meta() +
-  theme(legend.position = "none",
-        plot.title = element_text(size = 12, hjust = 0.5))
-plot(p1)
-
-p2 <- 
-  
-  ply_part %>%
-  group_by(sample) %>%
-  mutate(rel_abun = Y/sum(Y)) %>%
-  group_by(time, species) %>%
-  summarise(M = mean(M),
-            rel_abun = mean(rel_abun)) %>%
-  ggplot(data = .,
-         mapping = aes(x = M, y = rel_abun, colour = species)) +
-  geom_point() +
-  ggtitle("Across times") +
-  geom_smooth(method = "lm", se = FALSE) +
-  scale_colour_viridis_d(begin = 0.1, end = 0.74, option = "C") +
-  ylab("") +
-  xlab("Monoculture cover (%)") +
-  theme_meta()  +
-  theme(legend.position = "none",
-        plot.title = element_text(size = 12, hjust = 0.5))
-plot(p2)
-
-p12 <- 
-  ggarrange(p1, p2, legend.grob = legend, labels = c("a", "b"),
-            font.label = list(size = 11, face = "plain"))
-
-ggsave(filename = here("figures/fig5.png"), p12,
-       unit = "cm", width = 13, height = 8)
-
-
 # plotting the raw data mixtures and monocultures
 ply_part_M <- 
   ply_part %>%
@@ -399,10 +334,10 @@ levels(ply_part_sum$time2) <- c("Mar", "Jul", "Sep")
 
 p1 <- 
   ggplot() +
-  geom_point(data = ply_part_sum,
+  geom_point(data = ply_part_sum %>% filter(place == "Challaborough"),
              mapping = aes(x = time2, y = Cover, colour = species, shape = species),
              size = 2) +
-  geom_line(data = ply_part_sum,
+  geom_line(data = ply_part_sum %>% filter(place == "Challaborough"),
             mapping = aes(x = time, y = Cover, colour = species)) +
   scale_colour_manual(name = "Species/mixture",
                       labels = c("B.bifurcata", "F. serratus", "L. digitata", "S. muticum", "Mixture (4 sp.)"),
@@ -410,20 +345,94 @@ p1 <-
   scale_shape_manual(name = "Species/mixture",
                      labels = c("B.bifurcata", "F. serratus", "L. digitata", "S. muticum", "Mixture (4 sp.)"),
                      values = c(16, 16, 16, 16, 8)) +
+  scale_y_continuous(limits = c(0, 45)) +
+  ggtitle("Place 1: Challaborough") +
   ylab("Cover (%)") +
   xlab(NULL) +
-  facet_wrap(~place) +
   theme_meta() +
-  theme(legend.position = "none")
-  
+  theme(legend.position = "none",
+        plot.title = element_text(size = 12, hjust = 0.5))
 plot(p1)
 
-p1 <- 
-  ggarrange(p1, legend2, widths = c(2.5, 0.5),
+p2 <- 
+  ggplot() +
+  geom_point(data = ply_part_sum %>% filter(place == "Kingsand"),
+             mapping = aes(x = time2, y = Cover, colour = species, shape = species),
+             size = 2) +
+  geom_line(data = ply_part_sum %>% filter(place == "Kingsand"),
+            mapping = aes(x = time, y = Cover, colour = species)) +
+  scale_colour_manual(name = "Species/mixture",
+                      labels = c("B.bifurcata", "F. serratus", "L. digitata", "S. muticum", "Mixture (4 sp.)"),
+                      values = viridis(n = 5, begin = 0.1, end = 0.9, option = "C")) +   
+  scale_shape_manual(name = "Species/mixture",
+                     labels = c("B.bifurcata", "F. serratus", "L. digitata", "S. muticum", "Mixture (4 sp.)"),
+                     values = c(16, 16, 16, 16, 8)) +
+  scale_y_continuous(limits = c(0, 45)) +
+  ggtitle("Place 2: Kingsand") +
+  ylab("Cover (%)") +
+  xlab(NULL) +
+  theme_meta() +
+  theme(legend.position = "none",
+        plot.title = element_text(size = 12, hjust = 0.5))
+plot(p2)
+
+
+# check the correlation between relative yield and monoculture yields
+p3 <- 
+  
+  ply_part %>%
+  group_by(sample) %>%
+  mutate(rel_abun = Y/sum(Y)) %>%
+  group_by(place, species) %>%
+  summarise(M = mean(M),
+            rel_abun = mean(rel_abun), .groups = "drop") %>%
+  ggplot(data = .,
+         mapping = aes(x = M, y = rel_abun, colour = species)) +
+  geom_point(size = 2) +
+  ggtitle("Across places") +
+  geom_smooth(method = "lm", se = FALSE, size = 0.5) +
+  scale_colour_viridis_d(begin = 0.1, end = 0.74, option = "C") +
+  ylab("Relative abundance") +
+  xlab("Monoculture cover (%)") +
+  theme_meta() +
+  theme(legend.position = "none",
+        plot.title = element_text(size = 12, hjust = 0.5))
+plot(p3)
+
+p4 <- 
+  
+  ply_part %>%
+  group_by(sample) %>%
+  mutate(rel_abun = Y/sum(Y)) %>%
+  group_by(time, species) %>%
+  summarise(M = mean(M),
+            rel_abun = mean(rel_abun)) %>%
+  ggplot(data = .,
+         mapping = aes(x = M, y = rel_abun, colour = species)) +
+  geom_point(size = 2) +
+  ggtitle("Across times") +
+  geom_smooth(method = "lm", se = FALSE, size = 0.5) +
+  scale_colour_viridis_d(begin = 0.1, end = 0.74, option = "C") +
+  ylab("") +
+  xlab("Monoculture cover (%)") +
+  theme_meta()  +
+  theme(legend.position = "none",
+        plot.title = element_text(size = 12, hjust = 0.5))
+plot(p4)
+
+# arrange the plots in a 2 x 2 matrix
+p1234 <- 
+  ggarrange(p1, p2, p3, p4, 
+            heights = c(1, 1),
+            labels = c("a", "b", "c", "d"),
             font.label = list(size = 11, face = "plain"))
 
-ggsave(filename = here("figures/figS9.png"), p1,
-       unit = "cm", width = 20, height = 8)
+# add the legend
+p1234 <- ggarrange(p1234, legend2, widths = c(6, 1))
+
+ggsave(filename = here("figures/fig5.png"), p1234,
+       unit = "cm", width = 21, height = 14)
+
 
 
 # BES talk figures
