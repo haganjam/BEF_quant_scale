@@ -421,7 +421,7 @@ p1234 <-
 
 plot(p1234)
 
-ggsave(filename = here("figures/fig1.png"), p1234, dpi = 400,
+ggsave(filename = here("figures/fig3.png"), p1234, dpi = 400,
        unit = "cm", width = 20, height = 15)
 
 ### END

@@ -174,7 +174,7 @@ p123 <-
 plot(p123)
 
 # save this plot
-ggsave(filename = here("figures/ben_fig1.png"), p123,
+ggsave(filename = here("figures/fig6.png"), p123,
        unit = "cm", width = 20, height = 7)
 
 # check the correlations among these different effects
@@ -205,7 +205,17 @@ SI_env <-
 SI_env <- right_join(env_disp, SI_env, by = "cluster_id")
 
 # plot the relationship between environmental dispersion and the insurance effect
-p.BES6a <- 
+
+# run the simple linear regressions to test this relationship
+lm.a <- lm(SI ~ field_dispersion, data = SI_env)
+lm.a <- summary(lm.a)
+r2 <- round(lm.a$r.squared, 2)
+Fst <- round(lm.a$fstatistic[1], 2)
+df1 <- round(lm.a$fstatistic[2], 0)
+df2 <- round(lm.a$fstatistic[3], 0)
+pval <- round(lm.a$coefficients[2, 4], 2) 
+
+p1 <- 
   ggplot(data = SI_env) +
   geom_point(mapping = aes(x = field_dispersion, y = SI), size = 2) +
   geom_errorbar(mapping = aes(x = field_dispersion, 
@@ -214,19 +224,26 @@ p.BES6a <-
   geom_smooth(mapping = aes(x = field_dispersion, y = SI), 
               method = "lm", se = TRUE, alpha = 0.25,
               size = 0.5, colour = "black") +
+  annotate(geom = "text", x = 1.5, y = 3.24, label = bquote(r^2~" = "~.(r2.a) ), size = 3) +
+  annotate(geom = "text", x = 2.2, y = 3.2, label = bquote(F[.(df1)~","~.(df2)]~" = "~.(Fst) ), size = 3) +
+  annotate(geom = "text", x = 2.9, y = 3.24, label = bquote("P = "~.(pval) ), size = 3) +
   ylab("Spatial insurance (g)") +
   xlab("Multivariate dispersion") +
   theme_meta()
-plot(p.BES6a)
+plot(p1)
 
-ggsave(filename = here("figures/fig_BES6a.png"), p.BES6a,
-       unit = "cm", width = 9, height = 7)
 
-lm.a <- lm(SI ~ field_dispersion, data = SI_env)
-summary(lm.a)
+# run the simple linear regressions to test this relationship
+lm.b <- lm(SI ~ field_dispersion, data = SI_env %>% filter(cluster_id != "H"))
+lm.b <- summary(lm.b)
+r2 <- round(lm.b$r.squared, 2)
+Fst <- round(lm.b$fstatistic[1], 2)
+df1 <- round(lm.b$fstatistic[2], 0)
+df2 <- round(lm.b$fstatistic[3], 0)
+pval <- round(lm.b$coefficients[2, 4], 2) 
 
 # plot the relationship between environmental dispersion and the insurance effect
-p.BES6b <- 
+p2 <- 
   ggplot(data = SI_env %>% filter(cluster_id != "H")) +
   geom_point(mapping = aes(x = field_dispersion, y = SI), size = 2) +
   geom_errorbar(mapping = aes(x = field_dispersion, 
@@ -235,16 +252,20 @@ p.BES6b <-
   geom_smooth(mapping = aes(x = field_dispersion, y = SI), 
               method = "lm", se = TRUE, alpha = 0.25,
               size = 0.5, colour = "red", linetype = "dashed") +
+  annotate(geom = "text", x = 1.5, y = -0.46, label = bquote(r^2~" = "~.(r2.a) ), size = 3) +
+  annotate(geom = "text", x = 2.2, y = -0.5, label = bquote(F[.(df1)~","~.(df2)]~" = "~.(Fst) ), size = 3) +
+  annotate(geom = "text", x = 2.9, y = -0.46, label = bquote("P = "~.(pval) ), size = 3) +
   ylab("Spatial insurance (g)") +
   xlab("Multivariate dispersion") +
   theme_meta()
-plot(p.BES6b)
+plot(p2)
 
-lm.b <- lm(SI ~ field_dispersion, data = SI_env %>% filter(cluster_id != "H"))
-summary(lm.b)
+p12 <- ggarrange(p1, p2, labels = c("a", "b"),
+                 font.label = list(size = 11, face = "plain")
+                 )
 
-ggsave(filename = here("figures/fig_BES6b.png"), p.BES6b,
-       unit = "cm", width = 9, height = 7)
+ggsave(filename = here("figures/fig7.png"), p12,
+       unit = "cm", width = 16, height = 7)
 
 
 # BES talk figures
