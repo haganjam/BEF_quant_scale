@@ -357,7 +357,10 @@ p1 <-
   theme_meta()
 plot(p1)
 
-ggsave(here("figures/fig_hydro_mono.png"), p1,
-       width = 8, height = 7, units = "cm")
+# save as an object into the results folder
+save("p1", file = here("results/SP_D_monoculture_plot.RData"))
+
+# ggsave(here("figures/fig_hydro_mono.png"), p1,
+       # width = 8, height = 7, units = "cm")
 
 ### END
