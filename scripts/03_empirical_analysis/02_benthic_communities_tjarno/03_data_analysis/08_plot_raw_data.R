@@ -165,17 +165,17 @@ for(i in 1:length(c_id)) {
   # save this plot
   if (N_place == 5) {
     
-    ggsave(filename = here(paste0("figures/", "figS9", letters[i], ".png")), p1,
+    ggsave(filename = here(paste0("figures/", "figS10", letters[i], ".png")), p1,
            unit = "cm", width = 21, height = 16)
     
   } else if (N_place == 4) {
     
-    ggsave(filename = here(paste0("figures/", "figS9", letters[i], ".png")), p1,
+    ggsave(filename = here(paste0("figures/", "figS10", letters[i], ".png")), p1,
            unit = "cm", width = 14, height = 16)
     
   } else if (N_place == 3) {
     
-    ggsave(filename = here(paste0("figures/", "figS9", letters[i], ".png")), p1,
+    ggsave(filename = here(paste0("figures/", "figS10", letters[i], ".png")), p1,
            unit = "cm", width = 21, height = 8)
     
   }
