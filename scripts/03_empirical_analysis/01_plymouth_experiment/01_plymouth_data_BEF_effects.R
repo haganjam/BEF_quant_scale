@@ -369,7 +369,7 @@ p2 <-
                      values = c(16, 16, 16, 16, 8)) +
   scale_y_continuous(limits = c(0, 45)) +
   ggtitle("Place 2: Kingsand") +
-  ylab("Cover (%)") +
+  ylab("") +
   xlab(NULL) +
   theme_meta() +
   theme(legend.position = "none",
@@ -423,7 +423,7 @@ plot(p4)
 # arrange the plots in a 2 x 2 matrix
 p1234 <- 
   ggarrange(p1, p2, p3, p4, 
-            heights = c(1, 1),
+            heights = c(1, 1.1),
             labels = c("a", "b", "c", "d"),
             font.label = list(size = 11, face = "plain"))
 

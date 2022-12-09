@@ -48,7 +48,7 @@ mono_init_dat %>%
             mean_value = mean(Value_obs),
             sd_value = sd(Value_obs))
 
-# remove the models where the max_mono_width is less than 200
+# remove the models where the max_mono_width is less than 300
 mono_init_dat  <- 
   mono_init_dat  %>%
   filter(max_mono_width < 300) %>%

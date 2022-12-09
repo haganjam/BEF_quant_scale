@@ -34,7 +34,6 @@ BEF_dat <-
   select(cluster_id, mono_sample, RA, Beff, Value)
 
 # check how many of each effect there are
-View(BEF_dat[1:100,])
 BEF_dat %>%
   group_by(cluster_id, Beff) %>%
   summarise(n = n())
@@ -113,13 +112,13 @@ p1 <-
   geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
   geom_point(mapping = aes(x = Beff, y = Value_m, 
                            colour = Beff, fill = Beff, group = cluster_id),
-             position = position_dodge(0.75), size = 2.5) +
+             position = position_dodge(0.75), size = 3) +
   geom_errorbar(mapping = aes(x = Beff, ymin = PI_low, ymax = PI_high,
                               colour = Beff, group = cluster_id),
                 width = 0, position = position_dodge(0.75)) + 
   geom_label(mapping = aes(x = Beff, y = Value_m, label = cluster_id, group = cluster_id),
              colour = "white", position = position_dodge(0.75),
-             label.size = NA, alpha = 0, size = 2) +
+             label.size = NA, alpha = 0, size = 2.75) +
   scale_colour_manual(values = v_col_BEF(eff_in = eff_in )) +
   scale_fill_manual(values = v_col_BEF(eff_in = eff_in)) +
   ylab("Effect (g)") +
@@ -138,16 +137,16 @@ p2 <-
   geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
   geom_point(mapping = aes(x = Beff, y = Value_m, 
                            colour = Beff, fill = Beff, group = cluster_id),
-             position = position_dodge(0.75), size = 2.5) +
+             position = position_dodge(0.75), size = 3) +
   geom_errorbar(mapping = aes(x = Beff, ymin = PI_low, ymax = PI_high,
                               colour = Beff, group = cluster_id),
                 width = 0, position = position_dodge(0.75))  +
   geom_label(mapping = aes(x = Beff, y = Value_m, label = cluster_id, group = cluster_id),
              colour = "white", position = position_dodge(0.75),
-             label.size = NA, alpha = 0, size = 2) +
+             label.size = NA, alpha = 0, size = 2.75) +
   scale_colour_manual(values = v_col_BEF(eff_in = eff_in )) +
   scale_fill_manual(values = v_col_BEF(eff_in = eff_in )) +
-  ylab("Effect (g)") +
+  ylab(NULL) +
   xlab(NULL) +
   theme_meta() +
   theme(legend.position = "none")
@@ -163,16 +162,16 @@ p3 <-
   geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
   geom_point(mapping = aes(x = Beff, y = Value_m, 
                            colour = Beff, fill = Beff, group = cluster_id),
-             position = position_dodge(0.75), size = 2.5) +
+             position = position_dodge(0.75), size = 3) +
   geom_errorbar(mapping = aes(x = Beff, ymin = PI_low, ymax = PI_high,
                               colour = Beff, group = cluster_id),
                 width = 0, position = position_dodge(0.75)) +
   geom_label(mapping = aes(x = Beff, y = Value_m, label = cluster_id, group = cluster_id),
              colour = "white", position = position_dodge(0.75),
-             label.size = NA, alpha = 0, size = 2) +
+             label.size = NA, alpha = 0, size = 2.75) +
   scale_colour_manual(values = v_col_BEF(eff_in = eff_in )) +
   scale_fill_manual(values = v_col_BEF(eff_in = eff_in )) +
-  ylab("Effect (g)") +
+  ylab(NULL) +
   xlab(NULL) +
   theme_meta() +
   theme(legend.position = "none")
@@ -182,12 +181,15 @@ plot(p3)
 p123 <- 
   ggarrange(p1, p2, p3, ncol = 3, nrow = 1,
             labels = c("a", "b", "c"),
+            widths = c(1.15, 1, 1),
+            hjust = -0.05,
+            vjust = 0.9,
             font.label = list(size = 11, face = "plain"))
 plot(p123)
 
 # save this plot
 ggsave(filename = here("figures/fig6.png"), p123,
-       unit = "cm", width = 20, height = 7)
+       unit = "cm", width = 20, height = 7.5)
 
 # check the correlations among these different effects
 BEF_pool %>%
