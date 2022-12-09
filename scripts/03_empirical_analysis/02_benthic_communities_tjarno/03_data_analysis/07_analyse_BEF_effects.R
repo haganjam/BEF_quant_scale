@@ -88,6 +88,13 @@ BEF_pool <-
             PI_low = rethinking::PI(Value, 0.90)[1],
             PI_high = rethinking::PI(Value, 0.90)[2], .groups = "drop")
 
+# pooled average and PI
+BEF_trim %>%
+  group_by(Beff) %>%
+  summarise(Value_m = round(mean(Value), 2),
+            PI_low = rethinking::PI(Value, 0.90)[1],
+            PI_high = rethinking::PI(Value, 0.90)[2], .groups = "drop")
+
 # is the mean within the percentile interval 90
 BEF_pool %>%
   mutate(within_PI = if_else((Value_m > PI_low) & (Value_m < PI_high), 1, 0 )) %>%
@@ -98,6 +105,10 @@ BEF_pool %>%
 BEF_pool <- 
   BEF_pool %>%
   filter(cluster_id != "F")
+
+# check some numbers of the manuscript
+BEF_pool %>%
+  filter(Beff == "NBE")
 
 # compare total to local selection and complementarity
 
@@ -290,8 +301,8 @@ BEF_pool2 <-
   filter(cluster_id != "F") %>%
   group_by(Beff) %>%
   summarise(Value_m = round(mean(Value), 2),
-            PI_low = rethinking::HPDI(Value, 0.90)[1],
-            PI_high = rethinking::HPDI(Value, 0.90)[2], .groups = "drop")
+            PI_low = rethinking::PI(Value, 0.90)[1],
+            PI_high = rethinking::PI(Value, 0.90)[2], .groups = "drop")
 
 # calculate the percentage of total complementarity due to local complementarity
 LC <- filter(BEF_pool2, Beff == "LC")[["Value_m"]]
