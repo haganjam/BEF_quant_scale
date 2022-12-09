@@ -168,7 +168,7 @@ p1 <-
   scale_colour_manual(values = v_col_BEF()) +
   ylab("Prop: PI-5% < obs. < PI-95%") +
   xlab(NULL) +
-  ggtitle("Uncertainty: monocultures + initial RA") +
+  ggtitle(bquote("Uncertainty: monocultures + "~RY[E])) +
   geom_hline(yintercept = 0.5, linetype = "dashed") +
   theme_meta() +
   theme(legend.position = "none",
@@ -334,7 +334,7 @@ p3 <-
   scale_y_continuous(limits = c(0.3, 0.9)) +
   scale_colour_manual(values = v_col_BEF(c("LS", "TS", "NBE", "IT", "AS"))) +
   geom_hline(yintercept = 0.5, linetype = "dashed") +
-  ggtitle("Uncertainty: initial RA") +
+  ggtitle(bquote("Uncertainty: "~RY[E])) +
   ylab("Prop: PI-5% < obs. < PI-95%") +
   xlab(NULL) +
   theme_meta() +
