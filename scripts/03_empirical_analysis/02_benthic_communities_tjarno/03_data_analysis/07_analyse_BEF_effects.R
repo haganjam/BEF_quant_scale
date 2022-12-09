@@ -85,8 +85,8 @@ BEF_pool <-
   BEF_trim %>%
   group_by(cluster_id, Beff) %>%
   summarise(Value_m = round(mean(Value), 2),
-            PI_low = rethinking::HPDI(Value, 0.90)[1],
-            PI_high = rethinking::HPDI(Value, 0.90)[2], .groups = "drop")
+            PI_low = rethinking::PI(Value, 0.90)[1],
+            PI_high = rethinking::PI(Value, 0.90)[2], .groups = "drop")
 
 # is the mean within the percentile interval 90
 BEF_pool %>%
