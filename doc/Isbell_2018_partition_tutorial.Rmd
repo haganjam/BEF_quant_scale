@@ -8,7 +8,7 @@ html_notebook: default
 
 The field of biodiversity-ecosystem functioning (BEF) studies the relationship between biological diversity and different ecosystem processes or functions (primary productivity, nutrient cycling etc.), (reviewed in Cardinale *et al.* 2012). One of the key tools in the BEF researcher's toolbox is the partition proposed by Loreau and Hector (2001, *Nature*). This partition allows researchers to decompose a net biodiversity effect (i.e. the difference in mixture functioning relative to the expected functioning based only on monoculture yields and initial relative proportions or, relative expected yields, RYe) into two effects:
 
-+ 1. The complementarity effect which describes processes related to facilitation and niche partitioning between species. This allows all species, on average, to perform better in mixture than in monoculture.
++ 1. The complementarity effect which describes processes related to facilitation and niche partitioning between species. This allows all species, on average, to perform better in mixture than expected based on their functioning in monoculture.
 
 + 2. The selection effect which describes the effect of biodiversity that comes from high functioning, dominant species being more likely to be present in a given community.
 
@@ -45,6 +45,8 @@ Currently, *general code* for calculating these effects has not been developed (
 + 01_isbell_2018_partition.R
 
 In addition, the script includes an extension proposed by Hagan et al. (in prep.) to incorporate uncertainty in expected relative yields (RYe) using samples from a Dirichlet distribution. This is a tutorial that explains how to use this script.
+
+Currently, the script is hosted on Github: https://github.com/haganjam/BEF_quant_scale/blob/main/scripts/01_partition_functions/01_isbell_2018_partition.R
 
 ### How to use the functions?
 
@@ -93,12 +95,7 @@ print(df_template)
 
 ```
 
-The next argument is **RYe_post** is a *TRUE* or *FALSE* argument. If *TRUE*, the function will calculate a distribution of each biodiversity effect where each different value assumes a different set of RYe values from a Dirichlet distribution. The number of samples to draw from the Dirichlet distribution is given by the **N** argument and the argument **alpha_par** is the alpha parameter in the Dirichlet distribution which determines the skewness of the distribution. An example of a set of 100 samples from the Dirichlet distribution with an alpha value of four for three species is given below. Each line is one sample and the numbers sum to one.
-
-
-This can be useful because, often, we don't know the expected relative yields. This method allows us to still calculate the biodiversity effects whilst incorporating uncertainty in the RYe values.
-
-If **RYe_post** = *FALSE*, then we need to provide RYe values directly into the **RYe** argument. For each species, we need one of these values and, overall, the values must sum to one. 
+The next argument, **RYe_post**, is a *TRUE* or *FALSE* argument. If *TRUE*, the function will calculate a distribution of each biodiversity effect where each different value assumes a different set of RYe values from a Dirichlet distribution. The number of samples to draw from the Dirichlet distribution is given by the **N** argument and the argument **alpha_par** is the alpha parameter in the Dirichlet distribution which determines the skewness of the distribution. An example of a set of 100 samples from the Dirichlet distribution with an alpha value of four for three species is given below. Each line is one sample and the numbers sum to one.
 
 ```{r}
 
@@ -138,6 +135,10 @@ plot(p1)
 
 ```
 
+This can be useful because, often, we don't know the expected relative yields. This method allows us to still calculate the biodiversity effects whilst incorporating uncertainty in the RYe values.
+
+If **RYe_post** = *FALSE*, then we need to provide RYe values directly into the **RYe** argument. For each species, we need one of these values and, overall, the values must sum to one. 
+
 Now that we know how to use the *isbell_2018_sampler()* function, we will use it to calculate the biodiversity effects on some example data assuming known and unknown RYe values.
 
 First, we define a dataset (Isbell et al. 2018, Table 2) with two species at two times and two places.
@@ -152,7 +153,7 @@ df_test1 <-
                   Y=c(100,0,100,0,0,100,0,100))
 ```
 
-To start with, we assume equal RYe values for the two species (i.e. 0.5 and 0.5) and we use the isbell_2018_sampler function to calculate the biodiversity effects. We add df_test1 to the **data** argument and c(0.5, 0.5) to the **RYe** argument because we set **RYe_post** = FALSE because we know the RYe values.
+To start with, we assume equal RYe values for the two species (i.e. 0.5 and 0.5) and we use the isbell_2018_sampler() function to calculate the biodiversity effects. We add df_test1 to the **data** argument and c(0.5, 0.5) to the **RYe** argument because we set **RYe_post** = FALSE because we know the RYe values.
 
 ```{r}
 
@@ -213,4 +214,13 @@ ggplot(data = df_test2_out,
 
 ```
 
-As you can see from this set of histograms, we now have a histogram of biodiversity effects. These reflect differences in the value depending on the expected relative yield. However, you can also see that four effects: NO, SI, TC and TI have flat histograms. This is because these specific effects do not depend on the RYe value and so will always only have one value.
+As you can see from this set of histograms, we now have a histogram of biodiversity effects. These reflect differences in the value depending on the expected relative yield. However, you can also see that four effects: NO, SI, TC and TI have flat histograms. This is because these specific biodiversity effects do not depend on the RYe value and so will always only have the same value.
+
+Hopefully, this tutorial is useful to anyone looking to implement Isbell et al.'s (2018) partition of biodiversity effects.
+
+**References**
+
+Isbell *et al.* (2018, *Ecology Letters*): Quantifying effects of biodiversity on ecosystem functioning across times and places.
+
+Hagan *et al.* (in prep.): Quantifying the effects of biodiversity on ecosystem functioning across space and time in natural and semi-natural ecosystems.
+
