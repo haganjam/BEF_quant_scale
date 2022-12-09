@@ -81,8 +81,8 @@ m.D1 <-
 precis( m.D1  )
 
 # check the traceplots
-traceplot(m.D1, pars = c("aS", "bPC1") )
-dev.off()
+# traceplot(m.D1, pars = c("aS", "bPC1") )
+# dev.off()
 
 # plot the observed versus predicted data
 post <- sim(m.D1)
@@ -113,8 +113,8 @@ m.D2 <-
 precis( m.D2  )
 
 # check the traceplots
-traceplot(m.D2, pars = c("aS", "bPC1") )
-dev.off()
+# traceplot(m.D2, pars = c("aS", "bPC1") )
+# dev.off()
 
 # plot the observed versus predicted data
 post <- sim(m.D2)
@@ -144,8 +144,8 @@ m.D3 <-
 precis( m.D3  )
 
 # check the traceplots
-traceplot(m.D3, pars = c("aS", "bPC1") )
-dev.off()
+# traceplot(m.D3, pars = c("aS", "bPC1") )
+# dev.off()
 
 # plot the observed versus predicted data
 post <- sim(m.D3)
@@ -176,8 +176,8 @@ m.D4 <-
 precis( m.D4  )
 
 # check the traceplots
-traceplot(m.D4, pars = c("aS", "bPC1", "bPC2") )
-dev.off()
+# traceplot(m.D4, pars = c("aS", "bPC1", "bPC2") )
+# dev.off()
 
 # plot the observed versus predicted data
 post <- sim(m.D4)
@@ -214,8 +214,8 @@ m.D5 <-
 precis( m.D5  )
 
 # check the traceplots
-traceplot(m.D5, pars = c("aS", "bPC1", "bPC2") )
-dev.off()
+# traceplot(m.D5, pars = c("aS", "bPC1", "bPC2") )
+# dev.off()
 
 # plot the observed versus predicted data
 post <- sim(m.D5)
@@ -248,8 +248,8 @@ m.D6 <-
 precis( m.D6  )
 
 # check the traceplots
-traceplot(m.D6, pars = c("aS", "bPC1", "bPC2") )
-dev.off()
+# traceplot(m.D6, pars = c("aS", "bPC1", "bPC2") )
+# dev.off()
 
 # plot the observed versus predicted data
 post <- sim(m.D6)
@@ -281,8 +281,8 @@ m.D7 <-
 precis( m.D7  )
 
 # check the traceplots
-traceplot(m.D7, pars = c("aS", "bPC1", "bPC2") )
-dev.off()
+# traceplot(m.D7, pars = c("aS", "bPC1", "bPC2") )
+# dev.off()
 
 # plot the observed versus predicted data
 post <- sim(m.D7)
@@ -316,8 +316,8 @@ m.D8 <-
 precis( m.D8  )
 
 # check the traceplots
-traceplot(m.D8, pars = c("aS", "bPC1", "bPC2") )
-dev.off()
+# traceplot(m.D8, pars = c("aS", "bPC1", "bPC2") )
+# dev.off()
 
 # plot the observed versus predicted data
 post <- sim(m.D8)

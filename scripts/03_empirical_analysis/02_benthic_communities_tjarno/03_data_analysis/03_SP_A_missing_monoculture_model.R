@@ -59,8 +59,8 @@ m.A1 <-
 precis( m.A1  )
 
 # check the traceplots
-traceplot(m.A1 )
-dev.off()
+# traceplot(m.A1 )
+# dev.off()
 
 # plot the Y vs M comparison
 range(barn$Y)
@@ -103,8 +103,8 @@ m.A2 <-
 precis( m.A2  )
 
 # check the traceplots
-traceplot(m.A2 )
-dev.off()
+# traceplot(m.A2 )
+# dev.off()
 
 # plot the Y vs M comparison
 range(barn$Y)
@@ -147,8 +147,8 @@ m.A3 <-
 precis( m.A3  )
 
 # check the traceplots
-traceplot(m.A3 )
-dev.off()
+# traceplot(m.A3 )
+# dev.off()
 
 # plot the Y vs M comparison
 range(barn$Y)
@@ -189,8 +189,8 @@ m.A4 <-
 precis( m.A4  )
 
 # check the traceplots
-traceplot(m.A4 )
-dev.off()
+# traceplot(m.A4 )
+# dev.off()
 
 # plot the Y vs M comparison
 range(barn$Y)
@@ -229,8 +229,8 @@ m.A5 <-
 precis( m.A5  )
 
 # check the traceplots
-traceplot(m.A5 )
-dev.off()
+# traceplot(m.A5 )
+# dev.off()
 
 # plot the Y vs M comparison
 range(barn$Y)
@@ -269,8 +269,8 @@ m.A6 <-
 precis( m.A6  )
 
 # check the traceplots
-traceplot(m.A6 )
-dev.off()
+# traceplot(m.A6 )
+# dev.off()
 
 # plot the Y vs M comparison
 range(barn$Y)
@@ -308,8 +308,8 @@ m.A7 <-
 precis( m.A7  )
 
 # check the traceplots
-traceplot(m.A7 )
-dev.off()
+# traceplot(m.A7 )
+# dev.off()
 
 # plot the Y vs M comparison
 range(barn$Y)
@@ -343,8 +343,8 @@ m.A8 <-
 precis( m.A8  )
 
 # check the traceplots
-traceplot(m.A8 )
-dev.off()
+# traceplot(m.A8 )
+# dev.off()
 
 # simulate the posterior and check the range
 range(sim(m.A8))

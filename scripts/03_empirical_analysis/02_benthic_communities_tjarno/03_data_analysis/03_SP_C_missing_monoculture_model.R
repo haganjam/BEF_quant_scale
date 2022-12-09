@@ -56,8 +56,8 @@ m.C1 <-
 precis( m.C1  )
 
 # check the traceplots
-traceplot(m.C1 )
-dev.off()
+# traceplot(m.C1 )
+# dev.off()
 
 # plot the Y vs M comparison
 range(bumpi$Y)
@@ -92,11 +92,11 @@ m.C2 <-
     data = bumpi, chains = 4, log_lik = TRUE)
 
 # check the precis output
-precis( m.C2  )
+# precis( m.C2  )
 
 # check the traceplots
-traceplot(m.C2 )
-dev.off()
+# traceplot(m.C2 )
+# dev.off()
 
 # plot the Y vs M comparison
 range(bumpi$Y)
@@ -130,8 +130,8 @@ m.C3 <-
 precis( m.C3  )
 
 # check the traceplots
-traceplot(m.C3 )
-dev.off()
+# traceplot(m.C3 )
+# dev.off()
 
 # compare the three models
 compare(m.C1, m.C2, m.C3, func = PSIS)

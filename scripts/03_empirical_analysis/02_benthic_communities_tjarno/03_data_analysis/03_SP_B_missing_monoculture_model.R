@@ -59,8 +59,8 @@ m.B1 <-
 precis( m.B1  )
 
 # check the traceplots
-traceplot(m.B1 )
-dev.off()
+# traceplot(m.B1 )
+# dev.off()
 
 # plot the Y vs M comparison
 range(bryo$Y)
@@ -103,8 +103,8 @@ m.B2 <-
 precis( m.B2  )
 
 # check the traceplots
-traceplot(m.B2 )
-dev.off()
+# traceplot(m.B2 )
+# dev.off()
 
 # plot the observed versus predicted data
 post <- sim(m.B2)
@@ -133,8 +133,8 @@ m.B3 <-
 precis( m.B3  )
 
 # check the traceplots
-traceplot(m.B3 )
-dev.off()
+# traceplot(m.B3 )
+# dev.off()
 
 # plot the observed versus predicted data
 post <- sim(m.B3)
@@ -163,47 +163,17 @@ m.B4 <-
 precis( m.B4  )
 
 # check the traceplots
-traceplot(m.B4 )
-dev.off()
+# traceplot(m.B4 )
+# dev.off()
 
 # plot the observed versus predicted data
 post <- sim(m.B4)
 plot(apply(post, 2, mean), bryo$M)
 abline(0, 1)
 
+
 # model5
 m.B5 <- 
-  ulam(
-    alist(M ~ dnorm(u, sigma),
-          
-          u <- aS + bY*Y + bPC1*PC1 + bPC2*PC2 + bPCI*PC1*PC2,
-          
-          bY ~ dnorm( 0 , 1 ),
-          bPC1 ~ dnorm( 0, 1 ),
-          bPC2 ~ dnorm( 0, 1),
-          bPCI ~ dnorm( 0, 1),
-          
-          aS ~ normal( 0 , 2 ),
-          
-          sigma ~ dexp(1)
-          
-    ),
-    data = bryo, chains = 4, log_lik = TRUE)
-
-# check the precis output
-precis( m.B5  )
-
-# check the traceplots
-traceplot(m.B5 )
-dev.off()
-
-# plot the observed versus predicted data
-post <- sim(m.B5)
-plot(apply(post, 2, mean), bryo$M)
-abline(0, 1)
-
-# model6
-m.B6 <- 
   ulam(
     alist(M ~ dnorm(u, sigma),
           
@@ -223,19 +193,19 @@ m.B6 <-
     data = bryo, chains = 4, log_lik = TRUE)
 
 # check the precis output
-precis( m.B6  )
+precis( m.B5  )
 
 # check the traceplots
-traceplot(m.B6 )
-dev.off()
+# traceplot(m.B5 )
+# dev.off()
 
 # plot the observed versus predicted data
-post <- sim(m.B6)
+post <- sim(m.B5)
 plot(apply(post, 2, mean), bryo$M)
 abline(0, 1)
 
-# model7
-m.B7 <- 
+# model6
+m.B6 <- 
   ulam(
     alist(M ~ dnorm(u, sigma),
           
@@ -255,19 +225,19 @@ m.B7 <-
     data = bryo, chains = 4, log_lik = TRUE)
 
 # check the precis output
-precis( m.B7)
+precis( m.B6)
 
 # check the traceplots
-traceplot(m.B7 )
-dev.off()
+# traceplot(m.B6 )
+# dev.off()
 
 # plot the observed versus predicted data
-post <- sim(m.B7)
+post <- sim(m.B6)
 plot(apply(post, 2, mean), bryo$M)
 abline(0, 1)
 
-# model8
-m.B8 <- 
+# model7
+m.B7 <- 
   ulam(
     alist(M ~ dnorm(u, sigma),
           
@@ -288,25 +258,25 @@ m.B8 <-
     data = bryo, chains = 4, log_lik = TRUE)
 
 # check the precis output
-precis( m.B8)
+precis( m.B7)
 
 # check the traceplots
-traceplot(m.B8 )
-dev.off()
+# traceplot(m.B7 )
+# dev.off()
 
 # plot the observed versus predicted data
-post <- sim(m.B8)
+post <- sim(m.B7)
 plot(apply(post, 2, mean), bryo$M)
 abline(0, 1)
 
 
 # compare the models
 compare(m.B1, m.B2, m.B3, m.B4, 
-        m.B5, m.B6, m.B7, m.B8,
+        m.B5, m.B6, m.B7,
         func = PSIS)
 
 compare(m.B1, m.B2, m.B3,m.B4, 
-        m.B5, m.B6, m.B7, m.B8,
+        m.B5, m.B6, m.B7,
         func = WAIC)
 
 # sample from the m.B2 model

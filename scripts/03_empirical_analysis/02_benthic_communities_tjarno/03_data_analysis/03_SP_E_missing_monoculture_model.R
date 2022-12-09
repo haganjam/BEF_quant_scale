@@ -56,8 +56,8 @@ m.E1 <-
 precis( m.E1 )
 
 # check the traceplots
-traceplot(m.E1)
-dev.off()
+# traceplot(m.E1)
+# dev.off()
 
 # plot the Y vs M comparison
 range(seasq$Y)
@@ -95,8 +95,8 @@ m.E2 <-
 precis( m.E2 )
 
 # check the traceplots
-traceplot(m.E2)
-dev.off()
+# traceplot(m.E2)
+# dev.off()
 
 # plot the Y vs M comparison
 Y_seq <- seq(-0.9, 2.15, 0.05)
@@ -129,8 +129,8 @@ m.E3 <-
 precis( m.E3 )
 
 # check the traceplots
-traceplot(m.E3)
-dev.off()
+# traceplot(m.E3)
+# dev.off()
 
 # compare the three models
 compare(m.E1, m.E2, m.E3, func = PSIS)
