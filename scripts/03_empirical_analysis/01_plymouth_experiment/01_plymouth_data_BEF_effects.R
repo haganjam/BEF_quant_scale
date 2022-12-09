@@ -10,6 +10,7 @@ library(ggbeeswarm)
 library(here)
 library(viridis)
 library(ggpubr)
+library(rethinking)
 
 # set script to call partition functions from
 source(here("scripts/01_partition_functions/01_isbell_2018_partition.R"))
@@ -172,7 +173,8 @@ df_unc_sum <-
   df_unc %>%
   group_by(Beff) %>%
   summarise(Value_m = mean(Value),
-            Value_sd = sd(Value))
+            PI_low = PI(Value, prob = 0.90)[1],
+            PI_high = PI(Value, prob = 0.90)[2])
 
 # calculate the percentage of total complementarity due to local complementarity
 LC <- filter(df_unc_sum, Beff == "LC")[["Value_m"]]
@@ -189,8 +191,8 @@ p1 <-
   geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
   geom_col(mapping = aes(x = Beff, y = Value_m, colour = Beff, fill = Beff), width = 0.5) +
   geom_errorbar(mapping = aes(x = Beff, 
-                              ymin = Value_m - Value_sd,
-                              ymax = Value_m + Value_sd),
+                              ymin = PI_low,
+                              ymax = PI_high),
                 width = 0) + 
   scale_colour_manual(values = v_col_BEF(eff_in = eff_in) ) +
   scale_fill_manual(values = v_col_BEF(eff_in = eff_in)) +
@@ -211,12 +213,12 @@ p2 <-
   geom_col(mapping = aes(x = Beff, y = Value_m, colour = Beff, fill = Beff), 
            width = 0.5) +
   geom_errorbar(mapping = aes(x = Beff, 
-                              ymin = Value_m - Value_sd,
-                              ymax = Value_m + Value_sd),
+                              ymin = PI_low,
+                              ymax = PI_high),
                 width = 0) +
   scale_colour_manual(values = v_col_BEF(eff_in = eff_in)) +
   scale_fill_manual(values = v_col_BEF(eff_in = eff_in)) +
-  ylab("Effect (%, cover)") +
+  ylab(NULL) +
   xlab(NULL) +
   theme_meta() +
   theme(legend.position = "none")
@@ -233,12 +235,12 @@ p3 <-
   geom_col(mapping = aes(x = Beff, y = Value_m, colour = Beff, fill = Beff), 
            width = 0.5) +
   geom_errorbar(mapping = aes(x = Beff, 
-                              ymin = Value_m - Value_sd,
-                              ymax = Value_m + Value_sd),
+                                      ymin = PI_low,
+                                      ymax = PI_high),
                 width = 0) +
   scale_colour_manual(values = v_col_BEF(eff_in = eff_in)) +
   scale_fill_manual(values = v_col_BEF(eff_in = eff_in)) +
-  ylab("Effect (%, cover)") +
+  ylab(NULL) +
   xlab(NULL) +
   theme_meta() +
   theme(legend.position = "none")
@@ -247,12 +249,15 @@ plot(p3)
 # arrange this plot
 p123 <- 
   ggarrange(p1, p2, p3, ncol = 3, nrow = 1,
+            widths = c(1.1, 1, 1),
             labels = c("a", "b", "c"),
+            hjust = -0.2,
+            vjust = 1,
             font.label = list(size = 11, face = "plain"))
 plot(p123)
 
 ggsave(filename = here("figures/fig4.png"), p123,
-       unit = "cm", width = 20, height = 7)
+       unit = "cm", width = 20, height = 7.5)
 
 # why does local complementarity not vary with the RYe
 # formula uses average change in relative yield and average relative yield is the same
