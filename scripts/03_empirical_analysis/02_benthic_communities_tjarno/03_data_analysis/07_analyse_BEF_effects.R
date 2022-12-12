@@ -90,6 +90,7 @@ BEF_pool <-
 
 # pooled average and PI
 BEF_trim %>%
+  filter(cluster_id != "F") %>%
   group_by(Beff) %>%
   summarise(Value_m = round(mean(Value), 2),
             PI_low = rethinking::PI(Value, 0.90)[1],
