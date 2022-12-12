@@ -86,6 +86,38 @@ data_comb <-
   data_comb %>%
   filter(cluster_id != "F")
 
+# illustrate the net biodiversity effect
+df1 <- 
+  data_comb %>%
+  filter(cluster_id == "A", place == 1, time == 1)
+df1.sum <- 
+  df1 %>%
+  group_by(SR) %>%
+  summarise(biomass_mu = mean(biomass_mu))
+
+p1 <- 
+  ggplot() +
+  geom_point(data = df1, 
+             mapping = aes(x = SR, y = biomass_mu),
+             position = position_dodge2(width = 0.1),
+             alpha = 0.1) +
+  geom_errorbar(data = df1, 
+                mapping = aes(x = SR, 
+                              ymin = biomass_mu-biomass_sd,
+                              ymax = biomass_mu+biomass_sd),
+                width = 0.05, position = position_dodge2(width = 0.1),
+                alpha =0.2) +
+  geom_point(data = df1.sum,
+             mapping = aes(x = SR, y = biomass_mu), size = 2,
+             colour = "red") +
+  scale_x_continuous(limits = c(0.5, 4.5)) +
+  ylab("Biomass (g)") +
+  xlab("Species richness") +
+  theme_meta()
+
+ggsave(filename = here("figures/BES11.png"), p1, dpi = 400,
+       width = 6, height = 7, units = "cm")
+
 # make a legend
 legend <- data_comb[1:6, ]
 
