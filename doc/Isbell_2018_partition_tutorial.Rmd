@@ -1,7 +1,6 @@
 ---
 title: "How to calculate biodiversity effects across space and time (sensu Isbell et al. 2018, Ecology Letters)"
-output:
-html_notebook: default
+output: html_document
 ---
 
 ### Introduction
