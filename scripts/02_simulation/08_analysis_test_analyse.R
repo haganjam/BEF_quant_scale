@@ -243,8 +243,10 @@ p2 <-
   xlab(NULL) +
   theme_meta() +
   theme(legend.position = "none")
-
 plot(p2)
+
+ggsave(filename = here("figures/fig_BES12.png"), p2, dpi = 500,
+       width = 14, height = 7, units = "cm")
 
 
 ## unknown initial relative abundance

@@ -142,10 +142,10 @@ p2 <-
   ggplot() +
   geom_jitter(data = env_dispersion,
               mapping = aes(x = heterogeneity, y = field_dispersion), 
-              width = 0.1, shape = 1, size = 2, stroke = 0.6) +
+              width = 0.05, shape = 16, size = 2, alpha = 0.2) +
   geom_point(data = env_dispersion_s,
              mapping = aes(x = heterogeneity, y = d_m ),
-             colour = "red", size = 2.5) +
+             colour = "red", size = 3) +
   geom_errorbar(data = env_dispersion_s,
              mapping = aes(x = heterogeneity, ymin = d_m-d_sd, ymax = d_m+d_sd ),
              width = 0,
@@ -154,6 +154,9 @@ p2 <-
   ylab("Multivariate dispersion") +
   theme_meta()
 plot(p2)
+
+ggsave(filename = here("figures/fig_BES13.png"), p2, dpi = 400,
+       width = 9, height = 7, units = "cm")
 
 # do a t.test()
 t.test(field_dispersion ~ heterogeneity, data = env_dispersion)
