@@ -109,7 +109,14 @@ BEF_pool <-
 
 # check some numbers of the manuscript
 BEF_pool %>%
-  filter(Beff == "NBE")
+  filter(Beff %in% c("NBE", "IT") ) %>%
+  select(cluster_id, Beff, Value_m) %>%
+  pivot_wider(id_cols = c("cluster_id"),
+              names_from = "Beff",
+              values_from = "Value_m") %>%
+  mutate(IT_perc = (IT/NBE)*100 ) %>%
+  summarise(IT_perc_M = mean(IT_perc),
+            IT_perc_SD = sd(IT_perc))
 
 # compare total to local selection and complementarity
 

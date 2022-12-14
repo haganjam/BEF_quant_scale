@@ -88,15 +88,28 @@ pca_df %>%
   group_by(heterogeneity, cluster_id) %>%
   summarise(n = n())
 
+# generate a centroid dataset to plot cluster IDs
+pca_df_sum <- 
+  pca_df %>%
+  group_by(heterogeneity, cluster_id) %>%
+  summarise(PC1 = mean(PC1),
+            PC2 = mean(PC2))
+
 # plot the PC plot
-p1 <- ggplot() +
+p1 <- 
+  ggplot() +
   geom_point(data = pca_df, 
              mapping = aes(x = PC1, y = PC2, colour = cluster_id, shape = heterogeneity),
-             size = 2.5, alpha = 0.75) +
+             size = 3, alpha = 0.6) +
+  geom_point(data = pca_df_sum, 
+             mapping = aes(x = PC1, y = PC2, colour = cluster_id, shape = heterogeneity),
+             position = position_dodge2(width = 0.5),
+             size = 4.2, alpha = 1) +
+  geom_label(data = pca_df_sum, 
+             mapping = aes(x = PC1, y = PC2, label = cluster_id),
+             position = position_dodge2(width = 0.5),
+             label.size = NA, alpha = 0, size = 3, colour = "white") +  
   scale_colour_viridis_d(option = "C", begin = 0, end = 1) +
-  # geom_label(data = pca_df, 
-             # mapping = aes(x = PC1, y = PC2, label = cluster_id)) +
-  #scale_shape_manual(values = c(1, 2)) +
   guides(colour = "none") +
   theme_meta() +
   xlab("PC1 (38%)") +
