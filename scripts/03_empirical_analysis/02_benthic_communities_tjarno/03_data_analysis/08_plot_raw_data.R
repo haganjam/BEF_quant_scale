@@ -86,6 +86,11 @@ data_comb <-
   data_comb %>%
   filter(cluster_id != "F")
 
+# calculate the average monoculture functioning value
+data_comb %>%
+  group_by(SR) %>%
+  summarise(M = mean(biomass_mu))
+
 # illustrate the net biodiversity effect
 df1 <- 
   data_comb %>%
