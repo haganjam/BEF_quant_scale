@@ -15,6 +15,9 @@ library(tidyr)
 library(here)
 library(rethinking)
 
+# load relevant plotting themes
+source(here("scripts/Function_plotting_theme.R"))
+
 # load the analysis data
 data <- read_csv(here("data/benthic_communities_tjarno_data/data_clean/biomass_env_analysis_data.csv"))
 
@@ -128,43 +131,94 @@ all(data %>%
     ) 
 
 # check the monoculture predictions
-data_sum <- 
+data_obs <- 
   data %>%
   filter(!is.na(M)) %>%
+  mutate(obs_pred = "Observed") %>%
+  select(obs_pred, OTU, M) %>%
+  arrange(obs_pred, OTU)
+
+# how many observed samples do we have
+data_obs %>%
   group_by(OTU) %>%
-  summarise(n = n(),
-            mean_M = mean(M),
-            sd_M = sd(M),
-            Q5_M = quantile(M, 0.05),
-            Q95_M = quantile(M, 0.95))
+  summarise(n = n())
+
+# how many missing samples do we have?
+data %>%
+  filter(is.na(M)) %>%
+  group_by(OTU) %>%
+  summarise(n = n())
 
 data_pred <- 
   
-  lapply(sp_mono, function(data) {
+  mapply(function(data, name) {
   
-  y <- sapply(data, function(x) return(x))
-  z <- tibble(n1 = nrow(data), 
-              mean_M1 = mean(y),
-              sd_M1 = sd(y),
-              Q5_M1 = quantile(y, 0.05),
-              Q95_M1 = quantile(y, 0.95))
-  
+  y <- sapply(data, function(x) return(x) )
+  z <- tibble(obs_pred = "Predicted",
+              OTU = name,
+              M = y)
   return(z)
   
-} )
+}, sp_mono, names(sp_mono), SIMPLIFY = FALSE )
 
 # bind into a data.frame
 data_pred <- bind_rows(data_pred)
 
-# add an OTU column
-data_pred$OTU <- names(sp_mono)
+# bind the predictions into a data.frame with the observations
+data_comb <- bind_rows(data_obs, data_pred)
 
-# join to the actual monoculture values
-data_comp <- full_join(data_sum, data_pred, by = "OTU")
-data_comp <- bind_cols(data_comp[,"OTU"], round( data_comp[,names(data_comp) != "OTU"], 2))
+# calculate summary statistics
+data_sum <- 
+  data_comb %>%
+  group_by(obs_pred, OTU) %>%
+  summarise(M = mean(M))
 
-# save the monoculture prediction comparison table
-write_csv(x = data_comp, here("results/monoculture_prediction_comparison.csv"))
+# plot these data as density plots
+p1 <- 
+  ggplot() +
+  geom_density(data = data_comb,
+               mapping = aes(x = M, colour = obs_pred, fill = obs_pred), 
+               alpha = 0.4) +
+  geom_vline(data = data_sum,
+             mapping = aes(xintercept = M, colour = obs_pred),
+             show.legend = FALSE, linetype = "dashed") +
+  facet_wrap(~OTU, scales = "free") +
+  scale_colour_viridis_d(option = "C", end = 0.9) +
+  scale_fill_viridis_d(option = "C", end = 0.9) +
+  labs(colour = NULL, fill = NULL) + 
+  xlab("Monoculture biomass (g)") +
+  ylab("Density") +
+  scale_y_continuous(expand = c(0, 0)) +
+  theme_meta() +
+  theme(legend.position = "top")
+
+ggsave(filename = here("figures/figS6.png"), p1, dpi = 350,
+       units = "cm", width = 20, height = 15)
+
+# is there a site-bias in the missing monocultures?
+data_bias <- 
+  data %>%
+  select(cluster_id, PC1, PC2, OTU, M)
+data_bias$M2 <- ifelse(is.na(data_bias$M), "Missing", "Observed")
+data_bias$M2 <- factor(data_bias$M2, levels = c("Observed", "Missing"))
+
+# plot a PCA of the observed versus missing data for the different species
+p2 <- 
+  ggplot(data = data_bias,
+       mapping = aes(x = PC1, y = PC2, colour = M2)) +
+  geom_point(alpha = 0.9, shape = 1, size = 2) +
+  facet_wrap(~OTU, scales = "free") +
+  scale_colour_viridis_d(option = "C", end = 0.9) +
+  ylab("PC2 (32%)") +
+  xlab("PC1 (38%)") +
+  labs(colour = NULL) +
+  theme_meta() +
+  theme(legend.position = "top") +
+  theme(legend.key=element_blank(),
+        legend.background=element_blank())
+
+ggsave(filename = here("figures/figS7.png"), p2, dpi = 350,
+       units = "cm", width = 20, height = 15)
 
 # save the monoculture predictions as a .rds file
 saveRDS(object = sp_mono, file = here("results/benthic_mono_pred.rds"))
