@@ -120,6 +120,11 @@ BEF_pool %>%
 
 # compare total to local selection and complementarity
 
+# set-up some segments for plot comparisons
+segments <- data.frame(xstart = 0,
+                       xend = 0.3,
+                       effect = 30)
+
 # which effects to plot
 eff_in <- c("LC", "TC", "LS", "TS")
 
@@ -140,6 +145,10 @@ p1 <-
              label.size = NA, alpha = 0, size = 2.75) +
   scale_colour_manual(values = v_col_BEF(eff_in = eff_in )) +
   scale_fill_manual(values = v_col_BEF(eff_in = eff_in)) +
+  geom_segment(data = segments,
+               mapping = aes(x = xstart, xend = xend,
+                             y = effect, yend = effect),
+               size = 1.25, colour = "red") +
   ylab("Effect (g)") +
   xlab(NULL) +
   theme_meta() +
@@ -165,6 +174,10 @@ p2 <-
              label.size = NA, alpha = 0, size = 2.75) +
   scale_colour_manual(values = v_col_BEF(eff_in = eff_in )) +
   scale_fill_manual(values = v_col_BEF(eff_in = eff_in )) +
+  geom_segment(data = segments,
+               mapping = aes(x = xstart, xend = xend,
+                             y = effect, yend = effect),
+               size = 1.25, colour = "red") +
   ylab(NULL) +
   xlab(NULL) +
   theme_meta() +
@@ -190,6 +203,10 @@ p3 <-
              label.size = NA, alpha = 0, size = 2.75) +
   scale_colour_manual(values = v_col_BEF(eff_in = eff_in )) +
   scale_fill_manual(values = v_col_BEF(eff_in = eff_in )) +
+  geom_segment(data = segments,
+               mapping = aes(x = xstart, xend = xend,
+                             y = effect, yend = effect),
+               size = 1.25, colour = "red") +
   ylab(NULL) +
   xlab(NULL) +
   theme_meta() +
@@ -248,20 +265,21 @@ df1 <- round(lm.a$fstatistic[2], 0)
 df2 <- round(lm.a$fstatistic[3], 0)
 pval <- round(lm.a$coefficients[2, 4], 2) 
 
+# check the summary of the SI_env data
+summary(SI_env)
+
 p1 <- 
   ggplot(data = SI_env) +
   geom_point(mapping = aes(x = field_dispersion, y = SI), size = 2) +
   geom_errorbar(mapping = aes(x = field_dispersion, 
                               ymin = PI_low,
                               ymax = PI_high), width = 0) +
-  geom_smooth(mapping = aes(x = field_dispersion, y = SI), 
-              method = "lm", se = TRUE, alpha = 0.25,
-              size = 0.5, colour = "black") +
-  annotate(geom = "text", x = 1.5, y = 3.24, label = bquote(r^2~" = "~.(r2) ), size = 3) +
-  annotate(geom = "text", x = 2.2, y = 3.2, label = bquote(F[.(df1)~","~.(df2)]~" = "~.(Fst) ), size = 3) +
-  annotate(geom = "text", x = 2.9, y = 3.24, label = bquote("P = "~.(pval) ), size = 3) +
+  annotate(geom = "text", x = 1.35, y = 3.26, label = bquote(r^2~" = "~.(r2) ), size = 2.8) +
+  annotate(geom = "text", x = 2.15, y = 3.2, label = bquote(F[.(df1)~","~.(df2)]~" = "~.(Fst) ), size = 2.8) +
+  annotate(geom = "text", x = 2.95, y = 3.24, label = bquote("P = "~.(pval) ), size = 2.8) +
   ylab("Spatial insurance (g)") +
   xlab("Multivariate dispersion") +
+  scale_y_continuous(limits = c(-1.1, 3.6)) +
   theme_meta()
 plot(p1)
 
@@ -278,27 +296,30 @@ pval <- round(lm.b$coefficients[2, 4], 2)
 # plot the relationship between environmental dispersion and the insurance effect
 p2 <- 
   ggplot(data = SI_env %>% filter(cluster_id != "H")) +
+  geom_smooth(mapping = aes(x = field_dispersion, y = SI), 
+              method = "lm", se = TRUE, alpha = 0.25,
+              size = 0.5, colour = "red", linetype = "dashed") +
   geom_point(mapping = aes(x = field_dispersion, y = SI), size = 2) +
   geom_errorbar(mapping = aes(x = field_dispersion, 
                               ymin = PI_low,
                               ymax = PI_high), width = 0) +
-  geom_smooth(mapping = aes(x = field_dispersion, y = SI), 
-              method = "lm", se = TRUE, alpha = 0.25,
-              size = 0.5, colour = "red", linetype = "dashed") +
-  annotate(geom = "text", x = 1.5, y = -0.46, label = bquote(r^2~" = "~.(r2) ), size = 3) +
-  annotate(geom = "text", x = 2.2, y = -0.5, label = bquote(F[.(df1)~","~.(df2)]~" = "~.(Fst) ), size = 3) +
-  annotate(geom = "text", x = 2.9, y = -0.46, label = bquote("P = "~.(pval) ), size = 3) +
-  ylab("Spatial insurance (g)") +
+  annotate(geom = "text", x = 1.3, y = 3.26, label = bquote(r^2~" = "~.(r2) ), size = 2.8) +
+  annotate(geom = "text", x = 2.1, y = 3.2, label = bquote(F[.(df1)~","~.(df2)]~" = "~.(Fst) ), size = 2.8) +
+  annotate(geom = "text", x = 2.95, y = 3.24, label = bquote("P = "~.(pval) ), size = 2.8) +
+  ylab("") +
   xlab("Multivariate dispersion") +
-  theme_meta()
+  scale_y_continuous(limits = c(-1.1, 3.6)) +
+  theme_meta() +
+  theme(axis.title.y = element_text(size = 1))
 plot(p2)
 
 p12 <- ggarrange(p1, p2, labels = c("a", "b"),
                  font.label = list(size = 11, face = "plain")
                  )
+plot(p12)
 
 ggsave(filename = here("figures/fig7.png"), p12,
-       unit = "cm", width = 16, height = 7)
+       unit = "cm", width = 14, height = 8)
 
 
 # BES talk figures

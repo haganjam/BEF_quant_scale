@@ -183,19 +183,30 @@ LS <- filter(df_unc_sum, Beff == "LS")[["Value_m"]]
 
 (LC/(LS - TS + LC))*100
 
+# set-up some segments for plot comparisons
+segments <- data.frame(xstart = 0,
+                       xend = 0.3,
+                       effect = 30)
+
 # compare total to local selection and complementarity
 eff_in <- c("LC", "TC", "LS", "TS")
 p1 <- 
   ggplot(data = df_unc_sum %>%
          filter(Beff %in% eff_in)) +
   geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
-  geom_col(mapping = aes(x = Beff, y = Value_m, colour = Beff, fill = Beff), width = 0.5) +
+  geom_point(mapping = aes(x = Beff, y = Value_m, colour = Beff, fill = Beff),
+             size = 3) +
   geom_errorbar(mapping = aes(x = Beff, 
                               ymin = PI_low,
-                              ymax = PI_high),
+                              ymax = PI_high,
+                              colour = Beff),
                 width = 0) + 
   scale_colour_manual(values = v_col_BEF(eff_in = eff_in) ) +
   scale_fill_manual(values = v_col_BEF(eff_in = eff_in)) +
+  geom_segment(data = segments,
+               mapping = aes(x = xstart, xend = xend,
+                             y = effect, yend = effect),
+               size = 1.25, colour = "red") +
   ylab("Effect (%, cover)") +
   xlab(NULL) +
   theme_meta() +
@@ -210,18 +221,24 @@ p2 <-
          mutate(Beff = factor(Beff, levels = eff_in))
        ) +
   geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
-  geom_col(mapping = aes(x = Beff, y = Value_m, colour = Beff, fill = Beff), 
-           width = 0.5) +
+  geom_point(mapping = aes(x = Beff, y = Value_m, colour = Beff, fill = Beff), 
+           size = 3) +
   geom_errorbar(mapping = aes(x = Beff, 
                               ymin = PI_low,
-                              ymax = PI_high),
+                              ymax = PI_high,
+                              colour = Beff),
                 width = 0) +
   scale_colour_manual(values = v_col_BEF(eff_in = eff_in)) +
   scale_fill_manual(values = v_col_BEF(eff_in = eff_in)) +
-  ylab(NULL) +
+  geom_segment(data = segments,
+               mapping = aes(x = xstart, xend = xend,
+                             y = effect, yend = effect),
+               size = 1.25, colour = "red") +
+  ylab("") +
   xlab(NULL) +
   theme_meta() +
-  theme(legend.position = "none")
+  theme(legend.position = "none",
+        axis.title.y = element_text(size = 1))
 plot(p2)
 
 # examine the distribution of the insurance effects
@@ -232,24 +249,30 @@ p3 <-
          mutate(Beff = factor(Beff, levels = eff_in))
        ) +
   geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
-  geom_col(mapping = aes(x = Beff, y = Value_m, colour = Beff, fill = Beff), 
-           width = 0.5) +
+  geom_point(mapping = aes(x = Beff, y = Value_m, colour = Beff, fill = Beff),
+             size = 3) +
   geom_errorbar(mapping = aes(x = Beff, 
-                                      ymin = PI_low,
-                                      ymax = PI_high),
+                              ymin = PI_low,
+                              ymax = PI_high,
+                              colour = Beff),
                 width = 0) +
   scale_colour_manual(values = v_col_BEF(eff_in = eff_in)) +
   scale_fill_manual(values = v_col_BEF(eff_in = eff_in)) +
-  ylab(NULL) +
+  geom_segment(data = segments,
+               mapping = aes(x = xstart, xend = xend,
+                             y = effect, yend = effect),
+               size = 1.25, colour = "red") +
+  ylab("") +
   xlab(NULL) +
   theme_meta() +
-  theme(legend.position = "none")
+  theme(legend.position = "none",
+        axis.title.y = element_text(size = 1))
 plot(p3)
 
 # arrange this plot
 p123 <- 
   ggarrange(p1, p2, p3, ncol = 3, nrow = 1,
-            widths = c(1.1, 1, 1),
+            widths = c(1.1, 1.05, 1),
             labels = c("a", "b", "c"),
             hjust = -0.2,
             vjust = 1,
