@@ -1,5 +1,5 @@
 #'
-#' @title: Calculate the BEF effects using the modeled monoculture data
+#' @title: Extract the monoculture predictions
 #' 
 #' @description: This script uses the samples from the posterior distributions of
 #' the best monoculture models of each species to fill in the missing monoculture data.
@@ -11,6 +11,7 @@
 # load the required libraries
 library(readr)
 library(dplyr)
+library(tidyr)
 library(here)
 library(rethinking)
 
@@ -125,6 +126,45 @@ all(data %>%
       summarise(n = n()) %>%
       pull(n) == sapply(sp_mono, nrow)
     ) 
+
+# check the monoculture predictions
+data_sum <- 
+  data %>%
+  filter(!is.na(M)) %>%
+  group_by(OTU) %>%
+  summarise(n = n(),
+            mean_M = mean(M),
+            sd_M = sd(M),
+            Q5_M = quantile(M, 0.05),
+            Q95_M = quantile(M, 0.95))
+
+data_pred <- 
+  
+  lapply(sp_mono, function(data) {
+  
+  y <- sapply(data, function(x) return(x))
+  z <- tibble(n1 = nrow(data), 
+              mean_M1 = mean(y),
+              sd_M1 = sd(y),
+              Q5_M1 = quantile(y, 0.05),
+              Q95_M1 = quantile(y, 0.95))
+  
+  return(z)
+  
+} )
+
+# bind into a data.frame
+data_pred <- bind_rows(data_pred)
+
+# add an OTU column
+data_pred$OTU <- names(sp_mono)
+
+# join to the actual monoculture values
+data_comp <- full_join(data_sum, data_pred, by = "OTU")
+data_comp <- bind_cols(data_comp[,"OTU"], round( data_comp[,names(data_comp) != "OTU"], 2))
+
+# save the monoculture prediction comparison table
+write_csv(x = data_comp, here("results/monoculture_prediction_comparison.csv"))
 
 # save the monoculture predictions as a .rds file
 saveRDS(object = sp_mono, file = here("results/benthic_mono_pred.rds"))
