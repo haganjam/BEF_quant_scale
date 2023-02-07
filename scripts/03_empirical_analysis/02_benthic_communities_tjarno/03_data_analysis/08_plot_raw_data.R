@@ -100,28 +100,6 @@ df1.sum <-
   group_by(SR) %>%
   summarise(biomass_mu = mean(biomass_mu))
 
-p1 <- 
-  ggplot() +
-  geom_point(data = df1, 
-             mapping = aes(x = SR, y = biomass_mu),
-             position = position_dodge2(width = 0.1),
-             alpha = 0.1) +
-  geom_errorbar(data = df1, 
-                mapping = aes(x = SR, 
-                              ymin = biomass_mu-biomass_sd,
-                              ymax = biomass_mu+biomass_sd),
-                width = 0.05, position = position_dodge2(width = 0.1),
-                alpha =0.2) +
-  geom_point(data = df1.sum,
-             mapping = aes(x = SR, y = biomass_mu), size = 2,
-             colour = "red") +
-  scale_x_continuous(limits = c(0.5, 4.5)) +
-  ylab("Biomass (g)") +
-  xlab("Species richness") +
-  theme_meta()
-
-ggsave(filename = here("figures/BES11.png"), p1, dpi = 400,
-       width = 6, height = 7, units = "cm")
 
 # make a legend
 legend <- data_comb[1:6, ]
@@ -140,8 +118,6 @@ legend <-
   )
 plot(legend)
 
-ggsave(filename = here("figures/fig_BESlegend.png"), legend,
-       width = 4, height = 6, unit = "cm")
 
 # plot the raw data of the different clusters
 
@@ -203,17 +179,17 @@ for(i in 1:length(c_id)) {
   # save this plot
   if (N_place == 5) {
     
-    ggsave(filename = here(paste0("figures/", "figS10", letters[i], ".png")), p1,
+    ggsave(filename = here(paste0("figures/", "figS8", letters[i], ".png")), p1,
            unit = "cm", width = 21, height = 16)
     
   } else if (N_place == 4) {
     
-    ggsave(filename = here(paste0("figures/", "figS10", letters[i], ".png")), p1,
+    ggsave(filename = here(paste0("figures/", "figS8", letters[i], ".png")), p1,
            unit = "cm", width = 14, height = 16)
     
   } else if (N_place == 3) {
     
-    ggsave(filename = here(paste0("figures/", "figS10", letters[i], ".png")), p1,
+    ggsave(filename = here(paste0("figures/", "figS8", letters[i], ".png")), p1,
            unit = "cm", width = 21, height = 8)
     
   }
@@ -239,24 +215,5 @@ cov_RA_M <-
   select(cluster_id, sample, place, time, species, RA, biomass_mu, biomass_sd)
 head(cov_RA_M)
 summary(cov_RA_M)
-
-p.BES10 <- 
-  ggplot(data = cov_RA_M %>% filter(cluster_id == "C"),
-       mapping = aes(x = (biomass_mu), y = RA, colour = species)) +
-  geom_point(size = 1.9, shape = 16, alpha = 0.95) +
-  geom_errorbarh(mapping = aes(xmin = biomass_mu-biomass_sd,
-                               xmax = biomass_mu+biomass_sd,
-                               y = RA, colour = species),
-                 size = 0.25, alpha = 0.5) +
-  scale_colour_viridis_d(begin = 0.1, end = 0.74, option = "C") +
-  ylab("Relative abundance") +
-  xlab("Monoculture (g)") +
-  theme_meta()  +
-  theme(legend.position = "none",
-        plot.title = element_text(size = 12, hjust = 0.5))
-plot(p.BES10)
-
-ggsave(filename = here("figures/fig_BES10.png"), p.BES10,
-       unit = "cm", width = 10, height = 8)
 
 ### END
