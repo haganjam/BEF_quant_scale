@@ -168,9 +168,6 @@ p2 <-
   theme_meta()
 plot(p2)
 
-ggsave(filename = here("figures/fig_BES13.png"), p2, dpi = 400,
-       width = 9, height = 7, units = "cm")
-
 # do a t.test()
 t.test(field_dispersion ~ heterogeneity, data = env_dispersion)
 
@@ -181,7 +178,7 @@ p12 <-
           font.label = list(face = "plain", size = 11), common.legend = TRUE)
 plot(p12)
 
-ggsave(filename = here("figures/figS8.png"), p12,
+ggsave(filename = here("figures/figS2.2.1.png"), p12,
        unit = "cm", width = 20, height = 10)
 
 # output the multivariate dispersion into an .rds file

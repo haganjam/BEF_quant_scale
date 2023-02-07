@@ -194,13 +194,12 @@ p1 <-
   ggplot(data = df_unc_sum %>%
          filter(Beff %in% eff_in)) +
   geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
-  geom_point(mapping = aes(x = Beff, y = Value_m, colour = Beff, fill = Beff),
-             size = 3) +
+  geom_col(mapping = aes(x = Beff, y = Value_m, colour = Beff, fill = Beff),
+             width = 0.3) +
   geom_errorbar(mapping = aes(x = Beff, 
                               ymin = PI_low,
-                              ymax = PI_high,
-                              colour = Beff),
-                width = 0) + 
+                              ymax = PI_high),
+                width = 0, colour = "black") +
   scale_colour_manual(values = v_col_BEF(eff_in = eff_in) ) +
   scale_fill_manual(values = v_col_BEF(eff_in = eff_in)) +
   geom_segment(data = segments,
@@ -221,13 +220,12 @@ p2 <-
          mutate(Beff = factor(Beff, levels = eff_in))
        ) +
   geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
-  geom_point(mapping = aes(x = Beff, y = Value_m, colour = Beff, fill = Beff), 
-           size = 3) +
+  geom_col(mapping = aes(x = Beff, y = Value_m, colour = Beff, fill = Beff),
+           width = 0.3) +
   geom_errorbar(mapping = aes(x = Beff, 
                               ymin = PI_low,
-                              ymax = PI_high,
-                              colour = Beff),
-                width = 0) +
+                              ymax = PI_high),
+                width = 0, colour = "black") +
   scale_colour_manual(values = v_col_BEF(eff_in = eff_in)) +
   scale_fill_manual(values = v_col_BEF(eff_in = eff_in)) +
   geom_segment(data = segments,
@@ -249,13 +247,12 @@ p3 <-
          mutate(Beff = factor(Beff, levels = eff_in))
        ) +
   geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
-  geom_point(mapping = aes(x = Beff, y = Value_m, colour = Beff, fill = Beff),
-             size = 3) +
+  geom_col(mapping = aes(x = Beff, y = Value_m, colour = Beff, fill = Beff),
+           width = 0.3) +
   geom_errorbar(mapping = aes(x = Beff, 
                               ymin = PI_low,
-                              ymax = PI_high,
-                              colour = Beff),
-                width = 0) +
+                              ymax = PI_high),
+                width = 0, colour = "black") +
   scale_colour_manual(values = v_col_BEF(eff_in = eff_in)) +
   scale_fill_manual(values = v_col_BEF(eff_in = eff_in)) +
   geom_segment(data = segments,
