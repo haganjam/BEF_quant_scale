@@ -167,6 +167,10 @@ data_pred <- bind_rows(data_pred)
 # bind the predictions into a data.frame with the observations
 data_comb <- bind_rows(data_obs, data_pred)
 
+# change the OTU name
+data_comb$OTU <- factor(data_comb$OTU)
+levels(data_comb$OTU) <- c("Barn", "Bryo", "Asci", "Hydro", "Ciona")
+
 # calculate summary statistics
 data_sum <- 
   data_comb %>%

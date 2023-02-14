@@ -69,6 +69,11 @@ SP.x <- cor.test(covT12$T1_cover, covT12$T2_cover, method = "spearman")
 print(SP.x)
 
 # plot a proper correlation plot
+
+# rename the OTUs
+covT12$Species <- factor(covT12$Species)
+levels(covT12$Species) <- c("Barn", "Bryo", "Asci", "Hydro", "Ciona")
+
 p1 <- 
   ggplot(data = covT12,
        mapping = aes(x = T1_cover, y = T2_cover, colour = Species)) +
@@ -81,6 +86,7 @@ p1 <-
   theme_meta() +
   theme(legend.position = "top",
         legend.key = element_rect(fill = NA))
+plot(p1)
 
 # what about total cover?
 tot_cov <- 

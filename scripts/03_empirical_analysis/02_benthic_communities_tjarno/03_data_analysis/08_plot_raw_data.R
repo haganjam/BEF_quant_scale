@@ -72,14 +72,9 @@ data_comb <-
   bind_rows(data_M1 , data_M2) %>%
   arrange(cluster_id, sample, place, time, SR, species, biomass_mu, biomass_sd)
 
-data_comb $species <- factor(data_comb $species)
-levels(data_comb$species) <- list("Barn" = "Barn",
-                                  "Bryo" = "Bryo",
-                                  "Bumpi" = "Bumpi",
-                                  "Hydro" = "Hydro",
-                                  "Seasq" = "Seasq",
-                                  "Mixture (5 sp.)" = "Mixture (5 sp.)"
-                                 )
+data_comb$species <- factor(data_comb$species, 
+                            levels = c("Barn", "Bryo", "Bumpi", "Hydro", "Seasq", "Mixture (5 sp.)"))
+levels(data_comb$species) <- c("Barn", "Bryo", "Asci", "Hydro", "Ciona", "Mixture (5 sp.)")
 
 # remove cluster F from the analysis
 data_comb <- 
