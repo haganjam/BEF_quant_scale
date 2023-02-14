@@ -21,7 +21,7 @@ library(mcomsimr)
 
 # load key functions
 library(here)
-source(here("scripts/01_partition_functions/02_isbell_2018_partition.R"))
+source(here("scripts/01_partition_functions/01_isbell_2018_partition.R"))
 
 simulate_MC2 <- function(patches, species, dispersal = 0.01, timesteps = 1200,
                          start_abun = 150,

@@ -119,6 +119,15 @@ BEF_pool %>%
             IT_perc_SD = sd(IT_perc))
 
 # compare total to local selection and complementarity
+x <- BEF_trim %>%
+  filter(cluster_id != "F") %>%
+  group_by(Beff) %>%
+  summarise(Value_m = round(mean(Value), 2),
+            PI_low = rethinking::PI(Value, 0.90)[1],
+            PI_high = rethinking::PI(Value, 0.90)[2], .groups = "drop")
+
+(x[x$Beff == "LC",]$Value_m)/((x[x$Beff == "LS",]$Value_m) - (x[x$Beff == "TS",]$Value_m) + (x[x$Beff == "LC",]$Value_m) )
+
 
 # set-up some segments for plot comparisons
 segments <- data.frame(xstart = 0,

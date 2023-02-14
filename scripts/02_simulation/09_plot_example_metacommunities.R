@@ -126,7 +126,7 @@ p1 <-
   geom_line() +
   scale_colour_viridis_d(option = "C", end = 0.95) +
   facet_wrap(~place, scales = "free", ncol = 4, nrow = 5) +
-  ylab("Mixture functioning") +
+  ylab("Functioning of each species in mixture") +
   xlab("Time-point") +
   theme_meta() +
   theme(legend.position = "top",
@@ -143,7 +143,7 @@ p2 <-
   geom_line() +
   scale_colour_viridis_d(option = "C", end = 0.95) +
   facet_wrap(~place, scales = "free", ncol = 4, nrow = 5) +
-  ylab("Monoculture functioning") +
+  ylab("Functioning of each species in monoculture") +
   xlab("Time-point") +
   theme_meta() +
   theme(legend.position = "top",
