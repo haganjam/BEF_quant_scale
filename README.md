@@ -1,8 +1,8 @@
 ## BEF_quant_scale
 
-This repository contains code to reproduce the analysis reported in the following publication:
+This repository contains code to reproduce the analysis reported in the following manuscript (currently unpublished):
 
-+ coming soon (hopefully)
++ Hagan JG, Schrofner-Brunner BB, Gamfeldt L. (in prep.). Quantifying the effects of biodiversity on ecosystem functioning across space and time in natural and semi-natural ecosystems.
 
 The aim of the project was to develop a workflow to calculate biodiversity effects on ecosystem functioning across times and places as proposed by Isbell et al. (2018, Ecology Letters) on data from natural and semi-natural systems.
 
@@ -25,6 +25,10 @@ This unzipped research box containing all relevant raw data to reproduce the ana
 + scripts/03_empirical_analysis/02_benthic_commnunities_tjarno/02_data_cleaning/01_download_data_from_researchbox.R
 
 If you tell R where to find the unzipped researchbox, it will unzip it and save it to the data folder in this repository.
+
+## results
+
+The results folder stores various outputs generated throughout the analysis that may then be called later by other scripts.
 
 
 ## scripts
