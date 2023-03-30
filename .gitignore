@@ -47,3 +47,7 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# ignore renv files
+/renv
+*.Rprofile
