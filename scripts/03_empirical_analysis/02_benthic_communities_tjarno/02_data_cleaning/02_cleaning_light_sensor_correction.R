@@ -1,6 +1,11 @@
-
-# create lm to correct light sensor with light sensor data
-
+#'
+#' @title: Correction for old and new hobo loggers
+#' 
+#' @description: Checking the relationship between the old and the new hobo loggers
+#' and using a linear model to make sure they represent a common scale.
+#' 
+#' @authors: Lara Martins, Benedikt Schrofner-Brunner, James Hagan (james_hagan(at)outlook.com)
+#' 
 # load relevant libraries
 library(readr)
 library(dplyr)
@@ -190,7 +195,7 @@ temp_C <-
   pivot_wider(names_from = logger_id, values_from = temperature_C)
 cor(temp_C[,-1])
 
-#check for variability within version
+# check for variability within version
 light <- 
   loggers.compare %>% 
   select(no,logger_id,light_lux) %>%
