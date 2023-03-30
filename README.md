@@ -1,18 +1,44 @@
-# BEF_quant_scale
+## BEF_quant_scale
 
-Functions for quantifying the effect of biodiversity on ecosystem function across spatial and temporal scales
+This repository contains code to reproduce the analysis reported in the following publication:
 
-Here, we develop a workflow to calculate biodiversity across times and places as proposed by Isbell et al. (2018, Ecology Letters) on data from natural and semi-natural systems.
++ coming soon (hopefully)
 
-The limitation to Isbell et al.'s (2018) approach is that monoculture data is required for all species in mixtures at all times and places. In addition, it requires knowing the initial relative yields in mixtures (always 1/n species in substitutive experiments).
+The aim of the project was to develop a workflow to calculate biodiversity effects on ecosystem functioning across times and places as proposed by Isbell et al. (2018, Ecology Letters) on data from natural and semi-natural systems.
 
-To solve these problems, we model monoculture yields using Bayesian regression. We then assume a range of initial relative yields in mixture by drawing initial relative yields from a Dirichlet distribution. Using the posterior distribution from the regression and the distribution of initial relative yields, we generate posterior distributions of Isbell et al.'s (2018) biodiversity effects.
+The limitation to Isbell et al.'s (2018) approach is that monoculture data are required for all species in mixtures at all times and places. In addition, the method requires knowing the initial relative yields in mixtures (always 1/n species in substitutive experiments that directly manipulate species richness as a metric of biodiversity).
 
-This repository includes general code to apply Isbell et al.'s (2018) partition as only limited code was provided in the regional paper (01_partition_functions). It also includes code to simulate metacommunities with full monoculture and known initial relative yields which we use to test the potential accuracy of our workflow (02_simulation). Finally, it includes code to implement our workflow to different empirical datasets (03_empirical_analysis).
+To solve these problems, we model monoculture yields using Bayesian generalised linear model. We then assume a range of initial relative yields in mixture by drawing initial relative yields from a Dirichlet distribution. Using the posterior distribution from the regression and the distribution of initial relative yields, we generate distributions of Isbell et al.'s (2018) biodiversity effects.
 
-### Simulation (02_simulation)
+This repository includes general code to apply Isbell et al.'s (2018) partition as only limited code was provided in the regional paper (01_partition_functions). It also includes code to simulate metacommunities with full monoculture and known initial relative yields which we used to test the potential accuracy of our workflow (02_simulation). Finally, it includes code to implement our workflow to two different empirical datasets (03_empirical_analysis).
 
-To test the potential accuracy of our method, we simulate 1000 metacommunities using Thompson et al.'s (2020, Ecology Letters) metacommunity model. Each metacommunity is simulated with slightly different assumptions about the strength of inter and intraspecific competition, dispersal rates, niche breadth etc. This model was modified slightly to simulate all monocultures for each patch in the metacommunity across times:
+## scripts
+
+### 01_partition_functions
+
+In Isbell et al.'s (2018) original paper, they did not provide general code for calculating their proposed biodiversity effects. In the script *01_isbell_2018_partition.R*, we provide generalisable code that can be used for datasets with any number of species, times and places. The key function is:
+
++ Isbell_2018_sampler(data, RYe_post = FALSE, N = 100, alpha_par = 4, RYe)
+
+The *data* argument is a data.frame in the formated defined by Isbell et al. (2018, Ecology Letters):
+
++ column 1 - **sample**: variable specifying the unique place-time combination
++ column 2 - **place**: variable specifying the place
++ column 3 - **time**: variable specifying the time-point
++ column 4 - **species**: variable specifying the species name (all times and places must have all species names present)
++ column 5 - **M**: monoculture functioning
++ column 6 - **Y**: mixture function
+
+The *RYe* parameter is a vector of expected relative yields for the different species in the dataset. This vector must have the same length as there are species and it must sum to one.
+
+If you do not provide RYe data and you set *RYe_post = TRUE*, the function will draw samples from the Dirichlet distribution to use as RYe values. The number of samples to draw from the Dirichlet distribution is set using *N*. The skewness of the Dirichlet distribution is set using the *alpha_par* argument.
+
+The other two scripts: *02_isbell_2018_partition_test_data.R* and *03_isbell_2018_partition_test_script.R* are used to digitise the examples in Isbell et al. (2018) and test our functions against those examples respectively.
+
+
+### 02_simulation
+
+To test the potential accuracy of our workflow, we simulate 1000 metacommunities using Thompson et al.'s (2020, Ecology Letters) metacommunity model. Each metacommunity is simulated with slightly different assumptions about the strength of inter and intraspecific competition, dispersal rates, niche breadth etc. This model was modified slightly to simulate all monocultures for each patch in the metacommunity across times:
 
 + 01_mcomsimr_simulate_MC2_function.R
 + 02_analysis_test_simulate_metacommunities.R
