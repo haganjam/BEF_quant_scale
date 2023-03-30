@@ -12,6 +12,21 @@ To solve these problems, we model monoculture yields using Bayesian generalised 
 
 This repository includes general code to apply Isbell et al.'s (2018) partition as only limited code was provided in the regional paper (01_partition_functions). It also includes code to simulate metacommunities with full monoculture and known initial relative yields which we used to test the potential accuracy of our workflow (02_simulation). Finally, it includes code to implement our workflow to two different empirical datasets (03_empirical_analysis).
 
+## data
+
+Besides the simulated data which is generated using the scripts, we analysed two empirical datasets. Data for the first case study (case study 1: plymouth experiment) can be found at the following link. 
+
+Data for the second case study (case study 2: benthic communities tjarno) can be found at ResearchBox:
+
++ https://researchbox.org/843&PEER_REVIEW_passcode=GLGJFF
+
+This unzipped research box containing all relevant raw data to reproduce the analysis needs to be downloaded and saved into the data folder on your computer. We have written a script to facilitate this process:
+
++ scripts/03_empirical_analysis/02_benthic_commnunities_tjarno/02_data_cleaning/01_download_data_from_researchbox.R
+
+If you tell R where to find the unzipped researchbox, it will unzip it and save it to the data folder in this repository.
+
+
 ## scripts
 
 ### 01_partition_functions
@@ -45,8 +60,11 @@ To test the potential accuracy of our workflow, we simulate 1000 metacommunities
 
 Using these simulated metacommunities which can be generated relatively fast on a regular desktop computer, we assume that we only have monoculture data for 30% of the mixture patches. We then model the missing monoculture data using Bayesian regression implemented in Stan. This step is very computationally intensive as 1000 separate models need to be fit and sampled. We run this script on a computer cluster (Albiorix: http://mtop.github.io/albiorix/).
 
-+ missing_monoculture_glm.stan
 + 03_analysis_test_model_monocultures.R
+
+The stan model that the previous step calls is:
+
++ analysis_test_NAmonocultureGLM.stan
 
 Using the posterior distributions of the simulated monocultures, we then calculate Isbell et al.'s (2018) biodiversity effects for 100 samples of initial relative yields drawn from a Dirichlet distribution. Thus, we propagate the error of the monocultures and the initial relative yields because, we use the 100 initial relative yields to calculate biodiversity for each simulated monoculture which corresponds to one sample from the posterior distribution. Therefore, if we use 1000 samples from the posterior distribution, we are left with a 1000 * 100 biodiversity effects. This script is also run on a computer cluster (Albiorix: http://mtop.github.io/albiorix/).
 
@@ -64,13 +82,56 @@ The summarised outputs are then exported onto our local computer using a powersh
 
 + 07_analysis_test_export.ps1
 
-Finally, we analyse the summarised output to test how accurate our workflow is on simulated data. This can easily done on a local computer. This script also generates figure 2.
+We then analysed the summarised outputs to test how accurate our workflow is on simulated data. This can easily done on a local computer. This script also generates figure 2.
 
 + 08_analysis_test_analyse.R
 
-### Empirical analysis (03_empirical_analysis)
+Finally, we plot example metacommunities for the supplementary materials:
 
-These scripts are used to calculate the biodiversity on the empirical data.
++ 09_plot_example_metacommunities.R
+
+
+### 03_empirical_analysis
+
+### 01_plymouth_experiment
+
+This folder contains one script that is used to calculate Isbell et al.'s (2018) biodiversity effects on data from a macroalgae removal experiment conducted in Plymouth, United Kingdom.
+
+The folder contains one script that cleans the data, performs that analysis and makes the figures:
+
++ 01_plymouth_data_BEF_effects.R
+
+### 02_benthic_communities tjarno
+
+### 01_preparation
+
+These scripts were used to conduct a few tasks necessary before we began the experiment such as randomising the mixture and monoculture positions on the panels. They are not important for reproducing the analysis
+
+### 02_data_cleaning
+
+The scripts in this folder are used to unzip the data from ResearchBox, clean the different datasets: e.g. environmental data, biomass data etc. and output cleaned versions of this data into the *data* folder.
+
+The scripts are numbered 01 to 07 and should be run sequentially. All files contain a description paragraph that provides details on what the script does.
+
+The *cleaning_functions.R* script are helper functions that are called by various cleaning scripts.
+
+### 03_data_analysis
+
+The scripts in this folder are used calculate Isbell et al.'s (2018) biodiversity effects on the benthic community data from the Tjarno archipelago and perform any other analysis reported in the manuscript.
+
+The scripts are numbered 01 to 09 and should be run sequentially. All files contain a description paragraph that provides details on what the script does. All the scripts expected for script 05 (05_calculate_BEF_effects.R) can be run on a regular desktop computer. For script 05, we used a computer cluster as it was computationally intensive. Moreover, script 06 is a powershell script used to export the output files from the computer cluster into the local clone of the repository.
+
+### renv
+
+This project uses the renv R-package for package management. The .lock file contains all relevant information on the packages and the versions of those packages that were used in this project. To reproduce this analysis, users should install the renv R package:
+
+install.packages("renv")
+Then run the following code in the console:
+
+renv::restore()
+This will create a local copy of all relevant package versions that were used to perform these analyses.
+
+Importantly, we were unable to add the *rethinking* package to the .lock file. Some models depend on this package. Users that would like to reproduce the results should consult the following link for download instructions (https://github.com/rmcelreath/rethinking).
 
 
 
