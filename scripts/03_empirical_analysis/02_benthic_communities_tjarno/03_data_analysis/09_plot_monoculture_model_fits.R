@@ -1,5 +1,11 @@
-
-# plot the fit-to-sample monoculture models
+#'
+#' @title: Plot fit to sample of monoculture models
+#' 
+#' @description: This script plots the fit of the models used to impute the
+#' missing monoculture data of the benthic communities.
+#' 
+#' @authors: James G. Hagan (james_hagan(at)outlook.com)
+#'
 
 # load the required libraries
 library(dplyr)
@@ -25,7 +31,7 @@ figS5 <- ggarrange(figS5a, figS5b, figS5c, figS5d, figS5e,
                    )
 
 # save this plot
-ggsave(filename = here("figures/figS5.png"), figS5,
+ggsave(filename = here("figures/figA1_S5.png"), figS5,
        unit = "cm", width = 21, height = 16)
 
 ### END

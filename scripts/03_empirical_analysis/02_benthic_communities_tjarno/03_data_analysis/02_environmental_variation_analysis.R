@@ -178,7 +178,7 @@ p12 <-
           font.label = list(face = "plain", size = 11), common.legend = TRUE)
 plot(p12)
 
-ggsave(filename = here("figures/figS2.2.1.png"), p12,
+ggsave(filename = here("figures/figA2_S2.png"), p12,
        unit = "cm", width = 20, height = 10)
 
 # output the multivariate dispersion into an .rds file

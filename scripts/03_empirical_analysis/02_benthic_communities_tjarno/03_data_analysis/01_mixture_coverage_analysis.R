@@ -3,7 +3,8 @@
 #' 
 #' @description: Script to clean the cover-correction data. This cover-correction
 #' data is used to check whether our weights taken at different time points
-#' are representative samples of the same communities.
+#' are representative samples of the same communities. Appendix 2: Figure S6 is
+#' exported the to the 'figures' folder.
 #' 
 #' @authors: James G. Hagan (james_hagan(at)outlook.com)
 #'
@@ -117,7 +118,7 @@ p12 <-
   ggarrange(p1, p2, ncol = 2, nrow = 1, common.legend = TRUE,
             labels =c("a", "b"), font.label = list(face = "plain", size = 11))
 
-ggsave(filename = here("figures/figS2.3.3.png"), p12,
+ggsave(filename = here("figures/figA2_S5.png"), p12,
        unit = "cm", width = 20, height = 10)
 
 # correlation within each buoy

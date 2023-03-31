@@ -196,7 +196,7 @@ p1 <-
   theme_meta() +
   theme(legend.position = "top")
 
-ggsave(filename = here("figures/figS6.png"), p1, dpi = 350,
+ggsave(filename = here("figures/figA1_S6.png"), p1, dpi = 350,
        units = "cm", width = 20, height = 15)
 
 # is there a site-bias in the missing monocultures?
@@ -221,7 +221,7 @@ p2 <-
   theme(legend.key=element_blank(),
         legend.background=element_blank())
 
-ggsave(filename = here("figures/figS7.png"), p2, dpi = 350,
+ggsave(filename = here("figures/figA1_S7.png"), p2, dpi = 350,
        units = "cm", width = 20, height = 15)
 
 # save the monoculture predictions as a .rds file

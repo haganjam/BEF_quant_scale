@@ -1,3 +1,11 @@
+#'
+#' @title: Plot the raw biomass data of mixtures and monocultures for benthic data
+#' 
+#' @description: Plot the raw biomass data for the mixtures and monocultures of
+#' the benthic fouling data: Appendix 1: Figure S8.
+#' 
+#' @authors: James G. Hagan (james_hagan(at)outlook.com)
+#'
 
 # load the required libraries
 library(dplyr)
@@ -174,17 +182,17 @@ for(i in 1:length(c_id)) {
   # save this plot
   if (N_place == 5) {
     
-    ggsave(filename = here(paste0("figures/", "figS8", letters[i], ".png")), p1,
+    ggsave(filename = here(paste0("figures/", "figA1_S8", letters[i], ".png")), p1,
            unit = "cm", width = 21, height = 16)
     
   } else if (N_place == 4) {
     
-    ggsave(filename = here(paste0("figures/", "figS8", letters[i], ".png")), p1,
+    ggsave(filename = here(paste0("figures/", "figA1_S8", letters[i], ".png")), p1,
            unit = "cm", width = 14, height = 16)
     
   } else if (N_place == 3) {
     
-    ggsave(filename = here(paste0("figures/", "figS8", letters[i], ".png")), p1,
+    ggsave(filename = here(paste0("figures/", "figA1_S8", letters[i], ".png")), p1,
            unit = "cm", width = 21, height = 8)
     
   }
