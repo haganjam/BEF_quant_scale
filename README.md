@@ -206,8 +206,9 @@ This will create a local copy of all relevant package versions that were used to
 
 Importantly, we were unable to add the *rethinking* package to the .lock file. Some models depend on this package. Users that would like to reproduce the results should consult the following link for download instructions (https://github.com/rmcelreath/rethinking).
 
+### LICENCE
 
-
+This file contains information about the licence under which this repository is published.
 
 
 
