@@ -19,14 +19,14 @@ library(stringr)
 library(lubridate)
 
 # load cleaning functions
-source(here("scripts/03_empirical_analysis/02_benthic_communities_tjarno/02_data_cleaning/cleaning_functions.r"))
+source(here("scripts/03_empirical_analysis/02_case_study_2/02_data_cleaning/cleaning_functions.R"))
 
 # check if the correct directories exist
 check.dirs() 
 
 # 1. load the abiotic measurement data
 abiotic_measurements <- 
-  read_csv(here("data/benthic_communities_tjarno_data/ResearchBox 843/Data/abiotic_field_measurements.csv"), 
+  read_csv(here("data/case_study_2/ResearchBox 843/Data/abiotic_field_measurements.csv"), 
            col_types = cols(Date = col_date(format = "%d/%m/%Y"), 
                             Depth = col_number(), Temp. = col_number(), 
                             Salinity = col_number(), Oxygen = col_number(), 
@@ -64,7 +64,7 @@ abiotic_measurements <-
 
 # load the abiotic measurement data
 hobo_dat <- 
-  read_csv(here("data/benthic_communities_tjarno_data/data_clean/light_temperature_logger_clean.csv"))
+  read_csv(here("data/case_study_2/data_clean/light_temperature_logger_clean.csv"))
 
 # reorganise the columns
 hobo_dat <- 
@@ -88,7 +88,7 @@ hobo_dat <-
 
 # 3. load the gypsum data
 gypsum <- 
-  read_csv(here("data/benthic_communities_tjarno_data/ResearchBox 843/Data/water_velocity_gypsum.csv"),
+  read_csv(here("data/case_study_2/ResearchBox 843/Data/water_velocity_gypsum.csv"),
            col_types = cols(cluster = col_character(),
                             site = col_character(),
                             date_deploy = col_character(),
@@ -148,7 +148,7 @@ gypsum <-
             .groups = "drop")
 
 # 4. load the site data
-site_dat <- read_csv(file = here("data/benthic_communities_tjarno_data/ResearchBox 843/Data/site_data.csv"))
+site_dat <- read_csv(file = here("data/case_study_2/ResearchBox 843/Data/site_data.csv"))
 
 # rename the depth variable
 site_dat <- 
@@ -168,6 +168,6 @@ env_dat <-
 site_dat <- right_join(site_dat, env_dat, by = c("site_id", "depth"))
 
 # export this file into the data_clean folder
-write_csv(site_dat, here("data/benthic_communities_tjarno_data/data_clean/site_env_data.csv"))
+write_csv(site_dat, here("data/case_study_2/data_clean/site_env_data.csv"))
 
 ### END

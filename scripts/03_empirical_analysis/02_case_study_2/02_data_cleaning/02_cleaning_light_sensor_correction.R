@@ -7,7 +7,7 @@
 #' @authors: Lara Martins, Benedikt Schrofner-Brunner, James Hagan (james_hagan(at)outlook.com)
 #' 
 # load relevant libraries
-library(readr)
+library(readr) 
 library(dplyr)
 library(here)
 library(lubridate)
@@ -16,16 +16,17 @@ library(readxl)
 library(tidyr)
 
 # load cleaning functions
-source(here("scripts/03_empirical_analysis/02_benthic_communities_tjarno/02_data_cleaning/cleaning_functions.r"))
+source(here("scripts/03_empirical_analysis/02_case_study_2/02_data_cleaning/cleaning_functions.R"))
 
 # check for the correct directories
 check.dirs()
 
 # get file names from the table of contents
 files <- get.data.filenames("light_sensor_correction")
+print(files)
 
 # specify the folder path that contains the logger data
-logger.folder <- here("data/benthic_communities_tjarno_data/ResearchBox 843/Data/")
+logger.folder <- here("data/case_study_2/ResearchBox 843/Data/")
 
 # let-up an output list to store the loaded files
 hobos.correction <- vector("list",length = length(files)) 
@@ -300,6 +301,6 @@ prediction <- exp(prediction) - 1
 cor(prediction,light.prediction.data$old)
 
 # write data to create model
-write_csv(light.prediction.data, here("data/benthic_communities_tjarno_data/data_clean/light_sensor_correction_data.csv"))
+write_csv(light.prediction.data, here("data/case_study_2/data_clean/light_sensor_correction_data.csv"))
 
 ### END

@@ -20,16 +20,17 @@ library(lubridate)
 library(readr)
 
 #Load cleaning functions
-source(here("scripts/03_empirical_analysis/02_benthic_communities_tjarno/02_data_cleaning/cleaning_functions.r"))
+source(here("scripts/03_empirical_analysis/02_case_study_2/02_data_cleaning/cleaning_functions.R"))
 
 # check the directory
 check.dirs()
 
 # get filenames from researchbox table of contents
 files <- get.data.filenames("Light_Temperature_logger_data")
+print(files)
 
 # get the file names
-logger.folder <- here("data/benthic_communities_tjarno_data/ResearchBox 843/Data/")
+logger.folder <- here("data/case_study_2/ResearchBox 843/Data/")
 
 # set-up a list to gather the logger data
 hobos <- vector("list",length = length(files)) 
@@ -176,7 +177,7 @@ hobos <-
   filter( !(date_time > d23 & date_time < d24) )
 
 # write t1, t2 and t3 in the table
-hobos$time <- "" #Create the column empty
+hobos$time <- "" # create the column empty
 
 # chose the column, search for the specific date, write the "names" of that
 hobos$time[hobos$date <= '2022-08-10'] <- 't1' 
@@ -184,7 +185,7 @@ hobos$time[(hobos$date >= '2022-08-10') & (hobos$date <= '2022-08-22')] <- 't2'
 hobos$time[hobos$date >= '2022-08-23'] <- 't3'
 
 # get depth of the loggers
-site_data <- read_csv(here("data/benthic_communities_tjarno_data/ResearchBox 843/Data/site_data.csv"))
+site_data <- read_csv(here("data/case_study_2/ResearchBox 843/Data/site_data.csv"))
 
 # select the relevant columns
 site_data <- site_data[ c("site_id","panel_depth_m") ]
@@ -198,7 +199,7 @@ hobos <- left_join(hobos, site_data)
 # correct for new and old loggers - the old one is the standard
 
 # load the light correction data used to predict the old logger light based on the new logger light measurements
-light.correction.data <- read_csv(here("data/benthic_communities_tjarno_data/data_clean/light_sensor_correction_data.csv"))
+light.correction.data <- read_csv(here("data/case_study_2/data_clean/light_sensor_correction_data.csv"))
 
 # transform the new light data
 light.correction.data$new.trans <- log(light.correction.data$new+1)
@@ -224,6 +225,6 @@ hobos <-
   select(-lux,-light.transformed)
 
 # write a csv with the cleaned and corrected light and temperature data from the loggers
-write_csv(hobos, here("data/benthic_communities_tjarno_data/data_clean/light_temperature_logger_clean.csv"))
+write_csv(hobos, here("data/case_study_2/data_clean/light_temperature_logger_clean.csv"))
 
 ### END

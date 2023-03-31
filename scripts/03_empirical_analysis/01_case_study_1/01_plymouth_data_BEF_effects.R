@@ -1,5 +1,11 @@
-
-# Plymouth rock-pool data
+#'
+#' @title: Analyse the Plymouth experiment (case study 2)
+#' 
+#' @description: This scripts cleans the data, performs the analysis and 
+#' exports the figures for case study 1: Figures 5 and 6.
+#' 
+#' @authors: James G. Hagan (james_hagan(at)outlook.com)
+#'
 
 # load relevant libraries
 library(readr)
@@ -17,7 +23,7 @@ source(here("scripts/01_partition_functions/01_isbell_2018_partition.R"))
 source(here("scripts/Function_plotting_theme.R"))
 
 # read in the data
-ply_dat <- read_delim( here("data/Plymouth_data.csv"), delim = "," )
+ply_dat <- read_delim( here("data/case_study_1/Plymouth_data.csv"), delim = "," )
 
 # check the data
 head(ply_dat)

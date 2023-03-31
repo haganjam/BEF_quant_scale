@@ -13,7 +13,7 @@ library(readr)
 library(here)
 
 # load the data
-cov_dat <- read_csv(here("data/benthic_communities_tjarno_data/ResearchBox 843/Data/mixtures_coverage_comparison.csv"))
+cov_dat <- read_csv(here("data/case_study_2/ResearchBox 843/Data/mixtures_coverage_comparison.csv"))
 
 # remove the NAs
 cov_dat <- cov_dat[complete.cases(cov_dat), ]
@@ -34,6 +34,6 @@ cov_dat <-
          contains("percent"))
 
 # write this into the cleaned data folder
-write_csv(cov_dat, here("data/benthic_communities_tjarno_data/data_clean/mixture_coverage_data_clean.csv"))
+write_csv(cov_dat, here("data/case_study_2/data_clean/mixture_coverage_data_clean.csv"))
 
 ### END

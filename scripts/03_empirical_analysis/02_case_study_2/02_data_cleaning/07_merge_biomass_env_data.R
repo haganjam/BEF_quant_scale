@@ -15,7 +15,7 @@ library(ggplot2)
 library(here)
 
 # load the cleaned environmental data
-env_dat <- read_csv(here("data/benthic_communities_tjarno_data/data_clean/site_env_data.csv"))
+env_dat <- read_csv(here("data/case_study_2/data_clean/site_env_data.csv"))
 head(env_dat)
 
 # select the relevant variables
@@ -30,7 +30,7 @@ env_dat <-
   rename(buoy_id = site_id, depth_m = panel_depth_m_measured, seabed_dist_m = distance_between_panel_and_seabeed_m)
 
 # load the cleaned biomass data
-bio_dat <- read_csv(here("data/benthic_communities_tjarno_data/data_clean/biomass_data.csv"))
+bio_dat <- read_csv(here("data/case_study_2/data_clean/biomass_data.csv"))
 head(bio_dat)
 
 # join the environmental data to the biomass data
@@ -139,6 +139,6 @@ pca_env %>%
   sum()
 
 # write out the pca_env_data
-write_csv(x = pca_env, here("data/benthic_communities_tjarno_data/data_clean/biomass_env_analysis_data.csv"))
+write_csv(x = pca_env, here("data/case_study_2/data_clean/biomass_env_analysis_data.csv"))
 
 ### END

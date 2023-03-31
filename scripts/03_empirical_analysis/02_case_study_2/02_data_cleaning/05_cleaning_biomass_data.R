@@ -14,7 +14,7 @@ library(readr)
 library(here)
 
 # load the biomass data
-bio_dat <- read_csv(here("data/benthic_communities_tjarno_data/ResearchBox 843/Data/biotic_data.csv"))
+bio_dat <- read_csv(here("data/case_study_2/ResearchBox 843/Data/biotic_data.csv"))
 
 # check the variable structure
 str(bio_dat)
@@ -44,7 +44,7 @@ bio_dat <-
   mutate(dry_weight_g_cl = if_else(dry_weight_g_cl < 0, 0, dry_weight_g_cl))
 
 # load the imageJ cover data
-cov_mono <- read_csv(here("data/benthic_communities_tjarno_data/ResearchBox 843/Data/cover_imageJ.csv"))
+cov_mono <- read_csv(here("data/case_study_2/ResearchBox 843/Data/cover_imageJ.csv"))
 
 # check if the number of unique laser_id is the same as the number of rows
 length(unique(cov_mono$laser_id)) == nrow(cov_mono)
@@ -268,6 +268,6 @@ bio_dat %>%
   length()
 
 # write this into a .csv file
-write_csv(x = bio_dat, file = here("data/benthic_communities_tjarno_data/data_clean/biomass_data.csv"))
+write_csv(x = bio_dat, file = here("data/case_study_2/data_clean/biomass_data.csv"))
 
 ### END
