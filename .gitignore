@@ -52,7 +52,7 @@ vignettes/*.pdf
 *.Rprofile
 
 # ignore benthic community raw data
-/data/benthic_communities_tjarno_data
+/data/case_study_2
 
 
 
