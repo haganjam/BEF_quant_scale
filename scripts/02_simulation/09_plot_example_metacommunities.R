@@ -133,7 +133,7 @@ p1 <-
         legend.key = element_rect(fill = NA))
 plot(p1)
 
-ggsave(filename = here("figures/figS1.png"), p1, dpi = 350,
+ggsave(filename = here("figures/figA1_S3.png"), p1, dpi = 350,
        units = "cm", width = 18, height = 22.5)
 
 # monoculture functioning
@@ -150,7 +150,7 @@ p2 <-
         legend.key = element_rect(fill = NA))
 plot(p2)
 
-ggsave(filename = here("figures/figS2.png"), p2, dpi = 350,
+ggsave(filename = here("figures/figA1_S4.png"), p2, dpi = 350,
        units = "cm", width = 18, height = 22.5)
 
 # 3. environmental variation
@@ -188,7 +188,7 @@ p3 <-
   theme(legend.position = "none")
 plot(p3)
 
-ggsave(filename = here("figures/figS3.png"), p3, dpi = 350,
+ggsave(filename = here("figures/figA1_S2.png"), p3, dpi = 350,
        units = "cm", width = 18, height = 10)
 
 # plot the samples from the Dirichlet distribution that we used
@@ -267,7 +267,7 @@ p4 <-
   theme(legend.position = "none")
 plot(p4)
 
-ggsave(filename = here("figures/figS4.png"), p4, dpi = 350,
+ggsave(filename = here("figures/figA1_S1.png"), p4, dpi = 350,
        units = "cm", width = 18, height = 16)
 
 # check some of the summary statistics
