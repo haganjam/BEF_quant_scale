@@ -10,7 +10,6 @@
 .Ruserdata
 
 # RDS files and other data files
-*.csv
 *.txt
 *.xlsx
 *.png
@@ -51,3 +50,9 @@ vignettes/*.pdf
 # ignore renv files
 /renv
 *.Rprofile
+
+# ignore benthic community raw data
+/data/benthic_communities_tjarno_data
+
+
+

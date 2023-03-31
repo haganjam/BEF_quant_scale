@@ -57,12 +57,17 @@ The other two scripts: *02_isbell_2018_partition_test_data.R* and *03_isbell_201
 
 ### 02_simulation
 
-To test the potential accuracy of our workflow, we simulate 1000 metacommunities using Thompson et al.'s (2020, Ecology Letters) metacommunity model. Each metacommunity is simulated with slightly different assumptions about the strength of inter and intraspecific competition, dispersal rates, niche breadth etc. This model was modified slightly to simulate all monocultures for each patch in the metacommunity across times:
+To test the potential accuracy of our workflow, we simulate 1000 metacommunities using Thompson et al.'s (2020, Ecology Letters) metacommunity model. Each metacommunity is simulated with slightly different assumptions about the strength of inter and intraspecific competition, dispersal rates, niche breadth etc. This model was modified slightly to simulate all monocultures for each patch in the metacommunity across times.
 
 + 01_mcomsimr_simulate_MC2_function.R
 + 02_analysis_test_simulate_metacommunities.R
 
-Using these simulated metacommunities which can be generated relatively fast on a regular desktop computer, we assume that we only have monoculture data for 30% of the mixture patches. We then model the missing monoculture data using Bayesian regression implemented in Stan. This step is very computationally intensive as 1000 separate models need to be fit and sampled. We run this script on a computer cluster (Albiorix: http://mtop.github.io/albiorix/).
+These scripts, which can be run relatively fast on a regular desktop computer, generate two files. One contains the output from the simulated metacommunities and the other contains a set of 100 samples from the Dirichlet distribution. These files are available in the results folder:
+
++ results/MC_sims.rds
++ results/MC_sims_start_RA.rds
+
+Using these simulated metacommunities, we assume that we only have monoculture data for 30% of the mixture patches. We then model the missing monoculture data using Bayesian regression implemented in Stan. This step is very computationally intensive as 1000 separate models need to be fit and sampled. We run this script on a computer cluster (Albiorix: http://mtop.github.io/albiorix/).
 
 + 03_analysis_test_model_monocultures.R
 
@@ -88,8 +93,8 @@ The summarised outputs are then exported onto our local computer using a powersh
 
 The summarised outputs are provided in the *results* folder:
 
-+ BEF_output.rds
-+ BEF_output2.rds
++ results/BEF_output.rds
++ results/BEF_output2.rds
 
 We then analysed the summarised outputs to test how accurate our workflow is on simulated data. This can easily done on a local computer. This script also generates figure 2.
 
@@ -110,6 +115,7 @@ The folder contains one script that cleans the data, performs that analysis and 
 
 + 01_plymouth_data_BEF_effects.R
 
+
 ### 02_benthic_communities tjarno
 
 ### 01_preparation
@@ -128,11 +134,61 @@ The *cleaning_functions.R* script are helper functions that are called by variou
 
 The scripts in this folder are used calculate Isbell et al.'s (2018) biodiversity effects on the benthic community data from the Tjarno archipelago and perform any other analysis reported in the manuscript.
 
-The scripts are numbered 01 to 09 and should be run sequentially. All files contain a description paragraph that provides details on what the script does. All the scripts except for script 05 (05_calculate_BEF_effects.R) can be run on a regular desktop computer. For script 05, we used a computer cluster as it was computationally intensive. Moreover, script 06 (06_benthic_analysis_export.ps1) is a powershell script used to export the output files from the computer cluster into the local clone of the repository.
+The first script is used to test whether our temporal replicates had similar community structure using cover values from panels photographed at the same time point. The script exports Appendix 2: Figure S6.
 
-The output from the computer cluster is provided in the *results* folder:
++ 01_mixture_coverage_analysis.R
+
+The second script analyses the environmental heterogeneity within clusters to test whether our a priori designations of clusters as heterogeneous and homogeneous based on geographic data is still valid once we use other, measured environmental variables such as temperature, salinity and water movement. The scripts exports Appendix 2: Figure S.
+
++ 02_environmental_variation_analysis.R
+
+In addition, the script outputs a file to the *results* folder that contains the multivariate dispersion data:
+
++ results/benthic_env_dispersion.rds
+
+The next five scripts with the prefix *03* are scripts that we used to model the missing monocultures for the five OTUs: sp A: Barn, sp B: Bryo, sp C: Asci, sp D: Hydro and sp E: Ciona. Note that these names do not directly correspond to the names in the script. This is because we renamed 'Bumpi' to 'Asci' and 'Seasq' to 'Ciona' in the manuscript for clarity.
+
+These scripts perform model selection using PSIS. The posterior distribution of the best model and the model object are saved in the *results* folder as:
+
++ results/SP_X_monoculture_posterior.rds
++ results/SP_X_model_object.rds
+
+In addition, a plot of predicted versus observed data are outputted to later combine:
+
++ results/SP_X_monoculture_plot.rds
+
+The next uses the best models that were exported previously to impute the missing monocultures for each species. This script exports Appendix 1: Figures S6 and S7.
+
++ 03_get_monoculture_predictions.R
+
+In addition, the script outputs two data tiles that are used to subsequently calculate the BEF effects into the *results* folder:
+
++ results/benthic_BEF_data.rds
++ results/benthic_start_RA.rds
+
+Next, we used a script that takes the data with monoculture imputations and samples from the Dirichlet distribution and calculates Isbell et al.'s (2018) biodiversity effects. This script is computationally intensive and was run on a computer cluster (Albiorix: http://mtop.github.io/albiorix/).
+
++ 05_calculate_BEF_effects.R
+
+We then used a powershell script to export the BEF effects to our local computer:
+
++ 06_benthic_analysis_export.ps1
+
+The outputted data file was then saved into the *results* folder:
 
 + benthic_BEF_effects.rds
+
+THe next script then analyses the BEF effects that we calculated and plots Figure 6 and Figure 7 from the main text:
+
++ 07_analyse_BEF_effects.R
+
+We use the next script to plot the raw biomass data of mixtures and monocultures for the benthic community data: Appendix 1: Figure S8.
+
++ 08_plot_raw_data.R
+
+Finally, we plot the fit of the models that we used to impute the missing monocultures: Appendix 1: Figure S5.
+
++ 09_plot_monoculture_model_fits.R
 
 ### renv
 

@@ -1,0 +1,12 @@
+variable name,explanation
+month,"Three sampling months in 2008: March, July, September."
+shore,"Two shores: Challaborough, Kingsand. "
+pool,"Identification for the individual rockpools. For a given month, many pools have multiple rows. This is because we used multiple sampling grids for estimating algal cover. "
+composition,Species composition of the four focal algal species. Ten levels. All = 4 species; S = Sargassum; F = Fucus; L = Laminaria; B = Bifurcaria; None = no focal species.
+removed,"The number of removed species. Four levels (0, 1, 3, 4)."
+grid_squares,The number of squares (each square 25 cm^2) used to estimate algal cover. 
+bare rock,"Amount of bare rock (%), i.e. rockpool substrate with no algal growth. "
+red_crusts,Cover of red crust algae (%).
+columns 9-45,Column 9 (corallina_officinalis) to column 45 (brogniartella_byssoides) are the cover (%) for the 36 taxa encountered in the study. A value of 0.000001 means the taxon was noted as just present
+totcover,Summed cover (%) of all algal taxa.
+cover_nocrusts,"Summed cover (%) of all algal taxa, exlcuding red crust algae. "
