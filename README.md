@@ -14,22 +14,26 @@ This repository includes general code to apply Isbell et al.'s (2018) partition 
 
 ## data
 
-Besides the simulated data which is generated using the scripts, we analysed two empirical datasets. Data for the first case study (case study 1: plymouth experiment) can be found at the following link. 
+Besides the simulated data which is generated using the scripts, we analysed two empirical datasets (case study 1 and case study 2 in the manuscript). 
 
-Data for the second case study (case study 2: benthic communities tjarno) can be found at ResearchBox:
+Data and metadata for case study 1 is available on Github in the *data/case_study_1* folder. Upon publication, it will be archived on Figshare or Dryad:
+
++ Plymouth_data.csv
++ Plymouth_metadata.csv
+
+Data and metadata for the second case study 2 is currently available for peer review on ResearchBox at the following link. Upon publication is will be archived on ResearchBox:
 
 + https://researchbox.org/843&PEER_REVIEW_passcode=GLGJFF
 
 This unzipped research box containing all relevant raw data to reproduce the analysis needs to be downloaded and saved into the data folder on your computer. We have written a script to facilitate this process:
 
-+ scripts/03_empirical_analysis/02_benthic_commnunities_tjarno/02_data_cleaning/01_download_data_from_researchbox.R
++ scripts/03_empirical_analysis/02_case_study_2/02_data_cleaning/01_download_data_from_researchbox.R
 
 If you tell R where to find the unzipped researchbox, it will unzip it and save it to the data folder in this repository.
 
 ## results
 
-The results folder stores various outputs generated throughout the analysis that may then be called later by other scripts.
-
+The results folder stores various outputs generated throughout the analysis that may then be called later by other scripts. We have uploaded all relevant files that we generate during the analysis. Thus, to reproduce the results reported in the manuscipt, interested users do not have to run all the scripts.
 
 ## scripts
 
@@ -107,16 +111,16 @@ Finally, we plot example metacommunities for the supplementary materials:
 
 ### 03_empirical_analysis
 
-### 01_plymouth_experiment
+### 01_case_study_1
 
-This folder contains one script that is used to calculate Isbell et al.'s (2018) biodiversity effects on data from a macroalgae removal experiment conducted in Plymouth, United Kingdom.
+This folder contains one script that is used to calculate Isbell et al.'s (2018) biodiversity effects on data from a macroalgae removal experiment conducted in Plymouth, United Kingdom (case study 1 in the manuscript).
 
 The folder contains one script that cleans the data, performs that analysis and makes the figures:
 
 + 01_plymouth_data_BEF_effects.R
 
 
-### 02_benthic_communities tjarno
+### 02_case_study_2
 
 ### 01_preparation
 
@@ -124,7 +128,7 @@ These scripts were used to conduct a few tasks necessary before we began the exp
 
 ### 02_data_cleaning
 
-The scripts in this folder are used to unzip the data from ResearchBox, clean the different datasets: e.g. environmental data, biomass data etc. and output cleaned versions of this data into the *data/benthic_communities_tjarno_data/data_clean* folder.
+The scripts in this folder are used to unzip the data from ResearchBox, clean the different datasets: e.g. environmental data, biomass data etc. and output cleaned versions of this data into the *data/case_study_2/data_clean* folder.
 
 The scripts are numbered 01 to 07 and should be run sequentially. All files contain a description paragraph that provides details on what the script does.
 
@@ -132,7 +136,7 @@ The *cleaning_functions.R* script are helper functions that are called by variou
 
 ### 03_data_analysis
 
-The scripts in this folder are used calculate Isbell et al.'s (2018) biodiversity effects on the benthic community data from the Tjarno archipelago and perform any other analysis reported in the manuscript.
+The scripts in this folder are used calculate Isbell et al.'s (2018) biodiversity effects on the benthic community data from the Tjarno archipelago (case study 2) and perform any other analysis reported in the manuscript.
 
 The first script is used to test whether our temporal replicates had similar community structure using cover values from panels photographed at the same time point. The script exports Appendix 2: Figure S6.
 
