@@ -8,7 +8,7 @@ The aim of the project was to develop a workflow to calculate biodiversity effec
 
 The limitation to Isbell et al.'s (2018) approach is that monoculture data are required for all species in mixtures at all times and places. In addition, the method requires knowing the initial relative yields in mixtures (always 1/n species in substitutive experiments that directly manipulate species richness as a metric of biodiversity).
 
-To solve these problems, we model monoculture yields using Bayesian generalised linear model. We then assume a range of initial relative yields in mixture by drawing initial relative yields from a Dirichlet distribution. Using the posterior distribution from the regression and the distribution of initial relative yields, we generate distributions of Isbell et al.'s (2018) biodiversity effects.
+To solve these problems, we model monoculture yields using Bayesian generalised linear models. We then assume a range of initial relative yields in mixture by drawing initial relative yields from a Dirichlet distribution. Using the posterior distribution from the regression and the distribution of initial relative yields, we generate distributions of Isbell et al.'s (2018) biodiversity effects.
 
 This repository includes general code to apply Isbell et al.'s (2018) partition as only limited code was provided in the regional paper (01_partition_functions). It also includes code to simulate metacommunities with full monoculture and known initial relative yields which we used to test the potential accuracy of our workflow (02_simulation). Finally, it includes code to implement our workflow to two different empirical datasets (03_empirical_analysis).
 
@@ -86,6 +86,11 @@ The summarised outputs are then exported onto our local computer using a powersh
 
 + 07_analysis_test_export.ps1
 
+The summarised outputs are provided in the *results* folder:
+
++ BEF_output.rds
++ BEF_output2.rds
+
 We then analysed the summarised outputs to test how accurate our workflow is on simulated data. This can easily done on a local computer. This script also generates figure 2.
 
 + 08_analysis_test_analyse.R
@@ -113,7 +118,7 @@ These scripts were used to conduct a few tasks necessary before we began the exp
 
 ### 02_data_cleaning
 
-The scripts in this folder are used to unzip the data from ResearchBox, clean the different datasets: e.g. environmental data, biomass data etc. and output cleaned versions of this data into the *data* folder.
+The scripts in this folder are used to unzip the data from ResearchBox, clean the different datasets: e.g. environmental data, biomass data etc. and output cleaned versions of this data into the *data/benthic_communities_tjarno_data/data_clean* folder.
 
 The scripts are numbered 01 to 07 and should be run sequentially. All files contain a description paragraph that provides details on what the script does.
 
@@ -123,7 +128,11 @@ The *cleaning_functions.R* script are helper functions that are called by variou
 
 The scripts in this folder are used calculate Isbell et al.'s (2018) biodiversity effects on the benthic community data from the Tjarno archipelago and perform any other analysis reported in the manuscript.
 
-The scripts are numbered 01 to 09 and should be run sequentially. All files contain a description paragraph that provides details on what the script does. All the scripts expected for script 05 (05_calculate_BEF_effects.R) can be run on a regular desktop computer. For script 05, we used a computer cluster as it was computationally intensive. Moreover, script 06 is a powershell script used to export the output files from the computer cluster into the local clone of the repository.
+The scripts are numbered 01 to 09 and should be run sequentially. All files contain a description paragraph that provides details on what the script does. All the scripts except for script 05 (05_calculate_BEF_effects.R) can be run on a regular desktop computer. For script 05, we used a computer cluster as it was computationally intensive. Moreover, script 06 (06_benthic_analysis_export.ps1) is a powershell script used to export the output files from the computer cluster into the local clone of the repository.
+
+The output from the computer cluster is provided in the *results* folder:
+
++ benthic_BEF_effects.rds
 
 ### renv
 
