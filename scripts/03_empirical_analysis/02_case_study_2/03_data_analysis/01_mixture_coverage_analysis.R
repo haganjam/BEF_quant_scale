@@ -21,7 +21,7 @@ library(ggpubr)
 source(here("scripts/Function_plotting_theme.R"))
 
 # load the cleaned dataset
-cov_dat <- read_csv(here("data/benthic_communities_tjarno_data/data_clean/mixture_coverage_data_clean.csv"))
+cov_dat <- read_csv(here("data/case_study_2/data_clean/mixture_coverage_data_clean.csv"))
 
 # check how many unique buoys there are
 length(unique(cov_dat$buoy_id))

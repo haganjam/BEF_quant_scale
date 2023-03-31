@@ -19,7 +19,7 @@ library(rethinking)
 source(here("scripts/Function_plotting_theme.R"))
 
 # load the analysis data
-data <- read_csv(here("data/benthic_communities_tjarno_data/data_clean/biomass_env_analysis_data.csv"))
+data <- read_csv(here("data/case_study_2/data_clean/biomass_env_analysis_data.csv"))
 
 # make a Y2 variable
 data$Y2 <- data$Y^2

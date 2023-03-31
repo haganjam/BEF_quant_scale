@@ -20,7 +20,7 @@ library(vegan)
 source(here("scripts/Function_plotting_theme.R"))
 
 # load the cleaned environmental data
-env_dat <- read_csv(here("data/benthic_communities_tjarno_data/data_clean/site_env_data.csv"))
+env_dat <- read_csv(here("data/case_study_2/data_clean/site_env_data.csv"))
 
 # change the depth treatment to a heterogeneity variable
 env_dat$heterogeneity <-  ifelse(env_dat$depth_treatment == "alternating", "Heterogeneous", "Homogeneous")
