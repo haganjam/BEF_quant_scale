@@ -2,7 +2,7 @@
 
 This repository contains code to reproduce the analysis reported in the following manuscript (currently unpublished):
 
-+ Hagan JG, Schrofner-Brunner BB, Gamfeldt L. (in prep.). Quantifying the effects of biodiversity on ecosystem functioning across space and time in natural and semi-natural ecosystems.
++ Hagan JG, Schrofner-Brunner B, Gamfeldt L. (in prep.). Quantifying the effects of biodiversity on ecosystem functioning across space and time in natural and semi-natural ecosystems.
 
 The aim of the project was to develop a workflow to calculate biodiversity effects on ecosystem functioning across times and places as proposed by Isbell et al. (2018, Ecology Letters) on data from natural and semi-natural systems.
 
@@ -16,12 +16,12 @@ This repository includes general code to apply Isbell et al.'s (2018) partition 
 
 Besides the simulated data which is generated using the scripts, we analysed two empirical datasets (case study 1 and case study 2 in the manuscript). 
 
-Data and metadata for case study 1 is available on Github in the *data/case_study_1* folder. Upon publication, it will be archived on Figshare or Dryad:
+Data and metadata for case study 1 are available on Github in the *data/case_study_1* folder. Upon publication, it will be archived on Figshare or Dryad:
 
 + Plymouth_data.csv
 + Plymouth_metadata.csv
 
-Data and metadata for the second case study 2 is currently available for peer review on ResearchBox at the following link. Upon publication is will be archived on ResearchBox:
+Data and metadata for the second case study 2 are currently available for peer review on ResearchBox at the following link. Upon publication it will be archived on ResearchBox:
 
 + https://researchbox.org/843&PEER_REVIEW_passcode=GLGJFF
 
@@ -33,7 +33,7 @@ If you tell R where to find the unzipped researchbox, it will unzip it and save 
 
 ## results
 
-The results folder stores various outputs generated throughout the analysis that may then be called later by other scripts. We have uploaded all relevant files that we generate during the analysis. Thus, to reproduce the results reported in the manuscipt, interested users do not have to run all the scripts.
+The results folder stores various outputs generated throughout the analysis that may then be called later by other scripts. We have uploaded all relevant files that we generate during the analysis. Thus, to reproduce the results reported in the manuscript, interested users do not have to run all the scripts.
 
 ## scripts
 
@@ -43,7 +43,7 @@ In Isbell et al.'s (2018) original paper, they did not provide general code for 
 
 + Isbell_2018_sampler(data, RYe_post = FALSE, N = 100, alpha_par = 4, RYe)
 
-The *data* argument is a data.frame in the formated defined by Isbell et al. (2018, Ecology Letters):
+The *data* argument is a data.frame in the format defined by Isbell et al. (2018, Ecology Letters):
 
 + column 1 - **sample**: variable specifying the unique place-time combination
 + column 2 - **place**: variable specifying the place
@@ -100,7 +100,7 @@ The summarised outputs are provided in the *results* folder:
 + results/BEF_output.rds
 + results/BEF_output2.rds
 
-We then analysed the summarised outputs to test how accurate our workflow is on simulated data. This can easily done on a local computer. This script also generates figure 2.
+We then analysed the summarised outputs to test how accurate our workflow is on simulated data. This can easily be done on a local computer. This script also generates figure 2.
 
 + 08_analysis_test_analyse.R
 
@@ -124,7 +124,7 @@ The folder contains one script that cleans the data, performs that analysis and 
 
 ### 01_preparation
 
-These scripts were used to conduct a few tasks necessary before we began the experiment such as randomising the mixture and monoculture positions on the panels. They are not important for reproducing the analysis
+These scripts were used to conduct a few tasks necessary before we began the experiment such as randomising the mixture and monoculture positions on the panels. They are not important for reproducing the analysis.
 
 ### 02_data_cleaning
 
@@ -136,13 +136,13 @@ The *cleaning_functions.R* script are helper functions that are called by variou
 
 ### 03_data_analysis
 
-The scripts in this folder are used calculate Isbell et al.'s (2018) biodiversity effects on the benthic community data from the Tjarno archipelago (case study 2) and perform any other analysis reported in the manuscript.
+The scripts in this folder are used to calculate Isbell et al.'s (2018) biodiversity effects on the benthic community data from the Tjarno archipelago (case study 2) and perform any other analysis reported in the manuscript.
 
 The first script is used to test whether our temporal replicates had similar community structure using cover values from panels photographed at the same time point. The script exports Appendix 2: Figure S6.
 
 + 01_mixture_coverage_analysis.R
 
-The second script analyses the environmental heterogeneity within clusters to test whether our a priori designations of clusters as heterogeneous and homogeneous based on geographic data is still valid once we use other, measured environmental variables such as temperature, salinity and water movement. The scripts exports Appendix 2: Figure S.
+The second script analyses the environmental heterogeneity within clusters to test whether our a priori designations of clusters as heterogeneous and homogeneous based on geographic data are still valid once we use other, measured environmental variables such as temperature, salinity and water movement. The script exports Appendix 2: Figure S.
 
 + 02_environmental_variation_analysis.R
 
@@ -182,7 +182,7 @@ The outputted data file was then saved into the *results* folder:
 
 + benthic_BEF_effects.rds
 
-THe next script then analyses the BEF effects that we calculated and plots Figure 6 and Figure 7 from the main text:
+The next script then analyses the BEF effects that we calculated and plots Figure 6 and Figure 7 from the main text:
 
 + 07_analyse_BEF_effects.R
 
