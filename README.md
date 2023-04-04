@@ -12,6 +12,28 @@ To solve these problems, we model monoculture yields using Bayesian generalised 
 
 This repository includes general code to apply Isbell et al.'s (2018) partition as only limited code was provided in the regional paper (01_partition_functions). It also includes code to simulate metacommunities with full monoculture and known initial relative yields which we used to test the potential accuracy of our workflow (02_simulation). Finally, it includes code to implement our workflow to two different empirical datasets (03_empirical_analysis).
 
+## Running the code
+
+To reproduce the analyses reported in the manuscript, download this repository to your computer. This can be done in two ways:
+
+1. with git
+in the Terminal:
+
+cd path/to/local/folder
+
+(on your computer - the folder were you want the repository to live) command on Windows might differ.
+
+https://github.com/haganjam/BEF_quant_scale.git
+
+This should download the directory.
+
+2. without git
+If you don't have git installed, you can download the repository as zip file and save it locally.
+
+--> Clone or download (green button top right) --> Download Zip
+
+then save and extract the zip where you want the directory to be saved on your computer. To run the code correctly, it is important to create a R-Project. In R-Studio go to File > New Project... > Existing Directory > Choose the extracted directory.
+
 ## data
 
 Besides the simulated data which is generated using the scripts, we analysed two empirical datasets (case study 1 and case study 2 in the manuscript). 
@@ -56,7 +78,7 @@ The *RYe* parameter is a vector of expected relative yields for the different sp
 
 If you do not provide RYe data and you set *RYe_post = TRUE*, the function will draw samples from the Dirichlet distribution to use as RYe values. The number of samples to draw from the Dirichlet distribution is set using *N*. The skewness of the Dirichlet distribution is set using the *alpha_par* argument.
 
-The other two scripts: *02_isbell_2018_partition_test_data.R* and *03_isbell_2018_partition_test_script.R* are used to digitise the examples in Isbell et al. (2018) and test our functions against those examples respectively.
+The other two scripts: *02_isbell_2018_partition_test_data.R* and *03_isbell_2018_partition_test_script.R* are used to digitise the examples in Isbell et al. (2018) and test our functions against those examples respectively. This is to make sure that the functions we wrote correctly calculate the effects as per Isbell et al.'s (2018) proposed method.
 
 
 ### 02_simulation
