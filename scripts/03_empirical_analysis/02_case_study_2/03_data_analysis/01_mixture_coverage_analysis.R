@@ -72,12 +72,12 @@ print(SP.x)
 # plot a proper correlation plot
 
 # rename the OTUs
-covT12$Species <- factor(covT12$Species)
-levels(covT12$Species) <- c("Barn", "Bryo", "Asci", "Hydro", "Ciona")
+covT12$OTU <- factor(covT12$Species)
+levels(covT12$OTU) <- c("Barn", "Bryo", "Asci", "Hydro", "Ciona")
 
 p1 <- 
   ggplot(data = covT12,
-       mapping = aes(x = T1_cover, y = T2_cover, colour = Species)) +
+       mapping = aes(x = T1_cover, y = T2_cover, colour = OTU)) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
   geom_point(size = 2, alpha =0.7) +
   scale_colour_viridis_d(option = "C") +
@@ -86,7 +86,9 @@ p1 <-
   annotate(geom = "text", x = 10, y = 90, label = paste0("rho = ", round(SP.x$estimate, 2))) +
   theme_meta() +
   theme(legend.position = "top",
-        legend.key = element_rect(fill = NA))
+        legend.key = element_rect(fill = NA),
+        legend.text = element_text(size = 10),
+        legend.spacing.x = unit(0.05, 'cm'))
 plot(p1)
 
 # what about total cover?
@@ -109,14 +111,17 @@ p2 <-
   scale_colour_viridis_d(option = "C") +
   xlab("Total cover (%)") +
   ylab("Total cover (%)") +
+  ggtitle("") +
   annotate(geom = "text", x = 15, y = 160, label = paste0("rho = ", round(SP.y, 2))) +
   theme_meta() +
   theme(legend.position = "top",
-        legend.key = element_rect(fill = NA))
+        legend.key = element_rect(fill = NA),
+        plot.title = element_text(size = 35))
 
 p12 <- 
-  ggarrange(p1, p2, ncol = 2, nrow = 1, common.legend = TRUE,
+  ggarrange(p1, p2, ncol = 2, nrow = 1,
             labels =c("a", "b"), font.label = list(face = "plain", size = 11))
+plot(p12)
 
 ggsave(filename = here("figures/figA2_S5.png"), p12,
        unit = "cm", width = 20, height = 10)

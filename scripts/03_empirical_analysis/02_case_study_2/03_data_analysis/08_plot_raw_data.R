@@ -112,9 +112,9 @@ legend <-
     ggplot(data = legend,
            mapping = aes(x = SR, y = biomass_mu, colour = species, shape = species)) +
       geom_point(size = 2) +
-      scale_colour_manual(name = "Species/mixture",
+      scale_colour_manual(name = "OTU/mixture",
                           values = viridis(n = 6, begin = 0.1, end = 0.9, option = "C")) +   
-      scale_shape_manual(name = "Species/mixture",
+      scale_shape_manual(name = "OTU/mixture",
                          values = c(16, 16, 16, 16, 16, 8)) +
       theme_bw() +
       theme(legend.position = "bottom")
