@@ -29,363 +29,352 @@ v <- v[complete.cases(v),]
 # make a data.list with the training data
 barn <- 
   list(M = v$M,
-       Y = v$Y,
-       Y2 = v$Y^2,
-       PC1 = v$PC1,
-       PC2 = v$PC2
+       Y = with(v, (Y - min(Y))/(max(Y)-min(Y)) ),
+       PC1 = with(v, (PC1 - min(PC1))/(max(PC1)-min(PC1)) ),
+       PC2 = with(v, (PC2 - min(PC2))/(max(PC2)-min(PC2)) ),
+       C = as.integer(as.factor(v$cluster_id)),
+       T = as.integer(as.factor(v$time))
   )
 
-# model1
-m.A1 <- 
+# full model: non-centred
+m1 <- 
   ulam(
-    alist(M ~ dnorm(u, sigma),
+    alist(M ~ dlnorm(u, sigma),
           
-          u <- aS + bY*Y + bY2*Y2 + bPC1*PC1 + bPC2*PC2 + bPCI*PC1*PC2,
+          u <- a[C, T] + b1[C]*Y + b2[C]*PC1 + b3[C]*PC2 + b4[C]*Y*PC1 + b5[C]*Y*PC2,
           
-          bY ~ dnorm( 0 , 1 ),
-          bY2 ~ dnorm( 0 , 1 ),
-          bPC1 ~ dnorm( 0, 1 ),
-          bPC2 ~ dnorm( 0, 1),
-          bPCI ~ dnorm( 0, 1),
+          # a parameters
+          transpars> matrix[C,3]:a <-
+            compose_noncentered( sigma_a , L_Rho_a , z_Ca ),
+          matrix[3, C]:z_Ca ~ normal( 0 , 1 ),
           
-          aS ~ normal( 0 , 2 ),
+          # b1-3 parameters
+          transpars> vector[10]:b1 <<- bbar[1] + z_Cb[,1],
+          transpars> vector[10]:b2 <<- bbar[2] + z_Cb[,2],
+          transpars> vector[10]:b3 <<- bbar[3] + z_Cb[,3],
+          transpars> vector[10]:b4 <<- bbar[4] + z_Cb[,4],
+          transpars> vector[10]:b5 <<- bbar[5] + z_Cb[,5],
+          transpars> matrix[10, 5]:z_Cb <- 
+            compose_noncentered(sigma_b, L_Rho_b, Z),
+          matrix[5, 10]:Z ~ normal(0, 1),
           
-          sigma ~ dexp(1)
+          # fixed priors
+          cholesky_factor_corr[3]:L_Rho_a ~ lkj_corr_cholesky( 2 ),
+          vector[3]:sigma_a ~ dexp(1),
+          
+          cholesky_factor_corr[5]:L_Rho_b ~ lkj_corr_cholesky( 2 ),
+          vector[5]:bbar ~ normal(0, 1),
+          vector[5]:sigma_b ~ exponential(1),
+          
+          sigma ~ exponential(1),
+          
+          # convert cholesky to corr matrix
+          gq> matrix[3,3]:Rho_a <<- Chol_to_Corr(L_Rho_a),
+          gq> matrix[5,5]:Rho_b <<- Chol_to_Corr(L_Rho_b)
           
     ),
-    data = barn, chains = 4, log_lik = TRUE)
+    data = barn, chains = 4, log_lik = TRUE, control = list(adapt_delta = 0.99))
 
 # check the precis output
-precis( m.A1  )
-
-# check the traceplots
-# traceplot(m.A1 )
-# dev.off()
-
-# plot the Y vs M comparison
-range(barn$Y)
-Y_seq <- seq(-1, 3.2, 0.1)
-PC1_seq <- mean(barn$PC1)
-PC2_seq <- mean(barn$PC2)
-pred_dat <- list(Y = Y_seq, Y2 = Y_seq^2, 
-                 PC1 = rep(PC1_seq, length(Y_seq)),
-                 PC2 = rep(PC2_seq, length(Y_seq)))
-post <- link(m.A1, pred_dat)
-
-plot(barn$Y, barn$M)
-lines(pred_dat$Y, apply(post, 2, mean))
+precis( m1, depth = 3 )
+traceplot(m1)
+dev.off()
 
 # plot the observed versus predicted data
-post <- sim(m.A1)
+post <- sim(m1)
 plot(apply(post, 2, mean), barn$M)
 abline(0, 1)
 
-# model2
-m.A2 <- 
+r <- apply(post, 2, mean) - barn$M
+resid_var <- var2(r)
+outcome_var <- var2( barn$M )
+1 - resid_var/outcome_var
+
+# model 2
+m2 <- 
   ulam(
-    alist(M ~ dnorm(u, sigma),
+    alist(M ~ dlnorm(u, sigma),
           
-          u <- aS + bY*Y + bPC1*PC1 + bPC2*PC2 + bPCI*PC1*PC2,
+          u <- a[C, T] + b1[C]*Y + b2[C]*PC1 + b3[C]*PC2 + b4[C]*Y*PC1,
           
-          bY ~ dnorm( 0 , 1 ),
-          bPC1 ~ dnorm( 0, 1 ),
-          bPC2 ~ dnorm( 0, 1),
-          bPCI ~ dnorm( 0, 1),
+          # a parameters
+          transpars> matrix[C,3]:a <-
+            compose_noncentered( sigma_a , L_Rho_a , z_Ca ),
+          matrix[3, C]:z_Ca ~ normal( 0 , 1 ),
           
-          aS ~ normal( 0 , 2 ),
+          # b1-3 parameters
+          transpars> vector[10]:b1 <<- bbar[1] + z_Cb[,1],
+          transpars> vector[10]:b2 <<- bbar[2] + z_Cb[,2],
+          transpars> vector[10]:b3 <<- bbar[3] + z_Cb[,3],
+          transpars> vector[10]:b4 <<- bbar[4] + z_Cb[,4],
+          transpars> matrix[10, 4]:z_Cb <- 
+            compose_noncentered(sigma_b, L_Rho_b, Z),
+          matrix[4, 10]:Z ~ normal(0, 1),
           
-          sigma ~ dexp(1)
+          # fixed priors
+          cholesky_factor_corr[3]:L_Rho_a ~ lkj_corr_cholesky( 2 ),
+          vector[3]:sigma_a ~ dexp(1),
+          
+          cholesky_factor_corr[4]:L_Rho_b ~ lkj_corr_cholesky( 2 ),
+          vector[4]:bbar ~ normal(0, 1),
+          vector[4]:sigma_b ~ exponential(1),
+          
+          sigma ~ exponential(1),
+          
+          # convert cholesky to corr matrix
+          gq> matrix[3,3]:Rho_a <<- Chol_to_Corr(L_Rho_a),
+          gq> matrix[4,4]:Rho_b <<- Chol_to_Corr(L_Rho_b)
           
     ),
-    data = barn, chains = 4, log_lik = TRUE)
+    data = barn, chains = 4, log_lik = TRUE, control = list(adapt_delta = 0.99))
 
 # check the precis output
-precis( m.A2  )
-
-# check the traceplots
-# traceplot(m.A2 )
-# dev.off()
-
-# plot the Y vs M comparison
-range(barn$Y)
-Y_seq <- seq(-1, 3.2, 0.1)
-PC1_seq <- mean(barn$PC1)
-PC2_seq <- mean(barn$PC2)
-pred_dat <- list(Y = Y_seq, 
-                 PC1 = rep(PC1_seq, length(Y_seq)),
-                 PC2 = rep(PC2_seq, length(Y_seq)))
-post <- link(m.A2, pred_dat)
-
-plot(barn$Y, barn$M)
-lines(pred_dat$Y, apply(post, 2, mean))
+precis( m2, depth = 3 )
+traceplot(m2)
+dev.off()
 
 # plot the observed versus predicted data
-post <- sim(m.A2)
+post <- sim(m2)
 plot(apply(post, 2, mean), barn$M)
 abline(0, 1)
 
+r <- apply(post, 2, mean) - barn$M
+resid_var <- var2(r)
+outcome_var <- var2( barn$M )
+1 - resid_var/outcome_var
 
-# model3
-m.A3 <- 
+# model 3
+m3 <- 
   ulam(
-    alist(M ~ dnorm(u, sigma),
+    alist(M ~ dlnorm(u, sigma),
           
-          u <- aS + bY*Y + bPC1*PC1 + bPC2*PC2,
+          u <- a[C, T] + b1[C]*Y + b2[C]*PC1 + b3[C]*PC2,
           
-          bY ~ dnorm( 0 , 1 ),
-          bPC1 ~ dnorm( 0, 1 ),
-          bPC2 ~ dnorm( 0, 1),
+          # a parameters
+          transpars> matrix[C,3]:a <-
+            compose_noncentered( sigma_a , L_Rho_a , z_Ca ),
+          matrix[3, C]:z_Ca ~ normal( 0 , 1 ),
           
-          aS ~ normal( 0 , 2 ),
+          # b1-3 parameters
+          transpars> vector[10]:b1 <<- bbar[1] + z_Cb[,1],
+          transpars> vector[10]:b2 <<- bbar[2] + z_Cb[,2],
+          transpars> vector[10]:b3 <<- bbar[3] + z_Cb[,3],
+          transpars> matrix[10, 3]:z_Cb <- 
+            compose_noncentered(sigma_b, L_Rho_b, Z),
+          matrix[3, 10]:Z ~ normal(0, 1),
           
-          sigma ~ dexp(1)
+          # fixed priors
+          cholesky_factor_corr[3]:L_Rho_a ~ lkj_corr_cholesky( 2 ),
+          vector[3]:sigma_a ~ dexp(1),
+          
+          cholesky_factor_corr[3]:L_Rho_b ~ lkj_corr_cholesky( 2 ),
+          vector[3]:bbar ~ normal(0, 1),
+          vector[3]:sigma_b ~ exponential(1),
+          
+          sigma ~ exponential(1),
+          
+          # convert cholesky to corr matrix
+          gq> matrix[3,3]:Rho_a <<- Chol_to_Corr(L_Rho_a),
+          gq> matrix[3,3]:Rho_b <<- Chol_to_Corr(L_Rho_b)
           
     ),
-    data = barn, chains = 4, log_lik = TRUE)
+    data = barn, chains = 4, log_lik = TRUE, control = list(adapt_delta = 0.99))
 
 # check the precis output
-precis( m.A3  )
-
-# check the traceplots
-# traceplot(m.A3 )
-# dev.off()
-
-# plot the Y vs M comparison
-range(barn$Y)
-Y_seq <- seq(-1, 3.2, 0.1)
-PC1_seq <- mean(barn$PC1)
-PC2_seq <- mean(barn$PC2)
-pred_dat <- list(Y = Y_seq, 
-                 PC1 = rep(PC1_seq, length(Y_seq)),
-                 PC2 = rep(PC2_seq, length(Y_seq)))
-post <- link(m.A3, pred_dat)
-
-plot(barn$Y, barn$M)
-lines(pred_dat$Y, apply(post, 2, mean))
+precis( m3, depth = 3 )
+traceplot(m3)
+dev.off()
 
 # plot the observed versus predicted data
-post <- sim(m.A3)
-plot(apply(post, 2, mean), barn$M, ylab = "Predicted", xlab = "Observed")
-abline(0, 1)
-
-# model4
-m.A4 <- 
-  ulam(
-    alist(M ~ dnorm(u, sigma),
-          
-          u <- aS + bY*Y + bPC1*PC1,
-          
-          bY ~ dnorm( 0 , 1 ),
-          bPC1 ~ dnorm( 0, 1 ),
-          
-          aS ~ normal( 0 , 2 ),
-          
-          sigma ~ dexp(1)
-          
-    ),
-    data = barn, chains = 4, log_lik = TRUE)
-
-# check the precis output
-precis( m.A4  )
-
-# check the traceplots
-# traceplot(m.A4 )
-# dev.off()
-
-# plot the Y vs M comparison
-range(barn$Y)
-Y_seq <- seq(-1, 3.2, 0.1)
-PC1_seq <- mean(barn$PC1)
-pred_dat <- list(Y = Y_seq, 
-                 PC1 = rep(PC1_seq, length(Y_seq)))
-post <- link(m.A4, pred_dat)
-
-plot(barn$Y, barn$M)
-lines(pred_dat$Y, apply(post, 2, mean))
-
-# plot the observed versus predicted data
-post <- sim(m.A4)
+post <- sim(m3)
 plot(apply(post, 2, mean), barn$M)
 abline(0, 1)
 
-# model5
-m.A5 <- 
+r <- apply(post, 2, mean) - barn$M
+resid_var <- var2(r)
+outcome_var <- var2( barn$M )
+1 - resid_var/outcome_var
+
+# model 4
+m4 <- 
   ulam(
-    alist(M ~ dnorm(u, sigma),
+    alist(M ~ dlnorm(u, sigma),
           
-          u <- aS + bY*Y + bY2*Y2,
+          u <- a[C, T] + b1[C]*Y + b2[C]*PC1,
           
-          bY ~ dnorm( 0 , 1 ),
-          bY2 ~ dnorm( 0, 1 ),
+          # a parameters
+          transpars> matrix[C,3]:a <-
+            compose_noncentered( sigma_a , L_Rho_a , z_Ca ),
+          matrix[3, C]:z_Ca ~ normal( 0 , 1 ),
           
-          aS ~ normal( 0 , 2 ),
+          # b1-3 parameters
+          transpars> vector[10]:b1 <<- bbar[1] + z_Cb[,1],
+          transpars> vector[10]:b2 <<- bbar[2] + z_Cb[,2],
+          transpars> matrix[10, 2]:z_Cb <- 
+            compose_noncentered(sigma_b, L_Rho_b, Z),
+          matrix[2, 10]:Z ~ normal(0, 1),
           
-          sigma ~ dexp(1)
+          # fixed priors
+          cholesky_factor_corr[3]:L_Rho_a ~ lkj_corr_cholesky( 2 ),
+          vector[3]:sigma_a ~ dexp(1),
+          
+          cholesky_factor_corr[2]:L_Rho_b ~ lkj_corr_cholesky( 2 ),
+          vector[2]:bbar ~ normal(0, 1),
+          vector[2]:sigma_b ~ exponential(1),
+          
+          sigma ~ exponential(1),
+          
+          # convert cholesky to corr matrix
+          gq> matrix[3,3]:Rho_a <<- Chol_to_Corr(L_Rho_a),
+          gq> matrix[2,2]:Rho_b <<- Chol_to_Corr(L_Rho_b)
           
     ),
-    data = barn, chains = 4, log_lik = TRUE)
+    data = barn, chains = 4, log_lik = TRUE, control = list(adapt_delta = 0.99))
 
 # check the precis output
-precis( m.A5  )
-
-# check the traceplots
-# traceplot(m.A5 )
-# dev.off()
-
-# plot the Y vs M comparison
-range(barn$Y)
-Y_seq <- seq(-1, 3.2, 0.1)
-pred_dat <- list(Y = Y_seq, 
-                 Y2 = Y_seq^2)
-post <- link(m.A5, pred_dat)
-
-plot(barn$Y, barn$M)
-lines(pred_dat$Y, apply(post, 2, mean))
+precis( m4, depth = 3 )
+traceplot(m4)
+dev.off()
 
 # plot the observed versus predicted data
-post <- sim(m.A5)
+post <- sim(m4)
 plot(apply(post, 2, mean), barn$M)
 abline(0, 1)
 
-# model6
-m.A6 <- 
+apply(post, 2, PI)
+
+r <- apply(post, 2, mean) - barn$M
+resid_var <- var2(r)
+outcome_var <- var2( barn$M )
+1 - resid_var/outcome_var
+
+# model 5
+m5 <- 
   ulam(
-    alist(M ~ dnorm(u, sigma),
+    alist(M ~ dlnorm(u, sigma),
           
-          u <- aS + bY*Y + bPC1*PC1 + bPCY*PC1*Y,
+          u <- a[C, T] + z[C]*sigma_b*Y,
           
-          bY ~ dnorm( 0 , 1 ),
-          bPC1 ~ dnorm( 0, 1 ),
-          bPCY ~ dnorm( 0, 1),
+          # a parameters
+          transpars> matrix[C,3]:a <-
+            compose_noncentered( sigma_a , L_Rho_a , z_Ca ),
+          matrix[3, C]:z_Ca ~ normal( 0 , 1 ),
           
-          aS ~ normal( 0 , 2 ),
+          # fixed priors
+          cholesky_factor_corr[3]:L_Rho_a ~ lkj_corr_cholesky( 2 ),
+          vector[3]:sigma_a ~ dexp(1),
           
-          sigma ~ dexp(1)
+          z[C] ~ dnorm( 0 , 1 ),
+          sigma_b ~ exponential(1),
+          
+          sigma ~ exponential(1),
+          
+          # convert cholesky to corr matrix
+          gq> matrix[3,3]:Rho_a <<- Chol_to_Corr(L_Rho_a),
+          gq> vector[C]:b <<- z*sigma_b
           
     ),
-    data = barn, chains = 4, log_lik = TRUE)
+    data = barn, chains = 4, log_lik = TRUE, control = list(adapt_delta = 0.99))
 
 # check the precis output
-precis( m.A6  )
-
-# check the traceplots
-# traceplot(m.A6 )
-# dev.off()
-
-# plot the Y vs M comparison
-range(barn$Y)
-Y_seq <- seq(-1, 3.2, 0.1)
-PC1_seq <- mean(barn$PC1)
-pred_dat <- list(Y = Y_seq,
-                 PC1 = rep(PC1_seq, length(Y_seq)))
-post <- link(m.A6, pred_dat)
-
-plot(barn$Y, barn$M)
-lines(pred_dat$Y, apply(post, 2, mean))
+precis( m5, depth = 3 )
+traceplot(m5)
+dev.off()
 
 # plot the observed versus predicted data
-post <- sim(m.A6)
+post <- sim(m5)
 plot(apply(post, 2, mean), barn$M)
 abline(0, 1)
 
-# model7
-m.A7 <- 
+r <- apply(post, 2, mean) - barn$M
+resid_var <- var2(r)
+outcome_var <- var2( barn$M )
+1 - resid_var/outcome_var
+
+# model 6
+m6 <- 
   ulam(
-    alist(M ~ dnorm(u, sigma),
+    alist(M ~ dlnorm(u, sigma),
           
-          u <- aS + bY*Y,
+          u <- a[C, T],
           
-          bY ~ dnorm( 0 , 1 ),
+          # a parameters
+          transpars> matrix[C,3]:a <-
+            compose_noncentered( sigma_a , L_Rho_a , z_Ca ),
+          matrix[3, C]:z_Ca ~ normal( 0 , 1 ),
           
-          aS ~ normal( 0 , 2 ),
+          # fixed priors
+          cholesky_factor_corr[3]:L_Rho_a ~ lkj_corr_cholesky( 2 ),
+          vector[3]:sigma_a ~ dexp(1),
           
-          sigma ~ dexp(1)
+          sigma ~ exponential(1),
+          
+          # convert cholesky to corr matrix
+          gq> matrix[3,3]:Rho_a <<- Chol_to_Corr(L_Rho_a)
           
     ),
-    data = barn, chains = 4, log_lik = TRUE)
+    data = barn, chains = 4, log_lik = TRUE, control = list(adapt_delta = 0.99))
 
 # check the precis output
-precis( m.A7  )
-
-# check the traceplots
-# traceplot(m.A7 )
-# dev.off()
-
-# plot the Y vs M comparison
-range(barn$Y)
-Y_seq <- seq(-1, 3.2, 0.1)
-pred_dat <- list(Y = Y_seq)
-post <- link(m.A7, pred_dat)
-
-plot(barn$Y, barn$M)
-lines(pred_dat$Y, apply(post, 2, mean))
+precis( m6, depth = 3 )
+traceplot(m6)
+dev.off()
 
 # plot the observed versus predicted data
-post <- sim(m.A7)
+post <- sim(m6)
 plot(apply(post, 2, mean), barn$M)
 abline(0, 1)
 
-# model8
-m.A8 <- 
-  ulam(
-    alist(M ~ dnorm(u, sigma),
-          
-          u <- aS,
-          
-          aS ~ normal( 0 , 2 ),
-          
-          sigma ~ dexp(1)
-          
-    ),
-    data = barn, chains = 4, log_lik = TRUE)
+r <- apply(post, 2, mean) - barn$M
+resid_var <- var2(r)
+outcome_var <- var2( barn$M )
+1 - resid_var/outcome_var
 
-# check the precis output
-precis( m.A8  )
-
-# check the traceplots
-# traceplot(m.A8 )
-# dev.off()
-
-# simulate the posterior and check the range
-range(sim(m.A8))
-
-# compare the different models
-compare(m.A1, m.A2, m.A3, m.A4,
-        m.A5, m.A6, m.A7, m.A8,
-        func = PSIS)
-
-compare(m.A1, m.A2, m.A3, m.A4,
-        m.A5, m.A6, m.A7, m.A8,
-        func = WAIC)
+# compare using PSIS
+compare(m1, m2, m3, m4, m5, m6, func = "PSIS")
 
 # sample from the m.A3 model
-post <- rethinking::extract.samples(m.A3)
+post <- rethinking::extract.samples(m4)
 
 # write this posterior distribution list as a .rds object
 saveRDS(post, here("results/SP_A_monoculture_posterior.rds"))
 
 # save the model object as a .rds object
-saveRDS(m.A3, here("results/SP_A_model_object.rds")) 
+saveRDS(m4, here("results/SP_A_model_object.rds")) 
 
 # make a plot of the observed and predicted values
 source(here("scripts/Function_plotting_theme.R"))
-pred <- sim(m.A3)
+pred <- sim(m4)
+pred <- link(m4)
+pred <- 
+  apply(pred, 2, function(x) {
+  
+  exp(x + (0.5*(post$sigma^2)))
+  
+} )
 df.pred <- data.frame(M_obs = barn$M,
+                      M_C = as.character(barn$C),
+                      M_T = as.character(barn$T),
                       M_pred_mu = apply(pred, 2, mean),
-                      M_pred_PIlow = apply(pred, 2, PI)[1,],
-                      M_pred_PIhigh = apply(pred, 2, PI)[2,])
+                      M_pred_PIlow = apply(pred, 2, HPDI, 0.90)[1,],
+                      M_pred_PIhigh = apply(pred, 2, HPDI, 0.90)[2,])
 
 p1 <- 
   ggplot(data = df.pred,
-       mapping = aes(x = M_obs, y = M_pred_mu)) +
+       mapping = aes(x = M_obs, y = M_pred_mu, colour = M_T, fill = M_T)) +
   geom_point(shape = 16, alpha = 0.5) +
   geom_errorbar(mapping = aes(x = M_obs, ymin = M_pred_PIlow, ymax = M_pred_PIhigh),
                 width = 0, alpha = 0.5, size = 0.25) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed", colour = "red") +
   ylab("Predicted monoculture (g)") +
   xlab("Observed monoculture (g)") +
+  facet_wrap(~M_C) +
+  scale_y_continuous(limits = c(0, 17)) +
+  scale_x_continuous(limits = c(0, 17)) +
   theme_meta()
-plot(fig_SP_A)
+plot(p1)
+
+
 
 # save as an object into the results folder
 saveRDS(p1, file = here("results/SP_A_monoculture_plot.rds"))
