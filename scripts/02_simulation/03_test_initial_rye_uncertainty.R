@@ -22,9 +22,10 @@ MC_sims <- readRDS(file = "results/MC_sims.rds")
 start_RA <- readRDS(file = "results/MC_sims_start_RA.rds")
 
 # check an example dataset
+n <- 6
 
 # plot the mixtures
-MC_sims[[1]]$MC_dat %>%
+MC_sims[[n]]$MC_dat %>%
   ggplot(data = .,
          mapping = aes(x = time, y = Y, colour = as.character(species))) +
   geom_line() +
@@ -33,7 +34,7 @@ MC_sims[[1]]$MC_dat %>%
   theme(legend.position = "none")
 
 # plot the monocultures
-MC_sims[[1]]$MC_dat %>%
+MC_sims[[n]]$MC_dat %>%
   ggplot(data = .,
          mapping = aes(x = time, y = M, colour = as.character(species))) +
   geom_line() +
