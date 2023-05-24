@@ -417,6 +417,19 @@
       ],
       "Hash": "147e4db6909d8814bb30f671b49d7e06"
     },
+    "class": {
+      "Package": "class",
+      "Version": "7.3-21",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "MASS",
+        "R",
+        "stats",
+        "utils"
+      ],
+      "Hash": "8ae0d4328e2eb3a582dfd5391a3663b7"
+    },
     "cli": {
       "Package": "cli",
       "Version": "3.6.1",
@@ -985,6 +998,23 @@
       ],
       "Hash": "24b224366f9c2e7534d2344d10d59211"
     },
+    "hexbin": {
+      "Package": "hexbin",
+      "Version": "1.28.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "grDevices",
+        "graphics",
+        "grid",
+        "lattice",
+        "methods",
+        "stats",
+        "utils"
+      ],
+      "Hash": "124e384c01d8746f1c12f9dc1b80a161"
+    },
     "highr": {
       "Package": "highr",
       "Version": "0.10",
@@ -1132,6 +1162,17 @@
         "yaml"
       ],
       "Hash": "8329a9bcc82943c8069104d4be3ee22d"
+    },
+    "kohonen": {
+      "Package": "kohonen",
+      "Version": "3.0.11",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "Rcpp"
+      ],
+      "Hash": "5359916f27bac923806f72b663064462"
     },
     "labeling": {
       "Package": "labeling",
@@ -1825,6 +1866,34 @@
       ],
       "Hash": "40b74690debd20c57d93d8c246b305d4"
     },
+    "som": {
+      "Package": "som",
+      "Version": "0.3-5.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R"
+      ],
+      "Hash": "b806b38e4eb79232ba5e957da4f587a0"
+    },
+    "som.nn": {
+      "Package": "som.nn",
+      "Version": "1.1.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "class",
+        "grDevices",
+        "graphics",
+        "hexbin",
+        "kohonen",
+        "methods",
+        "som",
+        "stats",
+        "utils"
+      ],
+      "Hash": "1237ef6b70a56338cf41f81ae540dbd4"
+    },
     "stringi": {
       "Package": "stringi",
       "Version": "1.7.12",
@@ -1870,6 +1939,13 @@
         "utils"
       ],
       "Hash": "d683341b1fa2e8d817efde27d6e6d35b"
+    },
+    "synchrony": {
+      "Package": "synchrony",
+      "Version": "0.3.8",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "a3235e2f5b9e9f6e7b065387fafff586"
     },
     "sys": {
       "Package": "sys",

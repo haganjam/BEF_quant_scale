@@ -161,7 +161,7 @@ Isbell_2018_part <- function(data, RYe) {
   # test if all the required columns are present
   test_2 <- function(x) {
     
-    all(names(x) %in% c("sample", "place", "time", "species", "M", "Y"))
+    all(c("sample", "place", "time", "species", "M", "Y") %in% names(x))
     
   }
   

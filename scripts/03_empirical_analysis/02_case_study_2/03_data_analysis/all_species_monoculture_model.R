@@ -73,12 +73,12 @@ m1 <-
     data = spp, chains = 4, log_lik = TRUE, control = list(adapt_delta = 0.99))
 
 # check the precis output
-precis( mx, depth = 3 )
-traceplot(mx)
-dev.off()
+precis( m1, depth = 3 )
+# traceplot(mx)
+#dev.off()
 
 # plot the observed versus predicted data
-post <- sim(mx) - min_M
+post <- sim(m1) - min_M
 plot(apply(post, 2, mean), spp$M)
 abline(0, 1)
 
@@ -129,8 +129,8 @@ m2 <-
 
 # check the precis output
 precis( m2, depth = 3 )
-traceplot(m2)
-dev.off()
+# traceplot(m2)
+#dev.off()
 
 # plot the observed versus predicted data
 post <- sim(m2) - min_M
@@ -176,12 +176,12 @@ m3 <-
     data = spp, chains = 4, log_lik = TRUE, control = list(adapt_delta = 0.99))
 
 # check the precis output
-precis( m2, depth = 3 )
-traceplot(m2)
-dev.off()
+precis( m3, depth = 3 )
+# traceplot(m2)
+#dev.off()
 
 # plot the observed versus predicted data
-post <- sim(m2) - min_M
+post <- sim(m3) - min_M
 plot(apply(post, 2, mean), spp$M)
 abline(0, 1)
 
