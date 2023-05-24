@@ -34,4 +34,12 @@ output_rye %>%
   group_by(Beff) %>%
   summarise(prop_within = sum(within)/100)
 
+# calculate the percentage prediction error
+output_rye %>%
+  mutate(PPE = (abs(BEF_obs - mean_BEF)/BEF_obs)*100 ) %>%
+  group_by(Beff) %>%
+  summarise(median_PPE = median(PPE),
+            PI90_low = quantile(PPE, 0.05),
+            PI90_high = quantile(PPE, 0.95))
 
+### END
