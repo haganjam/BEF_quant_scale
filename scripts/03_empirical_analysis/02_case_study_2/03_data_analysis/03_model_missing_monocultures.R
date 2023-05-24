@@ -7,6 +7,10 @@
 #' @authors: James G. Hagan (james_hagan(at)outlook.com)
 #'
 
+# do the standardisation before we predict the new data because this
+# will influence the later predictions
+
+
 # load the required libraries
 library(readr)
 library(dplyr)
