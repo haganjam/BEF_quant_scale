@@ -20,7 +20,7 @@ library(ggplot2)
 library(rethinking)
 
 # load the analysis data
-data <- read_csv(here("data/case_study_2/data_clean/biomass_env_analysis_data.csv"))
+data <- read_csv("data/case_study_2/data_clean/biomass_env_analysis_data.csv")
 
 # remove any NAs
 v <- data[complete.cases(data),]
@@ -304,13 +304,15 @@ m5 <-
           u <- a[C, S],
           
           # parameters
-          transpars> matrix[C,5]:a <-
-            compose_noncentered( sigma_a , L_Rho_a , z_Ca ),
-          matrix[5, C]:z_Ca ~ normal( 0 , 1 ),
+          transpars> matrix[10, 5]:a <<- v_a + abar,
+          transpars> matrix[10, 5]:v_a <-
+            compose_noncentered( sigma_par , L_Rho_a , Z),
+          matrix[5, 10]:Z ~ normal( 0 , 1 ),
           
           # fixed priors
+          row_vector[5]:abar ~ normal(0, 3),
+          vector[5]:sigma_par ~ dexp(1),
           cholesky_factor_corr[5]:L_Rho_a ~ lkj_corr_cholesky( 2 ),
-          vector[5]:sigma_a ~ dexp(1),
           
           sigma ~ exponential(1),
           
@@ -380,5 +382,39 @@ p1 <-
   # scale_x_continuous(limits = c(0, 17)) +
   theme_meta()
 plot(p1)
+
+
+# centered version of the model
+
+
+mx <- 
+  ulam(
+    alist(M ~ dlnorm(u, sigma),
+          
+          u <- a[C, S],
+          
+          # priors
+          matrix[10, 5]:a ~ multi_normal(abar, Rho_a, sigma_a),
+          vector[5]:abar ~ dlnorm(0, 2),
+          vector[5]:sigma_a ~ dexp(1),
+          corr_matrix[5]:Rho_a ~ lkj_corr(2),
+          
+          sigma ~ dexp(1)
+          
+    ),
+    data = spp, chains = 4, log_lik = TRUE, control = list(adapt_delta = 0.99))
+
+precis(mx, depth = 3)
+traceplot(mx)
+
+# plot the observed versus predicted data
+post <- sim(mx) - min_M
+plot(apply(post, 2, mean), spp$M)
+abline(0, 1)
+
+r <- apply(post, 2, mean) - spp$M
+resid_var <- var2(r)
+outcome_var <- var2( spp$M )
+1 - resid_var/outcome_var
 
 ### END
