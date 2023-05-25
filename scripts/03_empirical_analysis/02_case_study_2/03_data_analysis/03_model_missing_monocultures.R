@@ -2,7 +2,7 @@
 #' @title: Model the missing monocultures
 #' 
 #' @description: This script attempts to impute the missing monoculture
-#' data using Bayesian generalised linera models.
+#' data using Bayesian generalised linear models.
 #' 
 #' @authors: James G. Hagan (james_hagan(at)outlook.com)
 #'
@@ -32,6 +32,8 @@
 library(readr)
 library(dplyr)
 library(ggplot2)
+library(rstan)
+library(loo)
 
 # load plotting theme
 source("scripts/Function_plotting_theme.R")
@@ -59,76 +61,39 @@ spp <-
        S = as.integer(as.factor(v$OTU))
   )
 
+# model 1
 
-# model 1: full model 
-m1 <- 
-  ulam(
-    alist(M ~ dlnorm(u, sigma),
-          
-          u <- 
-            (abar[S] + a[C, S]) + 
-            (b1bar[S] + b1[C, S]*T) + 
-            (b2bar[S] + b2[C, S]*Y) + 
-            (b3bar[S] + b3[C, S]*PC1) + 
-            (b4bar[S] + b4[C, S]*PC2) +
-            (b5bar[S] + b5[C, S]*Y*PC1),
-          
-          # define the effects using other parameters
-          matrix[5, 10]:Z ~ normal( 0 , 1 ),
-          
-          transpars> matrix[10,5]:a <-
-            compose_noncentered( sigma_a , L_Rho_a , Z ),
-          
-          transpars> matrix[10,5]:b1 <-
-            compose_noncentered( sigma_b1 , L_Rho_b1 , Z ),
-          
-          transpars> matrix[10,5]:b2 <-
-            compose_noncentered( sigma_b2 , L_Rho_b2 , Z  ),
-          
-          transpars> matrix[10,5]:b3 <-
-            compose_noncentered( sigma_b3 , L_Rho_b3 , Z  ),
-          
-          transpars> matrix[10,5]:b4 <-
-            compose_noncentered( sigma_b4 , L_Rho_b4 , Z  ),
-          
-          transpars> matrix[10,5]:b5 <-
-            compose_noncentered( sigma_b5 , L_Rho_b5 , Z  ),
-          
-          # fixed priors
-          cholesky_factor_corr[5]:c(L_Rho_a, L_Rho_b1, L_Rho_b2, L_Rho_b3, L_Rho_b4, L_Rho_b5) ~ lkj_corr_cholesky( 2 ),
-          
-          vector[5]:c(sigma_a, sigma_b1, sigma_b2, sigma_b3, sigma_b4, sigma_b5) ~ dexp(1),
-          vector[5]:c(abar, b1bar, b2bar, b3bar, b4bar, b5bar) ~ dnorm(0, 2),
-          
-          sigma ~ exponential(1),
-          
-          # convert cholesky to corr matrix
-          gq> matrix[5,5]:Rho_a <<- Chol_to_Corr(L_Rho_a),
-          gq> matrix[5,5]:Rho_b1 <<- Chol_to_Corr(L_Rho_b1),
-          gq> matrix[5,5]:Rho_b2 <<- Chol_to_Corr(L_Rho_b2),
-          gq> matrix[5,5]:Rho_b3 <<- Chol_to_Corr(L_Rho_b3),
-          gq> matrix[5,5]:Rho_b4 <<- Chol_to_Corr(L_Rho_b4),
-          gq> matrix[5,5]:Rho_b5 <<- Chol_to_Corr(L_Rho_b5)
-          
-    ),
-    data = spp, chains = 4, log_lik = TRUE)
-
-# check the precis output
-precis( m1, depth = 3 )
-# traceplot(mx)
-# dev.off()
-stancode(m1)
-
-# compile the stan growth rate model
-mx <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model1.stan",
+# compile the model
+m1 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model1.stan",
                         verbose = TRUE)
-print(m1)
 
 # sample the stan model: m1
-m1_fit <- rstan::sampling(m1, data = dat, 
+m1_fit <- rstan::sampling(m1, data = spp, 
                           iter = 2500, chains = 4, algorithm = c("NUTS"),
-                          control = list(adapt_delta = 0.99),
+                          control = list(adapt_delta = 0.99,
+                                         max_treedepth=12),
                           seed = 54856)
+
+# check the stan output
+print(m1_fit)
+
+# check the traceplots
+traceplot(m1_fit, pars = c("abar[1]", "abar[2]", "abar[3]", "abar[4]"))
+
+# extract the diagnostic parameters
+diag <- rstan::summary(m1_fit)
+par <- "bar"
+diag$summary[grepl(par, row.names(diag$summary)), ]
+
+# calculate the PSIS loocv estimate
+# ref: http://ritsokiguess.site/docs/2019/06/25/going-to-the-loo-using-stan-for-model-comparison/
+log_lik_1 <- loo::extract_log_lik(m1_fit, merge_chains = F)
+r_eff_1 <- loo::relative_eff(log_lik_1)
+
+# calculate the loocv estimating using PSIS
+loo_1 <- rstan::loo(log_lik_1, r_eff = r_eff_1)
+
+# prediction functions...
 
 # plot the observed versus predicted data
 post <- sim(m1) - min_M
