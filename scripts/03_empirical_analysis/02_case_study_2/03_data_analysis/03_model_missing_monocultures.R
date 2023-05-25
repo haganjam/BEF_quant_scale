@@ -33,9 +33,6 @@ library(readr)
 library(dplyr)
 library(ggplot2)
 
-# load the rethinking package
-library(rethinking)
-
 # load plotting theme
 source("scripts/Function_plotting_theme.R")
 

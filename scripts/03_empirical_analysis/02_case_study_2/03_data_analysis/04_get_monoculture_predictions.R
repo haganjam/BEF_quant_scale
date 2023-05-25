@@ -12,8 +12,6 @@
 library(readr)
 library(dplyr)
 library(tidyr)
-library(here)
-library(rethinking)
 
 # load relevant plotting themes
 source(here("scripts/Function_plotting_theme.R"))
