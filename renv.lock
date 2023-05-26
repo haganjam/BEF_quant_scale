@@ -138,7 +138,7 @@
     },
     "StanHeaders": {
       "Package": "StanHeaders",
-      "Version": "2.21.0-7",
+      "Version": "2.26.25",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -146,7 +146,20 @@
         "RcppEigen",
         "RcppParallel"
       ],
-      "Hash": "0459d4dd7a8c239be18469a30c23dd4b"
+      "Hash": "929e3524e31287dab487e63018c5dab7"
+    },
+    "V8": {
+      "Package": "V8",
+      "Version": "4.2.2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "Rcpp",
+        "curl",
+        "jsonlite",
+        "utils"
+      ],
+      "Hash": "ebee37dadb0a8f5086663825d2c33076"
     },
     "abind": {
       "Package": "abind",
@@ -1252,7 +1265,7 @@
     },
     "loo": {
       "Package": "loo",
-      "Version": "2.5.1",
+      "Version": "2.6.0",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -1262,7 +1275,7 @@
         "parallel",
         "stats"
       ],
-      "Hash": "31b53df2593afd03a4969ae028c437b1"
+      "Hash": "e5c8f41731502a0e98f353da23f7ca30"
     },
     "lpSolve": {
       "Package": "lpSolve",
@@ -1773,7 +1786,7 @@
     },
     "rstan": {
       "Package": "rstan",
-      "Version": "2.21.8",
+      "Version": "2.26.22",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -1783,6 +1796,7 @@
         "RcppEigen",
         "RcppParallel",
         "StanHeaders",
+        "V8",
         "ggplot2",
         "gridExtra",
         "inline",
@@ -1791,7 +1805,7 @@
         "pkgbuild",
         "stats4"
       ],
-      "Hash": "f8db1aa2a405b61dda9ebc5a732a59d3"
+      "Hash": "ae13db15c70922c5a33d1c85a43c61c1"
     },
     "rstatix": {
       "Package": "rstatix",

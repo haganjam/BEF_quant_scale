@@ -10,7 +10,8 @@
 #' do the standardisation before we predict the new data because this
 #' will influence the later predictions
 #'
-#' for reference, this is the simplest centered model
+#' for reference, this is the simplest centered model coded in ulam()
+#' 
 #' mx <- 
 #' ulam(
 #'    alist(M ~ dlnorm(u, sigma),
@@ -27,6 +28,7 @@
 #'          
 #'    ),
 #'    data = spp, chains = 4, log_lik = TRUE, control = list(adapt_delta = 0.99))
+#'    
 
 # load the required libraries
 library(readr)
@@ -67,11 +69,11 @@ spp <-
 m1 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model1.stan",
                         verbose = TRUE)
 
-# sample the stan model: m1
+# sample the stan model
 m1_fit <- rstan::sampling(m1, data = spp, 
-                          iter = 2500, chains = 4, algorithm = c("NUTS"),
+                          iter = 1500, chains = 4, algorithm = c("NUTS"),
                           control = list(adapt_delta = 0.99,
-                                         max_treedepth=12),
+                                         max_treedepth = 12),
                           seed = 54856)
 
 # check the stan output
@@ -92,228 +94,140 @@ r_eff_1 <- loo::relative_eff(log_lik_1)
 
 # calculate the loocv estimating using PSIS
 loo_1 <- rstan::loo(log_lik_1, r_eff = r_eff_1)
-
-# prediction functions...
-
-# plot the observed versus predicted data
-post <- sim(m1) - min_M
-plot(apply(post, 2, mean), spp$M)
-abline(0, 1)
-
-r <- apply(post, 2, mean) - spp$M
-resid_var <- var2(r)
-outcome_var <- var2( spp$M )
-1 - resid_var/outcome_var
+print(loo_1)
 
 # model 2
-m2 <- 
-  ulam(
-    alist(M ~ dlnorm(u, sigma),
-          
-          u <- 
-            (abar[S] + a[C, S]) + 
-            (b1bar[S] + b1[C, S]*T) + 
-            (b2bar[S] + b2[C, S]*Y) + 
-            (b3bar[S] + b3[C, S]*PC1) + 
-            (b4bar[S] + b4[C, S]*PC2),
-          
-          # define the effects using other parameters
-          matrix[5, 10]:Z ~ normal( 0 , 1 ),
-          
-          transpars> matrix[10,5]:a <-
-            compose_noncentered( sigma_a , L_Rho_a , Z ),
-          
-          transpars> matrix[10,5]:b1 <-
-            compose_noncentered( sigma_b1 , L_Rho_b1 , Z ),
-          
-          transpars> matrix[10,5]:b2 <-
-            compose_noncentered( sigma_b2 , L_Rho_b2 , Z  ),
-          
-          transpars> matrix[10,5]:b3 <-
-            compose_noncentered( sigma_b3 , L_Rho_b3 , Z  ),
-          
-          transpars> matrix[10,5]:b4 <-
-            compose_noncentered( sigma_b4 , L_Rho_b4 , Z  ),
-          
-          # fixed priors
-          cholesky_factor_corr[5]:c(L_Rho_a, L_Rho_b1, L_Rho_b2, L_Rho_b3, L_Rho_b4) ~ lkj_corr_cholesky( 2 ),
-          
-          vector[5]:c(sigma_a, sigma_b1, sigma_b2, sigma_b3, sigma_b4) ~ dexp(1),
-          vector[5]:c(abar, b1bar, b2bar, b3bar, b4bar) ~ dnorm(0, 2),
-          
-          sigma ~ exponential(1),
-          
-          # convert cholesky to corr matrix
-          gq> matrix[5,5]:Rho_a <<- Chol_to_Corr(L_Rho_a),
-          gq> matrix[5,5]:Rho_b1 <<- Chol_to_Corr(L_Rho_b1),
-          gq> matrix[5,5]:Rho_b2 <<- Chol_to_Corr(L_Rho_b2),
-          gq> matrix[5,5]:Rho_b3 <<- Chol_to_Corr(L_Rho_b3),
-          gq> matrix[5,5]:Rho_b4 <<- Chol_to_Corr(L_Rho_b4)
-          
-    ),
-    data = spp, chains = 4, log_lik = TRUE)
 
-# , control = list(adapt_delta = 0.95)
+# compile the model
+m2 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model2.stan",
+                        verbose = TRUE)
 
-# check the precis output
-precis(m2, depth = 3)
-# traceplot(m2)
-# dev.off()
+# sample the stan model
+m2_fit <- rstan::sampling(m2, data = spp, 
+                          iter = 1500, chains = 4, algorithm = c("NUTS"),
+                          control = list(adapt_delta = 0.99,
+                                         max_treedepth = 12),
+                          seed = 54856)
 
-# plot the observed versus predicted data
-post <- sim(m2) - min_M
-plot(apply(post, 2, mean), spp$M)
-abline(0, 1)
+# check the stan output
+print(m2_fit)
 
-r <- apply(post, 2, mean) - spp$M
-resid_var <- var2(r)
-outcome_var <- var2( spp$M )
-1 - resid_var/outcome_var
+# check the traceplots
+traceplot(m2_fit, pars = c("abar[1]", "abar[2]", "abar[3]", "abar[4]"))
+
+# extract the diagnostic parameters
+diag <- rstan::summary(m2_fit)
+par <- "bar"
+diag$summary[grepl(par, row.names(diag$summary)), ]
+
+# calculate the PSIS loocv estimate
+# ref: http://ritsokiguess.site/docs/2019/06/25/going-to-the-loo-using-stan-for-model-comparison/
+log_lik_2 <- loo::extract_log_lik(m2_fit, merge_chains = F)
+r_eff_2 <- loo::relative_eff(log_lik_2)
+
+# calculate the loocv estimating using PSIS
+loo_2 <- rstan::loo(log_lik_2, r_eff = r_eff_2)
 
 # model 3
-m3 <- 
-  ulam(
-    alist(M ~ dlnorm(u, sigma),
-          
-          u <- 
-            (abar[S] + a[C, S]) + 
-            (b1bar[S] + b1[C, S]*T) + 
-            (b2bar[S] + b2[C, S]*Y),
-          
-          # define the effects using other parameters
-          matrix[5, 10]:Z ~ normal( 0 , 1 ),
-          
-          transpars> matrix[10,5]:a <-
-            compose_noncentered( sigma_a , L_Rho_a , Z ),
-          
-          transpars> matrix[10,5]:b1 <-
-            compose_noncentered( sigma_b1 , L_Rho_b1 , Z ),
-          
-          transpars> matrix[10,5]:b2 <-
-            compose_noncentered( sigma_b2 , L_Rho_b2 , Z  ),
-          
-          # fixed priors
-          cholesky_factor_corr[5]:c(L_Rho_a, L_Rho_b1, L_Rho_b2) ~ lkj_corr_cholesky( 2 ),
-          
-          vector[5]:c(sigma_a, sigma_b1, sigma_b2) ~ dexp(1),
-          vector[5]:c(abar, b1bar, b2bar) ~ dnorm(0, 2),
-          
-          sigma ~ exponential(1),
-          
-          # convert cholesky to corr matrix
-          gq> matrix[5,5]:Rho_a <<- Chol_to_Corr(L_Rho_a),
-          gq> matrix[5,5]:Rho_b1 <<- Chol_to_Corr(L_Rho_b1),
-          gq> matrix[5,5]:Rho_b2 <<- Chol_to_Corr(L_Rho_b2)
-          
-    ),
-    data = spp, chains = 4, log_lik = TRUE)
 
-# check the precis output
-precis( m3, depth = 3 )
-# traceplot(m3)
-# dev.off()
+# compile the model
+m3 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model3.stan",
+                        verbose = TRUE)
 
-# plot the observed versus predicted data
-post <- sim(m3) - min_M
-plot(apply(post, 2, mean), spp$M)
-abline(0, 1)
+# sample the stan model
+m3_fit <- rstan::sampling(m3, data = spp, 
+                          iter = 1500, chains = 4, algorithm = c("NUTS"),
+                          control = list(adapt_delta = 0.99,
+                                         max_treedepth = 12),
+                          seed = 54856)
 
-r <- apply(post, 2, mean) - spp$M
-resid_var <- var2(r)
-outcome_var <- var2( spp$M )
-1 - resid_var/outcome_var
+# check the stan output
+print(m3_fit)
+
+# check the traceplots
+traceplot(m3_fit, pars = c("abar[1]", "abar[2]", "abar[3]", "abar[4]"))
+
+# extract the diagnostic parameters
+diag <- rstan::summary(m3_fit)
+par <- "bar"
+diag$summary[grepl(par, row.names(diag$summary)), ]
+
+# calculate the PSIS loocv estimate
+# ref: http://ritsokiguess.site/docs/2019/06/25/going-to-the-loo-using-stan-for-model-comparison/
+log_lik_3 <- loo::extract_log_lik(m3_fit, merge_chains = F)
+r_eff_3 <- loo::relative_eff(log_lik_3)
+
+# calculate the loocv estimating using PSIS
+loo_3 <- rstan::loo(log_lik_3, r_eff = r_eff_3)
 
 # model 4
-m4 <- 
-  ulam(
-    alist(M ~ dlnorm(u, sigma),
-          
-          u <- a[C, S] + b1[C, S]*T,
-          
-          u <- 
-            (abar[S] + a[C, S]) + 
-            (b1bar[S] + b1[C, S]*T),
-          
-          # define the effects using other parameters
-          matrix[5, 10]:Z ~ normal( 0 , 1 ),
-          
-          transpars> matrix[10,5]:a <-
-            compose_noncentered( sigma_a , L_Rho_a , Z ),
-          
-          transpars> matrix[10,5]:b1 <-
-            compose_noncentered( sigma_b1 , L_Rho_b1 , Z ),
-          
-          # fixed priors
-          cholesky_factor_corr[5]:c(L_Rho_a, L_Rho_b1) ~ lkj_corr_cholesky( 2 ),
-          
-          vector[5]:c(sigma_a, sigma_b1) ~ dexp(1),
-          vector[5]:c(abar, b1bar) ~ dnorm(0, 2),
-          
-          sigma ~ exponential(1),
-          
-          # convert cholesky to corr matrix
-          gq> matrix[5,5]:Rho_a <<- Chol_to_Corr(L_Rho_a),
-          gq> matrix[5,5]:Rho_b1 <<- Chol_to_Corr(L_Rho_b1)
-    ),
-    data = spp, chains = 4, log_lik = TRUE)
 
-# check the precis output
-precis( m4, depth = 3 )
-# traceplot(m4)
-# dev.off()
+# compile the model
+m4 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model4.stan",
+                        verbose = TRUE)
 
-# plot the observed versus predicted data
-post <- sim(m4) - min_M
-plot(apply(post, 2, mean), spp$M)
-abline(0, 1)
+# sample the stan model
+m4_fit <- rstan::sampling(m4, data = spp, 
+                          iter = 1500, chains = 4, algorithm = c("NUTS"),
+                          control = list(adapt_delta = 0.99,
+                                         max_treedepth = 12),
+                          seed = 54856)
 
-r <- apply(post, 2, mean) - spp$M
-resid_var <- var2(r)
-outcome_var <- var2( spp$M )
-1 - resid_var/outcome_var
+# check the stan output
+print(m4_fit)
+
+# check the traceplots
+traceplot(m4_fit, pars = c("abar[1]", "abar[2]", "abar[3]", "abar[4]"))
+
+# extract the diagnostic parameters
+diag <- rstan::summary(m4_fit)
+par <- "bar"
+diag$summary[grepl(par, row.names(diag$summary)), ]
+
+# calculate the PSIS loocv estimate
+# ref: http://ritsokiguess.site/docs/2019/06/25/going-to-the-loo-using-stan-for-model-comparison/
+log_lik_4 <- loo::extract_log_lik(m4_fit, merge_chains = F)
+r_eff_4 <- loo::relative_eff(log_lik_4)
+
+# calculate the loocv estimating using PSIS
+loo_4 <- rstan::loo(log_lik_4, r_eff = r_eff_4)
 
 # model 5
-m5 <- 
-  ulam(
-    alist(M ~ dlnorm(u, sigma),
-          
-          u <- abar[S] + a[C, S],
-          
-          # parameters
-          transpars> matrix[10, 5]:a <-
-            compose_noncentered( sigma_par , L_Rho_a , Z),
-          matrix[5, 10]:Z ~ normal( 0 , 1 ),
-          
-          # fixed priors
-          vector[5]:abar ~ dnorm(0, 2),
-          vector[5]:sigma_par ~ dexp(1),
-          cholesky_factor_corr[5]:L_Rho_a ~ lkj_corr_cholesky( 2 ),
-          
-          sigma ~ exponential(1),
-          
-          # convert cholesky to corr matrix
-          gq> matrix[5,5]:Rho_a <<- Chol_to_Corr(L_Rho_a)
-          
-    ),
-    data = spp, chains = 4, log_lik = TRUE)
 
-# check the precis output
-precis( m5, depth = 3 )
-# traceplot(m5)
-# dev.off()
+# compile the model
+m5 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model5.stan",
+                        verbose = TRUE)
 
-# plot the observed versus predicted data
-post <- sim(m5) - min_M
-plot(apply(post, 2, mean), spp$M)
-abline(0, 1)
+# sample the stan model
+m5_fit <- rstan::sampling(m5, data = spp, 
+                          iter = 1500, chains = 4, algorithm = c("NUTS"),
+                          control = list(adapt_delta = 0.99,
+                                         max_treedepth = 12),
+                          seed = 54856)
 
-r <- apply(post, 2, mean) - spp$M
-resid_var <- var2(r)
-outcome_var <- var2( spp$M )
-1 - resid_var/outcome_var
+# check the stan output
+print(m5_fit)
 
-# compare these three models for their predictive abilities: m3 best
-compare(m1, m2, m3, m4, m5, func = "PSIS")
+# check the traceplots
+traceplot(m5_fit, pars = c("abar[1]", "abar[2]", "abar[3]", "abar[4]"))
+
+# extract the diagnostic parameters
+diag <- rstan::summary(m5_fit)
+par <- "bar"
+diag$summary[grepl(par, row.names(diag$summary)), ]
+
+# calculate the PSIS loocv estimate
+# ref: http://ritsokiguess.site/docs/2019/06/25/going-to-the-loo-using-stan-for-model-comparison/
+log_lik_5 <- loo::extract_log_lik(m5_fit, merge_chains = F)
+r_eff_5 <- loo::relative_eff(log_lik_5)
+
+# calculate the loocv estimating using PSIS
+loo_5 <- rstan::loo(log_lik_5, r_eff = r_eff_5)
+
+
+
+
+
 
 # check the best predictive model
 post <- rethinking::extract.samples(m3)
