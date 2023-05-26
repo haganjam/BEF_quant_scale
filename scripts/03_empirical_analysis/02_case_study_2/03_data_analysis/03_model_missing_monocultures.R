@@ -47,10 +47,10 @@ data <- read_csv("data/case_study_2/data_clean/biomass_env_analysis_data.csv")
 v <- data[complete.cases(data),]
 
 # calculate the minimum observed biomass
-min_M <- min(v[v$M>0,]$M)
+# min_M <- min(v[v$M>0,]$M)
 
 # add this minimum to we can model without zero values
-v$M <- v$M + min_M
+# v$M <- v$M + min_M
 
 # make a data.list with the training data
 spp <- 
@@ -225,8 +225,33 @@ r_eff_5 <- loo::relative_eff(log_lik_5)
 loo_5 <- rstan::loo(log_lik_5, r_eff = r_eff_5)
 
 
+# try the gamma distribution
 
+# compile the model
+mx <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_modelgamma.stan",
+                        verbose = TRUE)
 
+# sample the stan model
+mx_fit <- rstan::sampling(mx, data = spp, 
+                          iter = 1000, chains = 4, algorithm = c("NUTS"),
+                          control = list(adapt_delta = 0.99,
+                                         max_treedepth = 12),
+                          seed = 54856)
+
+# check the stan output
+print(mx_fit)
+
+# check the traceplots
+traceplot(mx_fit, pars = c("abar[1]", "abar[2]", "abar[3]", "abar[4]"))
+
+# calculate the PSIS loocv estimate
+# ref: http://ritsokiguess.site/docs/2019/06/25/going-to-the-loo-using-stan-for-model-comparison/
+log_lik_x <- loo::extract_log_lik(mx_fit, merge_chains = F)
+r_eff_x <- loo::relative_eff(log_lik_x)
+
+# calculate the loocv estimating using PSIS
+loo_x <- rstan::loo(log_lik_x, r_eff = r_eff_x)
+loo_x
 
 
 # check the best predictive model
