@@ -1,8 +1,8 @@
 #'
 #' @title: Model the missing monocultures
 #' 
-#' @description: This script attempts to impute the missing monoculture
-#' data using Bayesian generalised linear models.
+#' @description: Fit log-normal hurdle generalised linear models in Stan that we 
+#' will use to impute the missing monoculture data .
 #' 
 #' @authors: James G. Hagan (james_hagan(at)outlook.com)
 #'
@@ -43,18 +43,23 @@ source("scripts/Function_plotting_theme.R")
 # load the analysis data
 data <- read_csv("data/case_study_2/data_clean/biomass_env_analysis_data.csv")
 
+# standardise the predictor variables in the overall data
+data$Y <- with(data, (Y - min(Y))/(max(Y)-min(Y)) )
+data$PC1 <- with(data, (PC1 - min(PC1))/(max(PC1)-min(PC1)) )
+data$PC2 <- with(data, (PC2 - min(PC2))/(max(PC2)-min(PC2)) )
+data$cluster_id <- as.integer(as.factor(data$cluster_id))
+data$time <- as.integer(as.factor(data$time))/3
+data$OTU <- as.integer(as.factor(data$OTU))
+
 # remove any NAs
 v <- data[complete.cases(data),]
 
-# calculate the minimum observed biomass
-# min_M <- min(v[v$M>0,]$M)
-
-# add this minimum to we can model without zero values
-# v$M <- v$M + min_M
-
 # make a data.list with the training data
 spp <- 
-  list(M = v$M,
+  list(N = length(v$M),
+       S_N = length(unique(v$OTU)),
+       C_N = length(unique(v$cluster_id)),
+       M = v$M,
        Y = with(v, (Y - min(Y))/(max(Y)-min(Y)) ),
        PC1 = with(v, (PC1 - min(PC1))/(max(PC1)-min(PC1)) ),
        PC2 = with(v, (PC2 - min(PC2))/(max(PC2)-min(PC2)) ),
@@ -72,29 +77,13 @@ m1 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_a
 # sample the stan model
 m1_fit <- rstan::sampling(m1, data = spp, 
                           iter = 1500, chains = 4, algorithm = c("NUTS"),
-                          control = list(adapt_delta = 0.99,
+                          control = list(adapt_delta = 0.95,
                                          max_treedepth = 12),
                           seed = 54856)
 
-# check the stan output
-print(m1_fit)
-
-# check the traceplots
-traceplot(m1_fit, pars = c("abar[1]", "abar[2]", "abar[3]", "abar[4]"))
-
-# extract the diagnostic parameters
-diag <- rstan::summary(m1_fit)
-par <- "bar"
-diag$summary[grepl(par, row.names(diag$summary)), ]
-
-# calculate the PSIS loocv estimate
-# ref: http://ritsokiguess.site/docs/2019/06/25/going-to-the-loo-using-stan-for-model-comparison/
-log_lik_1 <- loo::extract_log_lik(m1_fit, merge_chains = F)
-r_eff_1 <- loo::relative_eff(log_lik_1)
-
-# calculate the loocv estimating using PSIS
-loo_1 <- rstan::loo(log_lik_1, r_eff = r_eff_1)
-print(loo_1)
+# save the stan model fit object
+m1_fit@stanmodel@dso <- new("cxxdso")
+saveRDS(m1_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model1_fit.rds")
 
 # model 2
 
@@ -109,16 +98,24 @@ m2_fit <- rstan::sampling(m2, data = spp,
                                          max_treedepth = 12),
                           seed = 54856)
 
+# save the stan model fit object
+m2_fit@stanmodel@dso <- new("cxxdso")
+saveRDS(m2_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model2_fit.rds")
+
 # check the stan output
 print(m2_fit)
 
 # check the traceplots
-traceplot(m2_fit, pars = c("abar[1]", "abar[2]", "abar[3]", "abar[4]"))
+pars <- m2_fit@model_pars
+pars <- pars[!(grepl("Rho", pars) | pars == "Z" | pars == "mu" | pars == "hu" | pars == "log_lik" | pars == "lp__")]
+
+# check the traceplots
+par_sel <- sample(pars, 1)
+traceplot(m2_fit, pars = par_sel)
 
 # extract the diagnostic parameters
 diag <- rstan::summary(m2_fit)
-par <- "bar"
-diag$summary[grepl(par, row.names(diag$summary)), ]
+diag$summary[grepl(par_sel, row.names(diag$summary)), ]
 
 # calculate the PSIS loocv estimate
 # ref: http://ritsokiguess.site/docs/2019/06/25/going-to-the-loo-using-stan-for-model-comparison/
@@ -127,6 +124,49 @@ r_eff_2 <- loo::relative_eff(log_lik_2)
 
 # calculate the loocv estimating using PSIS
 loo_2 <- rstan::loo(log_lik_2, r_eff = r_eff_2)
+print(loo_2)
+
+# check individual points
+k_high2 <- which(pareto_k_influence_values(loo_2) > 0.7)
+
+# check the data with high k-values
+View(v[k_high2, ])
+
+# plot the model predictions
+post <- extract(m2_fit)
+
+mu2 <- vector(length = spp$N)
+for(i in 1:spp$N) {
+  
+  # get the mean prediction from the lognormal model on the natural scale
+  x <- 
+    with(spp, 
+         (post$abar[, S[i]] + post$a[, , S[i]][, C[i]]) + 
+           (post$b1bar[, S[i]] + post$b1[, , S[i]][, C[i]] * T[i]) + 
+           (post$b2bar[, S[i]] + post$b2[, , S[i]][, C[i]] * Y[i]) + 
+           (post$b3bar[, S[i]] + post$b3[, , S[i]][, C[i]] * PC1[i]) + 
+           (post$b4bar[, S[i]] + post$b4[, , S[i]][, C[i]] * PC2[i]))
+  x <- exp(x + (0.5*(post$sigma^2)))
+  
+  # get the probability of 0
+  y <- 
+    with(spp, 
+         (post$abar_hu[, S[i]] + post$a_hu[, , S[i]][, C[i]]) + 
+           (post$b1bar_hu[, S[i]] + post$b1_hu[, , S[i]][, C[i]] * T[i]) + 
+           (post$b2bar_hu[, S[i]] + post$b2_hu[, , S[i]][, C[i]] * Y[i]) + 
+           (post$b3bar_hu[, S[i]] + post$b3_hu[, , S[i]][, C[i]] * PC1[i]) + 
+           (post$b4bar_hu[, S[i]] + post$b4_hu[, , S[i]][, C[i]] * PC2[i]) )
+  y <- plogis(y)
+  y <- 1-y
+  
+  mu[i] <- mean((x*y))
+  
+}
+
+# plot the predicted values
+plot(mu2, spp$M)
+points(mu2[k_high2], spp$M[k_high2], col = "red")
+abline(0, 1)
 
 # model 3
 
@@ -141,16 +181,24 @@ m3_fit <- rstan::sampling(m3, data = spp,
                                          max_treedepth = 12),
                           seed = 54856)
 
+# save the stan model fit object
+m3_fit@stanmodel@dso <- new("cxxdso")
+saveRDS(m3_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model3_fit.rds")
+
 # check the stan output
 print(m3_fit)
 
 # check the traceplots
-traceplot(m3_fit, pars = c("abar[1]", "abar[2]", "abar[3]", "abar[4]"))
+pars <- m3_fit@model_pars
+pars <- pars[!(grepl("Rho", pars) | pars == "Z" | pars == "mu" | pars == "hu" | pars == "log_lik" | pars == "lp__")]
+
+# check the traceplots
+par_sel <- sample(pars, 1)
+traceplot(m3_fit, pars = par_sel)
 
 # extract the diagnostic parameters
 diag <- rstan::summary(m3_fit)
-par <- "bar"
-diag$summary[grepl(par, row.names(diag$summary)), ]
+diag$summary[grepl(par_sel, row.names(diag$summary)), ]
 
 # calculate the PSIS loocv estimate
 # ref: http://ritsokiguess.site/docs/2019/06/25/going-to-the-loo-using-stan-for-model-comparison/
@@ -159,6 +207,45 @@ r_eff_3 <- loo::relative_eff(log_lik_3)
 
 # calculate the loocv estimating using PSIS
 loo_3 <- rstan::loo(log_lik_3, r_eff = r_eff_3)
+print(loo_3)
+
+# check individual points
+k_high3 <- which(pareto_k_influence_values(loo_3) > 0.7)
+
+# check the data with high k-values
+View(v[k_high3, ])
+
+# plot the model predictions
+post <- extract(m3_fit)
+
+mu3 <- vector(length = spp$N)
+for(i in 1:spp$N) {
+  
+  # get the mean prediction from the lognormal model on the natural scale
+  x <- 
+    with(spp, 
+         (post$abar[, S[i]] + post$a[, , S[i]][, C[i]]) + 
+           (post$b1bar[, S[i]] + post$b1[, , S[i]][, C[i]] * T[i]) + 
+           (post$b2bar[, S[i]] + post$b2[, , S[i]][, C[i]] * Y[i]))
+  x <- exp(x + (0.5*(post$sigma^2)))
+  
+  # get the probability of 0
+  y <- 
+    with(spp, 
+         (post$abar_hu[, S[i]] + post$a_hu[, , S[i]][, C[i]]) + 
+           (post$b1bar_hu[, S[i]] + post$b1_hu[, , S[i]][, C[i]] * T[i]) + 
+           (post$b2bar_hu[, S[i]] + post$b2_hu[, , S[i]][, C[i]] * Y[i]) )
+  y <- plogis(y)
+  y <- 1-y
+  
+  mu3[i] <- mean((x*y))
+  
+}
+
+# plot the predicted values
+plot(mu3, spp$M)
+points(mu3[k_high3], spp$M[k_high3], col = "red")
+abline(0, 1)
 
 # model 4
 
@@ -173,16 +260,21 @@ m4_fit <- rstan::sampling(m4, data = spp,
                                          max_treedepth = 12),
                           seed = 54856)
 
-# check the stan output
-print(m4_fit)
+# save the stan model fit object
+m4_fit@stanmodel@dso <- new("cxxdso")
+saveRDS(m4_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model4_fit.rds")
 
 # check the traceplots
-traceplot(m4_fit, pars = c("abar[1]", "abar[2]", "abar[3]", "abar[4]"))
+pars <- m4_fit@model_pars
+pars <- pars[!(grepl("Rho", pars) | pars == "Z" | pars == "mu" | pars == "hu" | pars == "log_lik" | pars == "lp__")]
+
+# check the traceplots
+par_sel <- sample(pars, 1)
+traceplot(m4_fit, pars = par_sel)
 
 # extract the diagnostic parameters
 diag <- rstan::summary(m4_fit)
-par <- "bar"
-diag$summary[grepl(par, row.names(diag$summary)), ]
+diag$summary[grepl(par_sel, row.names(diag$summary)), ]
 
 # calculate the PSIS loocv estimate
 # ref: http://ritsokiguess.site/docs/2019/06/25/going-to-the-loo-using-stan-for-model-comparison/
@@ -191,6 +283,43 @@ r_eff_4 <- loo::relative_eff(log_lik_4)
 
 # calculate the loocv estimating using PSIS
 loo_4 <- rstan::loo(log_lik_4, r_eff = r_eff_4)
+print(loo_4)
+
+# check individual points
+k_high4 <- which(pareto_k_influence_values(loo_4) > 0.7)
+
+# check the data with high k-values
+View(v[k_high4, ])
+
+# plot the model predictions
+post <- extract(m4_fit)
+
+mu4 <- vector(length = spp$N)
+for(i in 1:spp$N) {
+  
+  # get the mean prediction from the lognormal model on the natural scale
+  x <- 
+    with(spp, 
+         (post$abar[, S[i]] + post$a[, , S[i]][, C[i]]) + 
+           (post$b1bar[, S[i]] + post$b1[, , S[i]][, C[i]] * T[i]))
+  x <- exp(x + (0.5*(post$sigma^2)))
+  
+  # get the probability of 0
+  y <- 
+    with(spp, 
+         (post$abar_hu[, S[i]] + post$a_hu[, , S[i]][, C[i]]) + 
+           (post$b1bar_hu[, S[i]] + post$b1_hu[, , S[i]][, C[i]] * T[i]) )
+  y <- plogis(y)
+  y <- 1-y
+  
+  mu4[i] <- mean((x*y))
+  
+}
+
+# plot the predicted values
+plot(mu4, spp$M)
+points(mu4[k_high4], spp$M[k_high4], col = "red")
+abline(0, 1)
 
 # model 5
 
@@ -205,16 +334,24 @@ m5_fit <- rstan::sampling(m5, data = spp,
                                          max_treedepth = 12),
                           seed = 54856)
 
+# save the stan model fit object
+m5_fit@stanmodel@dso <- new("cxxdso")
+saveRDS(m5_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model5_fit.rds")
+
 # check the stan output
 print(m5_fit)
 
 # check the traceplots
-traceplot(m5_fit, pars = c("abar[1]", "abar[2]", "abar[3]", "abar[4]"))
+pars <- m5_fit@model_pars
+pars <- pars[!(grepl("Rho", pars) | pars == "Z" | pars == "mu" | pars == "hu" | pars == "log_lik" | pars == "lp__")]
+
+# check the traceplots
+par_sel <- sample(pars, 1)
+traceplot(m5_fit, pars = par_sel)
 
 # extract the diagnostic parameters
 diag <- rstan::summary(m5_fit)
-par <- "bar"
-diag$summary[grepl(par, row.names(diag$summary)), ]
+diag$summary[grepl(par_sel, row.names(diag$summary)), ]
 
 # calculate the PSIS loocv estimate
 # ref: http://ritsokiguess.site/docs/2019/06/25/going-to-the-loo-using-stan-for-model-comparison/
@@ -223,35 +360,44 @@ r_eff_5 <- loo::relative_eff(log_lik_5)
 
 # calculate the loocv estimating using PSIS
 loo_5 <- rstan::loo(log_lik_5, r_eff = r_eff_5)
+print(loo_5)
 
+# check individual points
+k_high5 <- which(pareto_k_influence_values(loo_5) > 0.7)
 
-# try the gamma distribution
+# check the data with high k-values
+View(v[k_high5, ])
 
-# compile the model
-mx <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_modelgamma.stan",
-                        verbose = TRUE)
+# plot the model predictions
+post <- extract(m5_fit)
 
-# sample the stan model
-mx_fit <- rstan::sampling(mx, data = spp, 
-                          iter = 1000, chains = 4, algorithm = c("NUTS"),
-                          control = list(adapt_delta = 0.99,
-                                         max_treedepth = 12),
-                          seed = 54856)
+mu5 <- vector(length = spp$N)
+for(i in 1:spp$N) {
+  
+  # get the mean prediction from the lognormal model on the natural scale
+  x <- 
+    with(spp, 
+         (post$abar[, S[i]] + post$a[, , S[i]][, C[i]]))
+  x <- exp(x + (0.5*(post$sigma^2)))
+  
+  # get the probability of 0
+  y <- 
+    with(spp, 
+         (post$abar_hu[, S[i]] + post$a_hu[, , S[i]][, C[i]]))
+  y <- plogis(y)
+  y <- 1-y
+  
+  mu5[i] <- mean((x*y))
+  
+}
 
-# check the stan output
-print(mx_fit)
+# plot the predicted values
+plot(mu5, spp$M)
+points(mu5[k_high5], spp$M[k_high5], col = "red")
+abline(0, 1)
 
-# check the traceplots
-traceplot(mx_fit, pars = c("abar[1]", "abar[2]", "abar[3]", "abar[4]"))
-
-# calculate the PSIS loocv estimate
-# ref: http://ritsokiguess.site/docs/2019/06/25/going-to-the-loo-using-stan-for-model-comparison/
-log_lik_x <- loo::extract_log_lik(mx_fit, merge_chains = F)
-r_eff_x <- loo::relative_eff(log_lik_x)
-
-# calculate the loocv estimating using PSIS
-loo_x <- rstan::loo(log_lik_x, r_eff = r_eff_x)
-loo_x
+# compare the different models
+loo_compare(loo_1, loo_2, loo_3, loo_4, loo_5)
 
 
 # check the best predictive model
