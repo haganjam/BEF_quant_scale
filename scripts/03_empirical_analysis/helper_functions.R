@@ -47,4 +47,39 @@ var2 <- function( x , na.rm = TRUE ) {
   mean(x^2) - mean(x)^2
 }
 
+#'@title: HPDI() 
+#'
+#'@description: function to calculate the high density posterior interval
+#'McElreath (2020, https://rdrr.io/github/rmcelreath/rethinking/src/R/utilities.r)
+#'
+#'@param x vector of data to calculate the percentile interval on
+#' 
+
+# highest posterior density interval, sensu Box and Tiao
+# requires coda library
+HPDI <- function( samples , prob=0.89 ) {
+  require(coda)
+  coerce.list <- c( "numeric" , "matrix" , "data.frame" , "integer" , "array" )
+  if ( inherits(samples, coerce.list) ) {
+    # single chain for single variable
+    samples <- coda::as.mcmc( samples )
+  }
+  x <- sapply( prob , function(p) coda::HPDinterval( samples , prob=p ) )
+  # now order inside-out in pairs
+  n <- length(prob)
+  result <- rep(0,n*2)
+  for ( i in 1:n ) {
+    low_idx <- n+1-i
+    up_idx <- n+i
+    # lower
+    result[low_idx] <- x[1,i]
+    # upper
+    result[up_idx] <- x[2,i]
+    # add names
+    names(result)[low_idx] <- paste("|",prob[i])
+    names(result)[up_idx] <- paste(prob[i],"|")
+  }
+  return(result)
+}
+
 ### END
