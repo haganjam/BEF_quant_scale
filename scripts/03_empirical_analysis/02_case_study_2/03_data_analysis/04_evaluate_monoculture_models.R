@@ -470,19 +470,82 @@ v[as.integer(names(k_mult[k_mult>1])),]
 
 # make a fit to sample plot of the best fitting model: m1
 
+# extract samples from the posterior distribution
+post <- extract(m1_fit)
+id_high <- which(post$sigma > quantile(post$sigma, 0.95))
+id_low <- which(post$sigma < quantile(post$sigma, 0.05))
+id <- c(id_high, id_low)
+
 # pull into a data.frame for plotting
-M_C <- factor(spp$C)
-levels(M_C) <- paste0("Cluster ", LETTERS[1:10])
-df_pred <- data.frame(M_obs = spp$M,
-                      M_S = as.character(spp$S),
-                      M_C = M_C,
-                      M_T = as.character(round(spp$T, 1)),
-                      M_pred_mu = apply(mu1, 2, mean),
-                      M_pred_PIlow = apply(mu1, 2, HPDI, 0.90)[1,],
-                      M_pred_PIhigh = apply(mu1, 2, HPDI, 0.90)[2,])
+df_pred <- data.frame(M = data$M,
+                      S = data$OTU,
+                      C = data$cluster_id,
+                      T = data$time,
+                      Y = data$Y,
+                      PC1 = data$PC1, 
+                      PC2 = data$PC2)
+
+# use the posterior predictive distribution
+ppd <- TRUE
+
+pred_mod <- vector("list", length = nrow(df_pred))
+for(i in 1:nrow(df_pred)) {
+
+  # get the mean prediction from the lognormal model on the natural scale
+  x <- 
+    with(df_pred, 
+         (post$abar[-id, S[i]] + post$a[, , S[i]][-id, C[i]]) + 
+           (post$b1bar[-id, S[i]] + post$b1[, , S[i]][-id, C[i]] * T[i]) + 
+           (post$b2bar[-id, S[i]] + post$b2[, , S[i]][-id, C[i]] * Y[i]) + 
+           (post$b3bar[-id, S[i]] + post$b3[, , S[i]][-id, C[i]] * PC1[i]) + 
+           (post$b4bar[-id, S[i]] + post$b4[, , S[i]][-id, C[i]] * PC2[i]) + 
+           (post$b5bar[-id, S[i]] + post$b5[, , S[i]][-id, C[i]] * Y[i] * PC1[i]))
+  if(ppd) {
+    x <- rlnorm(n = length(x), x, post$sigma)
+  } else {
+    x <- exp(x + (0.5*(post$sigma^2)))
+  }
+  
+  # get the probability of 0
+  y <- 
+    with(df_pred, 
+         (post$abar_hu[-id, S[i]] + post$a_hu[, , S[i]][-id, C[i]]) + 
+           (post$b1bar_hu[-id, S[i]] + post$b1_hu[, , S[i]][-id, C[i]] * T[i]) + 
+           (post$b2bar_hu[-id, S[i]] + post$b2_hu[, , S[i]][-id, C[i]] * Y[i]) + 
+           (post$b3bar_hu[-id, S[i]] + post$b3_hu[, , S[i]][-id, C[i]] * PC1[i]) + 
+           (post$b4bar_hu[-id, S[i]] + post$b4_hu[, , S[i]][-id, C[i]] * PC2[i]) + 
+           (post$b5bar_hu[-id, S[i]] + post$b5_hu[, , S[i]][-id, C[i]] * Y[i] * PC1[i]) )
+  y <- plogis(y)
+  y <- 1-y
+  if(ppd) {
+    y <- rbinom(n = length(y), size = 1, prob = y)
+  }
+  
+  pred_mod[[i]] <- (x*y)
+  
+}
+
+# bind into a matrix
+pred_mod <- do.call("cbind", pred_mod)
+
+# pull into a data.frame for plotting
+C <- factor(data$cluster_id)
+levels(C) <- paste0("Cluster ", LETTERS[1:10])
+df_plot <- data.frame(M_obs = data$M,
+                      Obs_pred = ifelse(is.na(data$M), "Predicted", "Observed"),
+                      S = as.character(df_pred$S),
+                      C = C,
+                      T = as.character(data$time),
+                      Y = data$Y,
+                      PC1 = data$PC1,
+                      PC2 = data$PC2,
+                      M_pred_mu = apply(pred_mod, 2, mean),
+                      M_pred_PIlow = apply(pred_mod, 2, HPDI, 0.90)[1,],
+                      M_pred_PIhigh = apply(pred_mod, 2, HPDI, 0.90)[2,])
+
 
 # check the min and max
-summary(df_pred)
+summary(df_plot)
 
 # factor OTU order: Barn Bryo Bumpi Hydro Seasq
 
