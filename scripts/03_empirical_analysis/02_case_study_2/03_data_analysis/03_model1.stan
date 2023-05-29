@@ -137,26 +137,26 @@ model{
     // vector of means: binomial linear model 
      vector[N] hu;
     // standard deviation of the log-normal distribution
-    sigma ~ exponential( 1 );
+    sigma ~ exponential( 4 );
     // linear model priors: log-normal
-    abar ~ normal( 0 , 2 );
-    b1bar ~ normal( 0 , 2 );
-    b2bar ~ normal( 0 , 2 );
-    b3bar ~ normal( 0 , 2 );
-    b4bar ~ normal( 0 , 2 );
-    b5bar ~ normal( 0 , 2 );
-    sigma_a ~ exponential( 1 );
-    sigma_b1 ~ exponential( 1 );
-    sigma_b2 ~ exponential( 1 );
-    sigma_b3 ~ exponential( 1 );
-    sigma_b4 ~ exponential( 1 );
-    sigma_b5 ~ exponential( 1 );
-    L_Rho_a ~ lkj_corr_cholesky( 2 );
-    L_Rho_b1 ~ lkj_corr_cholesky( 2 );
-    L_Rho_b2 ~ lkj_corr_cholesky( 2 );
-    L_Rho_b3 ~ lkj_corr_cholesky( 2 );
-    L_Rho_b4 ~ lkj_corr_cholesky( 2 );
-    L_Rho_b5 ~ lkj_corr_cholesky( 2 );
+    abar ~ normal( 0 , 1 );
+    b1bar ~ normal( 0 , 0.5 );
+    b2bar ~ normal( 0 , 0.5 );
+    b3bar ~ normal( 0 , 0.5 );
+    b4bar ~ normal( 0 , 0.5 );
+    b5bar ~ normal( 0 , 0.5 );
+    sigma_a ~ exponential( 4 );
+    sigma_b1 ~ exponential( 3 );
+    sigma_b2 ~ exponential( 3 );
+    sigma_b3 ~ exponential( 3 );
+    sigma_b4 ~ exponential( 3 );
+    sigma_b5 ~ exponential( 3 );
+    L_Rho_a ~ lkj_corr_cholesky( 3 );
+    L_Rho_b1 ~ lkj_corr_cholesky( 3 );
+    L_Rho_b2 ~ lkj_corr_cholesky( 3 );
+    L_Rho_b3 ~ lkj_corr_cholesky( 3 );
+    L_Rho_b4 ~ lkj_corr_cholesky( 3 );
+    L_Rho_b5 ~ lkj_corr_cholesky( 3 );
     // linear model priors: binomial model
     abar_hu ~ normal( 0 , 2 );
     b1bar_hu ~ normal( 0 , 2 );
@@ -164,12 +164,12 @@ model{
     b3bar_hu ~ normal( 0 , 2 );
     b4bar_hu ~ normal( 0 , 2 );
     b5bar_hu ~ normal( 0 , 2 );
-    sigma_a_hu ~ exponential( 1 );
-    sigma_b1_hu ~ exponential( 1 );
-    sigma_b2_hu ~ exponential( 1 );
-    sigma_b3_hu ~ exponential( 1 );
-    sigma_b4_hu ~ exponential( 1 );
-    sigma_b5_hu ~ exponential( 1 );
+    sigma_a_hu ~ exponential( 2 );
+    sigma_b1_hu ~ exponential( 2 );
+    sigma_b2_hu ~ exponential( 2 );
+    sigma_b3_hu ~ exponential( 2 );
+    sigma_b4_hu ~ exponential( 2 );
+    sigma_b5_hu ~ exponential( 2 );
     L_Rho_a_hu ~ lkj_corr_cholesky( 2 );
     L_Rho_b1_hu ~ lkj_corr_cholesky( 2 );
     L_Rho_b2_hu ~ lkj_corr_cholesky( 2 );
