@@ -105,14 +105,14 @@ model{
     // vector of means: binomial linear model 
      vector[N] hu;
     // standard deviation of the log-normal distribution
-    sigma ~ exponential( 1 );
+    sigma ~ exponential( 3 );
     // linear model priors: log-normal
-    abar ~ normal( 0 , 2 );
-    b1bar ~ normal( 0 , 2 );
-    b2bar ~ normal( 0 , 2 );
-    sigma_a ~ exponential( 1 );
-    sigma_b1 ~ exponential( 1 );
-    sigma_b2 ~ exponential( 1 );
+    abar ~ normal( 0 , 1.5 );
+    b1bar ~ normal( 0 , 1.5 );
+    b2bar ~ normal( 0 , 1.5 );
+    sigma_a ~ exponential( 2 );
+    sigma_b1 ~ exponential( 2 );
+    sigma_b2 ~ exponential( 2 );
     L_Rho_a ~ lkj_corr_cholesky( 2 );
     L_Rho_b1 ~ lkj_corr_cholesky( 2 );
     L_Rho_b2 ~ lkj_corr_cholesky( 2 );
