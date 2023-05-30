@@ -14,7 +14,7 @@ library(dplyr)
 library(tidyr)
 
 # load relevant plotting themes
-source(here("scripts/Function_plotting_theme.R"))
+source("scripts/Function_plotting_theme.R")
 
 # load the analysis data
 data <- read_csv(here("data/case_study_2/data_clean/biomass_env_analysis_data.csv"))

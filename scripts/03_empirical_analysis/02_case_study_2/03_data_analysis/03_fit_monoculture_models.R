@@ -103,7 +103,7 @@ m3_fit <- rstan::sampling(m3, data = spp,
                           iter = 1500, chains = 4, algorithm = c("NUTS"),
                           control = list(adapt_delta = 0.99,
                                          max_treedepth = 12),
-                          seed = 54856)
+                          seed = 54856, cores = 4)
 
 # save the stan model fit object
 m3_fit@stanmodel@dso <- new("cxxdso")
@@ -117,10 +117,9 @@ m4 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_a
 
 # sample the stan model
 m4_fit <- rstan::sampling(m4, data = spp, 
-                          iter = 1500, chains = 4, algorithm = c("NUTS"),
-                          control = list(adapt_delta = 0.99,
-                                         max_treedepth = 12),
-                          seed = 54856)
+                          iter = 2000, chains = 4, algorithm = c("NUTS"),
+                          control = list(adapt_delta = 0.99),
+                          seed = 54856, cores = 4)
 
 # save the stan model fit object
 m4_fit@stanmodel@dso <- new("cxxdso")

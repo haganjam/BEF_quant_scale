@@ -347,19 +347,18 @@ for(i in 1:spp$N) {
   x <- 
     with(spp, 
          (post$abar[, S[i]] + post$a[, , S[i]][, C[i]]) + 
-           (post$b1bar[, S[i]] + post$b1[, , S[i]][, C[i]] * T[i]))
-  x <- exp(x + (0.5*(post$sigma^2)))
+           (post$b1[, S[i]] * Y[i]))
   if(ppd) {
     x <- rlnorm(n = length(x), x, post$sigma)
+  } else {
+    x <- exp(x + (0.5*(post$sigma^2)))
   }
   
   # get the probability of 0
   y <- 
     with(spp, 
-         (post$abar_hu[, S[i]] + post$a_hu[, , S[i]][, C[i]]) + 
-           (post$b1bar_hu[, S[i]] + post$b1_hu[, , S[i]][, C[i]] * T[i]) )
-  y <- plogis(y)
-  y <- 1-y
+         post$a_hu[, S[i]] * Y[i] + post$b1_hu[, S[i]] * Y[i] )
+  y <- 1 - plogis(y)
   if(ppd) {
     y <- rbinom(n = length(y), size = 1, prob = y)
   }
@@ -468,10 +467,10 @@ k_mult <- table(c(k_high1, k_high2, k_high3, k_high4, k_high5))
 v[as.integer(names(k_mult[k_mult>1])),]
 
 
-# make a fit to sample plot of the best fitting model: m1
+# make a fit to sample plot of the best fitting model: m4
 
 # extract samples from the posterior distribution
-post <- extract(m1_fit)
+post <- rstan::extract(m4_fit)
 id_high <- which(post$sigma > quantile(post$sigma, 0.95))
 id_low <- which(post$sigma < quantile(post$sigma, 0.05))
 id <- c(id_high, id_low)
@@ -494,12 +493,8 @@ for(i in 1:nrow(df_pred)) {
   # get the mean prediction from the lognormal model on the natural scale
   x <- 
     with(df_pred, 
-         (post$abar[-id, S[i]] + post$a[, , S[i]][-id, C[i]]) + 
-           (post$b1bar[-id, S[i]] + post$b1[, , S[i]][-id, C[i]] * T[i]) + 
-           (post$b2bar[-id, S[i]] + post$b2[, , S[i]][-id, C[i]] * Y[i]) + 
-           (post$b3bar[-id, S[i]] + post$b3[, , S[i]][-id, C[i]] * PC1[i]) + 
-           (post$b4bar[-id, S[i]] + post$b4[, , S[i]][-id, C[i]] * PC2[i]) + 
-           (post$b5bar[-id, S[i]] + post$b5[, , S[i]][-id, C[i]] * Y[i] * PC1[i]))
+         (post$abar[, S[i]] + post$a[, , S[i]][, C[i]]) + 
+           (post$b1[, S[i]] * Y[i]))
   if(ppd) {
     x <- rlnorm(n = length(x), x, post$sigma)
   } else {
@@ -509,14 +504,8 @@ for(i in 1:nrow(df_pred)) {
   # get the probability of 0
   y <- 
     with(df_pred, 
-         (post$abar_hu[-id, S[i]] + post$a_hu[, , S[i]][-id, C[i]]) + 
-           (post$b1bar_hu[-id, S[i]] + post$b1_hu[, , S[i]][-id, C[i]] * T[i]) + 
-           (post$b2bar_hu[-id, S[i]] + post$b2_hu[, , S[i]][-id, C[i]] * Y[i]) + 
-           (post$b3bar_hu[-id, S[i]] + post$b3_hu[, , S[i]][-id, C[i]] * PC1[i]) + 
-           (post$b4bar_hu[-id, S[i]] + post$b4_hu[, , S[i]][-id, C[i]] * PC2[i]) + 
-           (post$b5bar_hu[-id, S[i]] + post$b5_hu[, , S[i]][-id, C[i]] * Y[i] * PC1[i]) )
-  y <- plogis(y)
-  y <- 1-y
+         post$a_hu[, S[i]] * Y[i] + post$b1_hu[, S[i]] * Y[i] )
+  y <- 1 - plogis(y)
   if(ppd) {
     y <- rbinom(n = length(y), size = 1, prob = y)
   }
@@ -548,18 +537,20 @@ df_plot <- data.frame(M_obs = data$M,
 summary(df_plot)
 
 # factor OTU order: Barn Bryo Bumpi Hydro Seasq
-
 p1 <- 
-  ggplot(data = df_pred,
-         mapping = aes(x = M_obs, y = M_pred_mu, colour = M_S)) +
+  ggplot() +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed", colour = "red") +
-  geom_errorbar(mapping = aes(x = M_obs, ymin = M_pred_PIlow, ymax = M_pred_PIhigh),
+  geom_point(data = df_plot,
+         mapping = aes(x = M_obs, y = M_pred_mu, colour = S))
+  geom_errorbar(mapping = aes(x = M_obs, 
+                              ymin = M_pred_PIlow, ymax = M_pred_PIhigh,
+                              colour = S),
                 width = 0, alpha = 0.5, size = 0.25, show.legend = FALSE) +
   geom_point(shape = 16, alpha = 0.75) +
   ylab("Predicted monoculture (g)") +
   xlab("Observed monoculture (g)") +
-  facet_wrap(~M_C, scales = "free", nrow = 2, ncol = 5) +
-  scale_y_continuous(limits = c(0, 23)) +
+  facet_wrap(~C, scales = "free") +
+  scale_y_continuous(limits = c(0, 31)) +
   scale_x_continuous(limits = c(0, 10)) +
   scale_colour_manual(name = "OTU",
                       labels = c("Barn", "Bryo", "Asci", "Hydro", "Ciona"),
