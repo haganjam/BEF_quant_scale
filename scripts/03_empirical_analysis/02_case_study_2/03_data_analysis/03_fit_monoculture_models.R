@@ -6,6 +6,8 @@
 #' 
 #' @authors: James G. Hagan (james_hagan(at)outlook.com)
 #'
+#' reference on divergent transitions: https://www.martinmodrak.cz/2018/02/19/taming-divergences-in-stan-models/
+#'
 #' for a conceptual reference, this is the simplest centered model coded in ulam()
 #' 
 #' mx <- 
@@ -32,31 +34,31 @@ library(rstan)
 library(loo)
 
 # load the analysis data
-data <- read_csv("data/case_study_2/data_clean/biomass_env_analysis_data.csv")
+df_obs <- read_csv("data/case_study_2/data_clean/biomass_env_analysis_data.csv")
 
 # standardise the predictor variables in the overall data
-data$Y <- with(data, (Y - min(Y))/(max(Y)-min(Y)) )
-data$PC1 <- with(data, (PC1 - min(PC1))/(max(PC1)-min(PC1)) )
-data$PC2 <- with(data, (PC2 - min(PC2))/(max(PC2)-min(PC2)) )
-data$cluster_id <- as.integer(as.factor(data$cluster_id))
-data$time <- as.integer(as.factor(data$time))/3
-data$OTU <- as.integer(as.factor(data$OTU))
+df_obs$Y <- with(df_obs, (Y - min(Y))/(max(Y)-min(Y)) )
+df_obs$PC1 <- with(df_obs, (PC1 - min(PC1))/(max(PC1)-min(PC1)) )
+df_obs$PC2 <- with(df_obs, (PC2 - min(PC2))/(max(PC2)-min(PC2)) )
+df_obs$cluster_id <- as.integer(as.factor(df_obs$cluster_id))
+df_obs$time <- as.integer(as.factor(df_obs$time))/3
+df_obs$OTU <- as.integer(as.factor(df_obs$OTU))
 
 # remove any NAs
-v <- data[complete.cases(data),]
+df_m_obs <- df_obs[complete.cases(df_obs),]
 
 # make a data.list with the training data
-spp <- 
-  list(N = length(v$M),
-       S_N = length(unique(v$OTU)),
-       C_N = length(unique(v$cluster_id)),
-       M = v$M,
-       Y = v$Y,
-       PC1 = v$PC1,
-       PC2 = v$PC2,
-       C = v$cluster_id,
-       T = v$time,
-       S = v$OTU)
+df_m_obs <- 
+  list(N = length(df_m_obs$M),
+       S_N = length(unique(df_m_obs$OTU)),
+       C_N = length(unique(df_m_obs$cluster_id)),
+       M = df_m_obs$M,
+       Y = df_m_obs$Y,
+       PC1 = df_m_obs$PC1,
+       PC2 = df_m_obs$PC2,
+       C = df_m_obs$cluster_id,
+       T = df_m_obs$time,
+       S = df_m_obs$OTU)
 
 # model 1
 
@@ -65,11 +67,11 @@ m1 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_a
                         verbose = TRUE)
 
 # sample the stan model
-m1_fit <- rstan::sampling(m1, data = spp, 
-                          iter = 1500, chains = 4, algorithm = c("NUTS"),
-                          control = list(adapt_delta = 0.99,
-                                         max_treedepth = 12),
-                          seed = 54856)
+m1_fit <- rstan::sampling(m1, data = df_m_obs, 
+                          iter = 2000, chains = 4, algorithm = c("NUTS"),
+                          control = list(adapt_delta = 0.999,
+                                         max_treedepth = 14, stepsize = 0.001),
+                          cores = 4)
 
 # save the stan model fit object
 m1_fit@stanmodel@dso <- new("cxxdso")
@@ -82,11 +84,11 @@ m2 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_a
                         verbose = TRUE)
 
 # sample the stan model
-m2_fit <- rstan::sampling(m2, data = spp, 
-                          iter = 1500, chains = 4, algorithm = c("NUTS"),
+m2_fit <- rstan::sampling(m2, data = df_m_obs, 
+                          iter = 1000, chains = 4, algorithm = c("NUTS"),
                           control = list(adapt_delta = 0.99,
-                                         max_treedepth = 12),
-                          seed = 54856)
+                                         max_treedepth = 14, stepsize = 0.001),
+                          seed = 54856, cores = 4)
 
 # save the stan model fit object
 m2_fit@stanmodel@dso <- new("cxxdso")
@@ -99,8 +101,8 @@ m3 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_a
                         verbose = TRUE)
 
 # sample the stan model
-m3_fit <- rstan::sampling(m3, data = spp, 
-                          iter = 1500, chains = 4, algorithm = c("NUTS"),
+m3_fit <- rstan::sampling(m3, data = df_m_obs, 
+                          iter = 2000, chains = 4, algorithm = c("NUTS"),
                           control = list(adapt_delta = 0.99,
                                          max_treedepth = 12),
                           seed = 54856, cores = 4)
@@ -116,10 +118,11 @@ m4 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_a
                         verbose = TRUE)
 
 # sample the stan model
-m4_fit <- rstan::sampling(m4, data = spp, 
+m4_fit <- rstan::sampling(m4, data = df_m_obs, 
                           iter = 2000, chains = 4, algorithm = c("NUTS"),
-                          control = list(adapt_delta = 0.99),
-                          seed = 54856, cores = 4)
+                          control = list(adapt_delta = 0.99,
+                                         max_treedepth = 14, stepsize = 0.001),
+                          cores = 4)
 
 # save the stan model fit object
 m4_fit@stanmodel@dso <- new("cxxdso")
@@ -132,11 +135,11 @@ m5 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_a
                         verbose = TRUE)
 
 # sample the stan model
-m5_fit <- rstan::sampling(m5, data = spp, 
-                          iter = 1500, chains = 4, algorithm = c("NUTS"),
+m5_fit <- rstan::sampling(m5, data = df_m_obs, 
+                          iter = 2000, chains = 4, algorithm = c("NUTS"),
                           control = list(adapt_delta = 0.99,
-                                         max_treedepth = 12),
-                          seed = 54856)
+                                         max_treedepth = 14, stepsize = 0.001),
+                          seed = 54856, cores = 4)
 
 # save the stan model fit object
 m5_fit@stanmodel@dso <- new("cxxdso")

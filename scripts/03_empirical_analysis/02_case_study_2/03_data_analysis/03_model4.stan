@@ -68,7 +68,7 @@ parameters{
      vector[S_N] abar;
      real<lower=0> sigma_b1;
      real b1bar;
-     // parameters: binomial model
+     // parameters: binomial
      vector[S_N] Za_hu;
      vector[S_N] Zb1_hu;
      real<lower=0> sigma_a_hu;
@@ -96,16 +96,16 @@ model{
     // standard deviation of the log-normal distribution
     sigma ~ exponential( 4 );
     // linear model priors: log-normal
-    abar ~ uniform( -4 , 4 );
-    sigma_a ~ exponential( 4 );
+    abar ~ uniform( -4.5 , 4.5 );
+    sigma_a ~ exponential( 3 );
     L_Rho_a ~ lkj_corr_cholesky( 2 );
-    b1bar ~ normal(0, 1);
+    b1bar ~ normal(0.5, 1.5);
     sigma_b1 ~ exponential( 2 );
     // linear model priors: binomial model
-    abar_hu ~ normal( 0 , 1 );
-    sigma_a_hu ~ exponential( 2 );
-    b1bar_hu ~ normal(0, 1);
-    sigma_b1_hu ~ exponential( 2 );
+    abar_hu ~ normal( 0.5 , 1.5 );
+    sigma_a_hu ~ exponential( 3 );
+    b1bar_hu ~ normal(0.5, 1.5);
+    sigma_b1_hu ~ exponential( 3 );
     // standard normal vectors
     to_vector( Za ) ~ normal( 0 , 1 );
     to_vector( Zb1 ) ~ normal( 0 , 1 );

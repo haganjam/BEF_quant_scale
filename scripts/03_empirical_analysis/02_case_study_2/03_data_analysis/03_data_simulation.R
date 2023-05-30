@@ -245,7 +245,7 @@ diag <- as.data.frame(rstan::summary(m_sim_fit)$summary)
 # parameter row names
 pars_rows <- gsub(pattern = "\\[(.*?)\\]", replace = "", row.names(diag))
 
-# check simulated parameter
+# check simulated parameters
 n <- 13
 
 pars[n]
@@ -253,7 +253,7 @@ eval(parse(text = pars[n]))
 pars_rows[pars[n] == pars_rows]
 diag[pars[n] == pars_rows, ]$mean
 
-# check the relationship between these parameters
+# check the relationship between matrix parameters
 m_true <- eval(parse(text = pars[n]))
 m_est <- t(matrix(diag[pars[n] == pars_rows, ]$mean, ncol = 10, nrow = 5))
 
@@ -261,6 +261,4 @@ col <- 5
 plot(m_true[,col], m_est[,col])
 abline(0, 1)
 
-
-
-
+### END

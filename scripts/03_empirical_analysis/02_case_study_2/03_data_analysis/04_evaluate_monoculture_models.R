@@ -19,47 +19,30 @@ source("scripts/Function_plotting_theme.R")
 source("scripts/03_empirical_analysis/helper_functions.R")
 
 # load the analysis data
-data <- read_csv("data/case_study_2/data_clean/biomass_env_analysis_data.csv")
+df_obs <- read_csv("data/case_study_2/data_clean/biomass_env_analysis_data.csv")
 
 # standardise the predictor variables in the overall data
-data$Y <- with(data, (Y - min(Y))/(max(Y)-min(Y)) )
-data$PC1 <- with(data, (PC1 - min(PC1))/(max(PC1)-min(PC1)) )
-data$PC2 <- with(data, (PC2 - min(PC2))/(max(PC2)-min(PC2)) )
-data$cluster_id <- as.integer(as.factor(data$cluster_id))
-data$time <- as.integer(as.factor(data$time))/3
-data$OTU <- as.integer(as.factor(data$OTU))
+df_obs$Y <- with(df_obs, (Y - min(Y))/(max(Y)-min(Y)) )
+df_obs$PC1 <- with(df_obs, (PC1 - min(PC1))/(max(PC1)-min(PC1)) )
+df_obs$PC2 <- with(df_obs, (PC2 - min(PC2))/(max(PC2)-min(PC2)) )
+df_obs$C <- as.integer(as.factor(df_obs$cluster_id))
+df_obs$T <- as.integer(as.factor(df_obs$time))/3
+df_obs$S <- as.integer(as.factor(df_obs$OTU))
 
-# remove any NAs
-v <- data[complete.cases(data),]
-
-# make a data.list with the training data
-spp <- 
-  list(N = length(v$M),
-       S_N = length(unique(v$OTU)),
-       C_N = length(unique(v$cluster_id)),
-       M = v$M,
-       Y = with(v, (Y - min(Y))/(max(Y)-min(Y)) ),
-       PC1 = with(v, (PC1 - min(PC1))/(max(PC1)-min(PC1)) ),
-       PC2 = with(v, (PC2 - min(PC2))/(max(PC2)-min(PC2)) ),
-       C = as.integer(as.factor(v$cluster_id)),
-       T = as.integer(as.factor(v$time))/3,
-       S = as.integer(as.factor(v$OTU))
-  )
-
+# which rows have observed monoculture
+n_obs_mono <- which(!is.na(df_obs$M))
 
 # model 1
 m1_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model1_fit.rds")
 
-# check the stan output
-print(m1_fit)
-
 # check the traceplots
 pars <- m1_fit@model_pars
-pars <- pars[!(grepl("Rho", pars) | pars == "Z" | pars == "mu" | pars == "hu" | pars == "log_lik" | pars == "lp__")]
+pars <- pars[!(grepl("Rho", pars) | grepl("Z", pars) | pars == "mu" | pars == "hu" | pars == "log_lik" | pars == "lp__")]
 
 # check the traceplots
 par_sel <- sample(pars, 1)
-traceplot(m1_fit, pars = par_sel)
+print(par_sel)
+rstan::traceplot(m1_fit, pars = par_sel)
 
 # extract the diagnostic parameters
 diag <- rstan::summary(m1_fit)
@@ -86,18 +69,16 @@ post <- extract(m1_fit)
 # use the posterior predictive distribution
 ppd <- TRUE
 
-mu1 <- vector("list", length = spp$N)
-for(i in 1:spp$N) {
+mu1 <- vector("list", length = nrow(df_obs))
+for(i in 1:nrow(df_obs)) {
 
   # get the mean prediction from the lognormal model on the natural scale
   x <- 
-    with(spp, 
+    with(df_obs, 
          (post$abar[, S[i]] + post$a[, , S[i]][, C[i]]) + 
-           (post$b1bar[, S[i]] + post$b1[, , S[i]][, C[i]] * T[i]) + 
-           (post$b2bar[, S[i]] + post$b2[, , S[i]][, C[i]] * Y[i]) + 
-           (post$b3bar[, S[i]] + post$b3[, , S[i]][, C[i]] * PC1[i]) + 
-           (post$b4bar[, S[i]] + post$b4[, , S[i]][, C[i]] * PC2[i]) + 
-           (post$b5bar[, S[i]] + post$b5[, , S[i]][, C[i]] * Y[i] * PC1[i]))
+           post$b1[, S[i]] * Y[i] + 
+           post$b2[, S[i]] * PC1[i] + 
+           post$b3[, S[i]] * Y[i] * PC1[i] )
   if(ppd) {
     x <- rlnorm(n = length(x), x, post$sigma)
   } else {
@@ -106,15 +87,13 @@ for(i in 1:spp$N) {
   
   # get the probability of 0
   y <- 
-    with(spp, 
-         (post$abar_hu[, S[i]] + post$a_hu[, , S[i]][, C[i]]) + 
-           (post$b1bar_hu[, S[i]] + post$b1_hu[, , S[i]][, C[i]] * T[i]) + 
-           (post$b2bar_hu[, S[i]] + post$b2_hu[, , S[i]][, C[i]] * Y[i]) + 
-           (post$b3bar_hu[, S[i]] + post$b3_hu[, , S[i]][, C[i]] * PC1[i]) + 
-           (post$b4bar_hu[, S[i]] + post$b4_hu[, , S[i]][, C[i]] * PC2[i]) + 
-           (post$b5bar_hu[, S[i]] + post$b5_hu[, , S[i]][, C[i]] * Y[i] * PC1[i]) )
-  y <- plogis(y)
-  y <- 1-y
+    with(df_obs, 
+         post$a_hu[, S[i]] * Y[i] + 
+           post$b1_hu[, S[i]] * Y[i] +
+           post$b2[, S[i]] * PC1[i] + 
+           post$b3[, S[i]] * Y[i] * PC1[i]
+           )
+  y <- 1 - plogis(y)
   if(ppd) {
     y <- rbinom(n = length(y), size = 1, prob = y)
   }
@@ -127,24 +106,25 @@ for(i in 1:spp$N) {
 mu1 <- do.call("cbind", mu1)
 
 # plot the predicted values
-plot(apply(mu1, 2, mean), spp$M)
-points(apply(mu1, 2, mean)[k_high1], spp$M[k_high1], col = "red")
+plot(apply(mu1[, n_obs_mono], 2, mean), df_obs[n_obs_mono,]$M)
+points(apply(mu1[, n_obs_mono], 2, mean)[k_high1], df_obs[n_obs_mono,]$M[k_high1], col = "red")
 abline(0, 1)
 
 # calculate the r2 value
-r <- apply(mu1, 2, mean) - spp$M
-r <- 1 - (var2(r)/var2(spp$M))
+r <- apply(mu1[,n_obs_mono], 2, mean) - df_obs[n_obs_mono,]$M
+r <- 1 - (var2(r)/var2(df_obs[n_obs_mono,]$M))
 print(r)
+
+# check the overall predicted distributions
+max(apply(mu1, 2, mean))
+max(apply(mu1, 2, max))
 
 # model 2
 m2_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model2_fit.rds")
 
-# check the stan output
-print(m2_fit)
-
 # check the traceplots
 pars <- m2_fit@model_pars
-pars <- pars[!(grepl("Rho", pars) | pars == "Z" | pars == "mu" | pars == "hu" | pars == "log_lik" | pars == "lp__")]
+pars <- pars[!(grepl("Rho", pars) | grepl("Z", pars)  | pars == "mu" | pars == "hu" | pars == "log_lik" | pars == "lp__")]
 
 # check the traceplots
 par_sel <- sample(pars, 1)
@@ -175,32 +155,28 @@ post <- extract(m2_fit)
 # use the posterior predictive distribution
 ppd <- TRUE
 
-mu2 <- vector("list", length = spp$N)
-for(i in 1:spp$N) {
+mu2 <- vector("list", length = nrow(df_obs))
+for(i in 1:nrow(df_obs)) {
   
   # get the mean prediction from the lognormal model on the natural scale
   x <- 
-    with(spp, 
+    with(df_obs, 
          (post$abar[, S[i]] + post$a[, , S[i]][, C[i]]) + 
-           (post$b1bar[, S[i]] + post$b1[, , S[i]][, C[i]] * T[i]) + 
-           (post$b2bar[, S[i]] + post$b2[, , S[i]][, C[i]] * Y[i]) + 
-           (post$b3bar[, S[i]] + post$b3[, , S[i]][, C[i]] * PC1[i]) + 
-           (post$b4bar[, S[i]] + post$b4[, , S[i]][, C[i]] * PC2[i]))
-  x <- exp(x + (0.5*(post$sigma^2)))
+           post$b1[, S[i]] * Y[i] + 
+           post$b2[, S[i]] * PC1[i] )
   if(ppd) {
     x <- rlnorm(n = length(x), x, post$sigma)
+  } else {
+    x <- exp(x + (0.5*(post$sigma^2)))
   }
   
   # get the probability of 0
   y <- 
-    with(spp, 
-         (post$abar_hu[, S[i]] + post$a_hu[, , S[i]][, C[i]]) + 
-           (post$b1bar_hu[, S[i]] + post$b1_hu[, , S[i]][, C[i]] * T[i]) + 
-           (post$b2bar_hu[, S[i]] + post$b2_hu[, , S[i]][, C[i]] * Y[i]) + 
-           (post$b3bar_hu[, S[i]] + post$b3_hu[, , S[i]][, C[i]] * PC1[i]) + 
-           (post$b4bar_hu[, S[i]] + post$b4_hu[, , S[i]][, C[i]] * PC2[i]) )
-  y <- plogis(y)
-  y <- 1-y
+    with(df_obs, 
+         post$a_hu[, S[i]] * Y[i] + 
+           post$b1_hu[, S[i]] * Y[i] +
+           post$b2[, S[i]] * PC1[i] )
+  y <- 1 - plogis(y)
   if(ppd) {
     y <- rbinom(n = length(y), size = 1, prob = y)
   }
@@ -213,24 +189,25 @@ for(i in 1:spp$N) {
 mu2 <- do.call("cbind", mu2)
 
 # plot the predicted values
-plot(apply(mu2, 2, mean), spp$M)
-points(apply(mu2, 2, mean)[k_high2], spp$M[k_high2], col = "red")
+plot(apply(mu2[, n_obs_mono], 2, mean), df_obs[n_obs_mono,]$M)
+points(apply(mu2[, n_obs_mono], 2, mean)[k_high1], df_obs[n_obs_mono,]$M[k_high1], col = "red")
 abline(0, 1)
 
 # calculate the r2 value
-r <- apply(mu2, 2, mean) - spp$M
-r <- 1 - (var2(r)/var2(spp$M))
+r <- apply(mu2[,n_obs_mono], 2, mean) - df_obs[n_obs_mono,]$M
+r <- 1 - (var2(r)/var2(df_obs[n_obs_mono,]$M))
 print(r)
+
+# check the overall predicted distributions
+max(apply(mu2, 2, mean))
+max(apply(mu2, 2, max))
 
 # model 3
 m3_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model3_fit.rds")
 
-# check the stan output
-print(m3_fit)
-
 # check the traceplots
 pars <- m3_fit@model_pars
-pars <- pars[!(grepl("Rho", pars) | pars == "Z" | pars == "mu" | pars == "hu" | pars == "log_lik" | pars == "lp__")]
+pars <- pars[!(grepl("Rho", pars) | grepl("Z", pars)  | pars == "mu" | pars == "hu" | pars == "log_lik" | pars == "lp__")]
 
 # check the traceplots
 par_sel <- sample(pars, 1)
@@ -261,28 +238,27 @@ post <- extract(m3_fit)
 # use the posterior predictive distribution
 ppd <- TRUE
 
-mu3 <- vector("list", length = spp$N)
-for(i in 1:spp$N) {
+mu3 <- vector("list", length = nrow(df_obs))
+for(i in 1:nrow(df_obs)) {
   
   # get the mean prediction from the lognormal model on the natural scale
   x <- 
-    with(spp, 
+    with(df_obs, 
          (post$abar[, S[i]] + post$a[, , S[i]][, C[i]]) + 
-           (post$b1bar[, S[i]] + post$b1[, , S[i]][, C[i]] * T[i]) + 
-           (post$b2bar[, S[i]] + post$b2[, , S[i]][, C[i]] * Y[i]))
-  x <- exp(x + (0.5*(post$sigma^2)))
+           post$b1[, S[i]] * Y[i] + 
+           post$b2[, S[i]] * PC1[i] )
   if(ppd) {
     x <- rlnorm(n = length(x), x, post$sigma)
+  } else {
+    x <- exp(x + (0.5*(post$sigma^2)))
   }
   
   # get the probability of 0
   y <- 
-    with(spp, 
-         (post$abar_hu[, S[i]] + post$a_hu[, , S[i]][, C[i]]) + 
-           (post$b1bar_hu[, S[i]] + post$b1_hu[, , S[i]][, C[i]] * T[i]) + 
-           (post$b2bar_hu[, S[i]] + post$b2_hu[, , S[i]][, C[i]] * Y[i]) )
-  y <- plogis(y)
-  y <- 1-y
+    with(df_obs, 
+         post$a_hu[, S[i]] * Y[i] + 
+           post$b1_hu[, S[i]] * Y[i])
+  y <- 1 - plogis(y)
   if(ppd) {
     y <- rbinom(n = length(y), size = 1, prob = y)
   }
@@ -295,21 +271,25 @@ for(i in 1:spp$N) {
 mu3 <- do.call("cbind", mu3)
 
 # plot the predicted values
-plot(apply(mu3, 2, mean), spp$M)
-points(apply(mu3, 2, mean)[k_high3], spp$M[k_high3], col = "red")
+plot(apply(mu3[, n_obs_mono], 2, mean), df_obs[n_obs_mono,]$M)
+points(apply(mu3[, n_obs_mono], 2, mean)[k_high1], df_obs[n_obs_mono,]$M[k_high1], col = "red")
 abline(0, 1)
 
 # calculate the r2 value
-r <- apply(mu3, 2, mean) - spp$M
-r <- 1 - (var2(r)/var2(spp$M))
+r <- apply(mu3[,n_obs_mono], 2, mean) - df_obs[n_obs_mono,]$M
+r <- 1 - (var2(r)/var2(df_obs[n_obs_mono,]$M))
 print(r)
+
+# check the overall predicted distributions
+max(apply(mu3, 2, mean))
+max(apply(mu3, 2, max))
 
 # model 4
 m4_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model4_fit.rds")
 
 # check the traceplots
 pars <- m4_fit@model_pars
-pars <- pars[!(grepl("Rho", pars) | pars == "Z" | pars == "mu" | pars == "hu" | pars == "log_lik" | pars == "lp__")]
+pars <- pars[!(grepl("Rho", pars) | grepl("Z", pars)  | pars == "mu" | pars == "hu" | pars == "log_lik" | pars == "lp__")]
 
 # check the traceplots
 par_sel <- sample(pars, 1)
@@ -340,12 +320,12 @@ post <- extract(m4_fit)
 # use the posterior predictive distribution
 ppd <- TRUE
 
-mu4 <- vector("list", length = spp$N)
-for(i in 1:spp$N) {
+mu4 <- vector("list", length = nrow(df_obs))
+for(i in 1:nrow(df_obs)) {
   
   # get the mean prediction from the lognormal model on the natural scale
   x <- 
-    with(spp, 
+    with(df_obs, 
          (post$abar[, S[i]] + post$a[, , S[i]][, C[i]]) + 
            (post$b1[, S[i]] * Y[i]))
   if(ppd) {
@@ -356,7 +336,7 @@ for(i in 1:spp$N) {
   
   # get the probability of 0
   y <- 
-    with(spp, 
+    with(df_obs, 
          post$a_hu[, S[i]] * Y[i] + post$b1_hu[, S[i]] * Y[i] )
   y <- 1 - plogis(y)
   if(ppd) {
@@ -371,27 +351,29 @@ for(i in 1:spp$N) {
 mu4 <- do.call("cbind", mu4)
 
 # plot the predicted values
-plot(apply(mu4, 2, mean), spp$M)
-points(apply(mu4, 2, mean)[k_high4], spp$M[k_high4], col = "red")
+plot(apply(mu4[, n_obs_mono], 2, mean), df_obs[n_obs_mono,]$M)
+points(apply(mu4[, n_obs_mono], 2, mean)[k_high1], df_obs[n_obs_mono,]$M[k_high1], col = "red")
 abline(0, 1)
 
 # calculate the r2 value
-r <- apply(mu4, 2, mean) - spp$M
-r <- 1 - (var2(r)/var2(spp$M))
+r <- apply(mu4[,n_obs_mono], 2, mean) - df_obs[n_obs_mono,]$M
+r <- 1 - (var2(r)/var2(df_obs[n_obs_mono,]$M))
 print(r)
+
+# check the overall predicted distributions
+max(apply(mu4, 2, mean))
+max(apply(mu4, 2, max))
 
 # model 5
 m5_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model5_fit.rds")
 
-# check the stan output
-print(m5_fit)
-
 # check the traceplots
 pars <- m5_fit@model_pars
-pars <- pars[!(grepl("Rho", pars) | pars == "Z" | pars == "mu" | pars == "hu" | pars == "log_lik" | pars == "lp__")]
+pars <- pars[!(grepl("Rho", pars) | grepl("Z", pars)  | pars == "mu" | pars == "hu" | pars == "log_lik" | pars == "lp__")]
 
 # check the traceplots
 par_sel <- sample(pars, 1)
+print(par_sel)
 traceplot(m5_fit, pars = par_sel)
 
 # extract the diagnostic parameters
@@ -419,24 +401,25 @@ post <- extract(m5_fit)
 # use the posterior predictive distribution
 ppd <- TRUE
 
-mu5 <- vector("list", length = spp$N)
-for(i in 1:spp$N) {
+mu5 <- vector("list", length = nrow(df_obs))
+for(i in 1:nrow(df_obs)) {
   
   # get the mean prediction from the lognormal model on the natural scale
   x <- 
-    with(spp, 
-         (post$abar[, S[i]] + post$a[, , S[i]][, C[i]]))
-  x <- exp(x + (0.5*(post$sigma^2)))
+    with(df_obs, 
+         post$a[, S[i]] + post$b1[, S[i]] * Y[i])
+  
   if(ppd) {
     x <- rlnorm(n = length(x), x, post$sigma)
+  } else {
+    x <- exp(x + (0.5*(post$sigma^2)))
   }
   
   # get the probability of 0
   y <- 
-    with(spp, 
-         (post$abar_hu[, S[i]] + post$a_hu[, , S[i]][, C[i]]))
-  y <- plogis(y)
-  y <- 1-y
+    with(df_obs, 
+         post$a_hu[, S[i]] * Y[i] + post$b1_hu[, S[i]] * Y[i] )
+  y <- 1 - plogis(y)
   if(ppd) {
     y <- rbinom(n = length(y), size = 1, prob = y)
   }
@@ -449,14 +432,18 @@ for(i in 1:spp$N) {
 mu5 <- do.call("cbind", mu5)
 
 # plot the predicted values
-plot(apply(mu5, 2, mean), spp$M)
-points(apply(mu5, 2, mean)[k_high5], spp$M[k_high5], col = "red")
+plot(apply(mu5[, n_obs_mono], 2, mean), df_obs[n_obs_mono,]$M)
+points(apply(mu5[, n_obs_mono], 2, mean)[k_high1], df_obs[n_obs_mono,]$M[k_high1], col = "red")
 abline(0, 1)
 
 # calculate the r2 value
-r <- apply(mu5, 2, mean) - spp$M
-r <- 1 - (var2(r)/var2(spp$M))
+r <- apply(mu5[,n_obs_mono], 2, mean) - df_obs[n_obs_mono,]$M
+r <- 1 - (var2(r)/var2(df_obs[n_obs_mono,]$M))
 print(r)
+
+# check the overall predicted distributions
+max(apply(mu5, 2, mean))
+max(apply(mu5, 2, max))
 
 # compare the different models
 loo_compare(loo_1, loo_2, loo_3, loo_4, loo_5)
@@ -471,9 +458,6 @@ v[as.integer(names(k_mult[k_mult>1])),]
 
 # extract samples from the posterior distribution
 post <- rstan::extract(m4_fit)
-id_high <- which(post$sigma > quantile(post$sigma, 0.95))
-id_low <- which(post$sigma < quantile(post$sigma, 0.05))
-id <- c(id_high, id_low)
 
 # pull into a data.frame for plotting
 df_pred <- data.frame(M = data$M,
@@ -495,6 +479,7 @@ for(i in 1:nrow(df_pred)) {
     with(df_pred, 
          (post$abar[, S[i]] + post$a[, , S[i]][, C[i]]) + 
            (post$b1[, S[i]] * Y[i]))
+  
   if(ppd) {
     x <- rlnorm(n = length(x), x, post$sigma)
   } else {
@@ -505,6 +490,7 @@ for(i in 1:nrow(df_pred)) {
   y <- 
     with(df_pred, 
          post$a_hu[, S[i]] * Y[i] + post$b1_hu[, S[i]] * Y[i] )
+  
   y <- 1 - plogis(y)
   if(ppd) {
     y <- rbinom(n = length(y), size = 1, prob = y)
@@ -516,6 +502,9 @@ for(i in 1:nrow(df_pred)) {
 
 # bind into a matrix
 pred_mod <- do.call("cbind", pred_mod)
+
+# check the maximum mean
+max(apply(pred_mod, 2, mean))
 
 # pull into a data.frame for plotting
 C <- factor(data$cluster_id)
@@ -535,6 +524,30 @@ df_plot <- data.frame(M_obs = data$M,
 
 # check the min and max
 summary(df_plot)
+
+# plot fit-to-sample
+p1 <- 
+  ggplot(data = df_plot %>% filter(!is.na(M_obs))) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", colour = "red") +
+  geom_point(mapping = aes(x = M_obs, y = M_pred_mu, colour = S),
+             shape = 16, alpha = 0.75) + 
+  geom_errorbar(mapping = aes(x = M_obs, ymin = M_pred_PIlow, ymax = M_pred_PIhigh, 
+                              colour = S),
+                width = 0, alpha = 0.5, size = 0.25, show.legend = FALSE) +
+  ylab("Predicted monoculture (g)") +
+  xlab("Observed monoculture (g)") +
+  facet_wrap(~C, scales = "free") +
+  scale_y_continuous(limits = c(0, 31)) +
+  scale_x_continuous(limits = c(0, 10)) +
+  scale_colour_manual(name = "OTU",
+                      labels = c("Barn", "Bryo", "Asci", "Hydro", "Ciona"),
+                      values = viridis(n = 5, begin = 0.1, end = 0.9, option = "C")) +
+  guides(colour = guide_legend(override.aes = list(shape = 16, size = 4, alpha = 1))) +
+  theme_meta() +
+  theme(legend.position = "top",
+        legend.key = element_rect(fill = NA))
+plot(p1)
+
 
 # factor OTU order: Barn Bryo Bumpi Hydro Seasq
 p1 <- 
