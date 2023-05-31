@@ -32,6 +32,87 @@ df_obs$S <- as.integer(as.factor(df_obs$OTU))
 # which rows have observed monoculture
 n_obs_mono <- which(!is.na(df_obs$M))
 
+# model 0
+m0_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model0_fit.rds")
+
+# check the traceplots
+pars <- m0_fit@model_pars
+pars <- pars[!(grepl("Rho", pars) | grepl("Z", pars) | pars == "mu" | pars == "hu" | pars == "log_lik" | pars == "lp__")]
+
+# check the traceplots
+par_sel <- sample(pars, 1)
+print(par_sel)
+rstan::traceplot(m0_fit, pars = par_sel)
+
+# extract the diagnostic parameters
+diag <- rstan::summary(m0_fit)
+diag$summary[grepl(par_sel, row.names(diag$summary)), ]
+
+# calculate the PSIS loocv estimate
+# ref: http://ritsokiguess.site/docs/2019/06/25/going-to-the-loo-using-stan-for-model-comparison/
+log_lik_0 <- loo::extract_log_lik(m0_fit, merge_chains = F)
+r_eff_0 <- loo::relative_eff(log_lik_0)
+
+# calculate the loocv estimating using PSIS
+loo_0 <- rstan::loo(log_lik_0, r_eff = r_eff_0)
+print(loo_0)
+
+# check individual points
+k_high0 <- which(pareto_k_influence_values(loo_0) > 0.7)
+
+# check the data with high k-values
+View(v[k_high0, ])
+
+# plot the model predictions
+post <- extract(m0_fit)
+
+# use the posterior predictive distribution
+ppd <- TRUE
+
+mu0 <- vector("list", length = nrow(df_obs))
+for(i in 1:nrow(df_obs)) {
+  
+  # get the mean prediction from the lognormal model on the natural scale
+  x <- 
+    with(df_obs, 
+         post$a[, S[i]] + post$b1[, S[i]]* Y[i] + post$b2[, S[i]]* PC1[i])
+  
+  if(ppd) {
+    x <- rlnorm(n = length(x), x, post$sigma)
+  } else {
+    x <- exp(x + (0.5*(post$sigma^2)))
+  }
+  
+  # get the probability of 0
+  y <- 
+    with(df_obs, 
+         post$a_hu[, S[i]] + post$b1_hu[, S[i]]* Y[i] )
+  y <- 1 - plogis(y)
+  if(ppd) {
+    y <- rbinom(n = length(y), size = 1, prob = y)
+  }
+  
+  mu0[[i]] <- (x*y)
+  
+}
+
+# bind into a matrix
+mu0 <- do.call("cbind", mu0)
+
+# plot the predicted values
+plot(apply(mu0[, n_obs_mono], 2, mean), df_obs[n_obs_mono,]$M)
+points(apply(mu0[, n_obs_mono], 2, mean)[k_high0], df_obs[n_obs_mono,]$M[k_high0], col = "red")
+abline(0, 1)
+
+# calculate the r2 value
+r <- apply(mu0[,n_obs_mono], 2, mean) - df_obs[n_obs_mono,]$M
+r <- 1 - (var2(r)/var2(df_obs[n_obs_mono,]$M))
+print(r)
+
+# check the overall predicted distributions
+max(apply(mu0, 2, mean))
+max(apply(mu0, 2, max))
+
 # model 1
 m1_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model1_fit.rds")
 
@@ -518,80 +599,34 @@ max(apply(mu6, 2, mean))
 max(apply(mu6, 2, max))
 
 # compare the different models
-loo_compare(loo_1, loo_2, loo_3, loo_4, loo_5)
+loo_compare(list( "m0" = loo_0, 
+                  "m1" = loo_1, 
+                  "m2" = loo_2, 
+                  "m3" = loo_3, 
+                  "m4" = loo_4, 
+                  "m5" = loo_5, 
+                  "m6" = loo_6) )
 
 # are similar points leading to the high values
-k_mult <- table(c(k_high1, k_high2, k_high3, k_high4, k_high5))
+k_mult <- table(c(k_high0, k_high1, k_high2, k_high3, k_high4, k_high5, k_high6))
+df_obs[as.integer(names(k_mult[k_mult>1])),]
 
-v[as.integer(names(k_mult[k_mult>1])),]
-
-
-# make a fit to sample plot of the best fitting model: m4
-
-# extract samples from the posterior distribution
-post <- rstan::extract(m4_fit)
+# make a fit to sample plot of the best fitting model: m0
 
 # pull into a data.frame for plotting
-df_pred <- data.frame(M = data$M,
-                      S = data$OTU,
-                      C = data$cluster_id,
-                      T = data$time,
-                      Y = data$Y,
-                      PC1 = data$PC1, 
-                      PC2 = data$PC2)
-
-# use the posterior predictive distribution
-ppd <- TRUE
-
-pred_mod <- vector("list", length = nrow(df_pred))
-for(i in 1:nrow(df_pred)) {
-
-  # get the mean prediction from the lognormal model on the natural scale
-  x <- 
-    with(df_pred, 
-         (post$abar[, S[i]] + post$a[, , S[i]][, C[i]]) + 
-           (post$b1[, S[i]] * Y[i]))
-  
-  if(ppd) {
-    x <- rlnorm(n = length(x), x, post$sigma)
-  } else {
-    x <- exp(x + (0.5*(post$sigma^2)))
-  }
-  
-  # get the probability of 0
-  y <- 
-    with(df_pred, 
-         post$a_hu[, S[i]] * Y[i] + post$b1_hu[, S[i]] * Y[i] )
-  
-  y <- 1 - plogis(y)
-  if(ppd) {
-    y <- rbinom(n = length(y), size = 1, prob = y)
-  }
-  
-  pred_mod[[i]] <- (x*y)
-  
-}
-
-# bind into a matrix
-pred_mod <- do.call("cbind", pred_mod)
-
-# check the maximum mean
-max(apply(pred_mod, 2, mean))
-
-# pull into a data.frame for plotting
-C <- factor(data$cluster_id)
+C <- factor(df_obs$cluster_id)
 levels(C) <- paste0("Cluster ", LETTERS[1:10])
-df_plot <- data.frame(M_obs = data$M,
-                      Obs_pred = ifelse(is.na(data$M), "Predicted", "Observed"),
-                      S = as.character(df_pred$S),
+df_plot <- data.frame(M_obs = df_obs$M,
+                      Obs_pred = ifelse(is.na(df_obs$M), "Predicted", "Observed"),
+                      S = as.character(df_obs$S),
                       C = C,
-                      T = as.character(data$time),
-                      Y = data$Y,
-                      PC1 = data$PC1,
-                      PC2 = data$PC2,
-                      M_pred_mu = apply(pred_mod, 2, mean),
-                      M_pred_PIlow = apply(pred_mod, 2, HPDI, 0.90)[1,],
-                      M_pred_PIhigh = apply(pred_mod, 2, HPDI, 0.90)[2,])
+                      T = as.character(df_obs$time),
+                      Y = df_obs$Y,
+                      PC1 = df_obs$PC1,
+                      PC2 = df_obs$PC2,
+                      M_pred_mu = apply(mu0, 2, mean),
+                      M_pred_PIlow = apply(mu0, 2, HPDI, 0.90)[1,],
+                      M_pred_PIhigh = apply(mu0, 2, HPDI, 0.90)[2,])
 
 
 # check the min and max
@@ -620,30 +655,6 @@ p1 <-
         legend.key = element_rect(fill = NA))
 plot(p1)
 
-
-# factor OTU order: Barn Bryo Bumpi Hydro Seasq
-p1 <- 
-  ggplot() +
-  geom_abline(intercept = 0, slope = 1, linetype = "dashed", colour = "red") +
-  geom_point(data = df_plot,
-         mapping = aes(x = M_obs, y = M_pred_mu, colour = S))
-  geom_errorbar(mapping = aes(x = M_obs, 
-                              ymin = M_pred_PIlow, ymax = M_pred_PIhigh,
-                              colour = S),
-                width = 0, alpha = 0.5, size = 0.25, show.legend = FALSE) +
-  geom_point(shape = 16, alpha = 0.75) +
-  ylab("Predicted monoculture (g)") +
-  xlab("Observed monoculture (g)") +
-  facet_wrap(~C, scales = "free") +
-  scale_y_continuous(limits = c(0, 31)) +
-  scale_x_continuous(limits = c(0, 10)) +
-  scale_colour_manual(name = "OTU",
-                      labels = c("Barn", "Bryo", "Asci", "Hydro", "Ciona"),
-                      values = viridis(n = 5, begin = 0.1, end = 0.9, option = "C")) +
-  guides(colour = guide_legend(override.aes = list(shape = 16, size = 4, alpha = 1))) +
-  theme_meta() +
-  theme(legend.position = "top",
-        legend.key = element_rect(fill = NA))
-plot(p1)
+# check the overlap between the predicted values and the observed values
 
 ### END

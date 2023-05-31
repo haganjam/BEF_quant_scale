@@ -60,6 +60,25 @@ df_m_obs <-
        T = df_m_obs$time,
        S = df_m_obs$OTU)
 
+# model 0
+
+# compile the model
+m0 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model0.stan",
+                        verbose = TRUE)
+
+# sample the stan model
+m0_fit <- rstan::sampling(m0, data = df_m_obs, 
+                          iter = 3000, chains = 4, algorithm = c("NUTS"),
+                          control = list(adapt_delta = 0.99),
+                          cores = 4)
+
+# check for divergent transitions
+check_divergences(m0_fit)
+
+# save the stan model fit object
+m0_fit@stanmodel@dso <- new("cxxdso")
+saveRDS(m0_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model0_fit.rds")
+
 # model 1
 
 # compile the model
