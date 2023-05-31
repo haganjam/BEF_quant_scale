@@ -1,5 +1,5 @@
 //
-// LogNormal-Hurdle: Model 1
+// LogNormal-Hurdle: Model 2
 //
 functions {
   /* hurdle lognormal log-PDF of a single response
@@ -61,53 +61,25 @@ parameters{
      // standard deviation: log-normal model
      real<lower=0> sigma;
      // standard normal deviations: log-normal model
-     matrix[S_N,C_N] Za;
-     vector[S_N] Zb1;
-     vector[S_N] Zb2;
-     vector[S_N] Zb3;
+     matrix[3, S_N] Z;
      // parameters: log-normal model
-     cholesky_factor_corr[S_N] L_Rho_a;
-     vector<lower=0>[S_N] sigma_a;
-     vector[S_N] abar;
-     real<lower=0> sigma_b1;
-     real b1bar;
-     real<lower=0> sigma_b2;
-     real b2bar;
-     real<lower=0> sigma_b3;
-     real b3bar;
+     cholesky_factor_corr[3] L_Rho_v;
+     vector<lower=0>[3] sigma_v;
+     vector[3] vbar;
      // parameters: binomial model
-     vector[S_N] Za_hu;
-     vector[S_N] Zb1_hu;
-     vector[S_N] Zb2_hu;
-     vector[S_N] Zb3_hu;
-     real<lower=0> sigma_a_hu;
-     real abar_hu;
-     real<lower=0> sigma_b1_hu;
-     real b1bar_hu;
-     real<lower=0> sigma_b2_hu;
-     real b2bar_hu;
-     real<lower=0> sigma_b3_hu;
-     real b3bar_hu;
+     real a_hu;
+     real b1_hu;
 }
 transformed parameters{
      // transformed parameters: log-normal model
-     matrix[C_N,S_N] a;
+     matrix[S_N, 3] v;
+     vector[S_N] a;
      vector[S_N] b1;
      vector[S_N] b2;
-     vector[S_N] b3;
-     a = (diag_pre_multiply(sigma_a, L_Rho_a) * Za)';
-     b1 = b1bar + (Zb1*sigma_b1);
-     b2 = b2bar + (Zb2*sigma_b2);
-     b3 = b3bar + (Zb3*sigma_b3);
-     // transformed parameters: binomial model
-     vector[S_N] a_hu;
-     vector[S_N] b1_hu;
-     vector[S_N] b2_hu;
-     vector[S_N] b3_hu;
-     a_hu = abar_hu + (Za_hu*sigma_a_hu);
-     b1_hu = b1bar_hu + (Zb1_hu*sigma_b1_hu);
-     b2_hu = b2bar_hu + (Zb2_hu*sigma_b2_hu);
-     b3_hu = b1bar_hu + (Zb3_hu*sigma_b3_hu);
+     v = (diag_pre_multiply(sigma_v, L_Rho_v) * Z)';
+     a = vbar[1] + v[,1];
+     b1 = vbar[2] + v[,2];
+     b2 = vbar[3] + v[,3];
 }
 model{
     // vector of means: log-normal linear model 
@@ -117,36 +89,17 @@ model{
     // standard deviation of the log-normal distribution
     sigma ~ exponential( 4 );
     // linear model priors: log-normal
-    abar ~ uniform( -4 , 4 );
-    sigma_a ~ exponential( 2 );
-    L_Rho_a ~ lkj_corr_cholesky( 2 );
-    b1bar ~ normal(0.5, 1);
-    sigma_b1 ~ exponential( 2 );
-    b2bar ~ normal(0, 1);
-    sigma_b2 ~ exponential( 2 );
-    b3bar ~ normal(0, 1);
-    sigma_b3 ~ exponential( 2 );
+    vbar ~ normal(0, 2);
+    sigma_v ~ exponential( 2 );
+    L_Rho_v ~ lkj_corr_cholesky( 2 );
     // linear model priors: binomial
-    abar_hu ~ uniform( -5 , 5 );
-    sigma_a_hu ~ exponential( 2 );
-    b1bar_hu ~ normal(0.5, 1);
-    sigma_b1_hu ~ exponential( 2 );
-    b2bar_hu ~ normal(0, 1);
-    sigma_b2_hu ~ exponential( 2 );
-    b3bar_hu ~ normal(0, 1);
-    sigma_b3_hu ~ exponential( 2 );
+    a_hu ~ normal(0, 2);
+    b1_hu ~ normal(0, 2);
     // standard normal vectors
-    to_vector( Za ) ~ normal( 0 , 1 );
-    to_vector( Zb1 ) ~ normal( 0 , 1 );
-    to_vector( Zb2 ) ~ normal( 0 , 1 );
-    to_vector( Zb3 ) ~ normal( 0 , 1 );
-    to_vector( Za_hu ) ~ normal( 0 , 1 );
-    to_vector( Zb1_hu ) ~ normal( 0 , 1 );
-    to_vector( Zb2_hu ) ~ normal( 0 , 1 );
-    to_vector( Zb3_hu ) ~ normal( 0 , 1 );
+    to_vector( Z ) ~ normal( 0 , 1 );
     for ( i in 1:N ) {
-        mu[i] = (abar[S[i]] + a[C[i], S[i]]) + b1[S[i]] * Y[i] + b2[S[i]] * PC1[i] + b3[S[i]] * Y[i]*PC1[i];
-        hu[i] =  a_hu[S[i]] + b1_hu[S[i]] * Y[i] + b2[S[i]] * PC1[i] + b3[S[i]] * Y[i]*PC1[i];
+        mu[i] = a[S[i]] + b1[S[i]] * Y[i] + b2[S[i]] * PC1[i];
+        hu[i] =  a_hu + b1_hu * Y[i];
         target += hurdle_lognormal_logit_lpdf(M[i] | mu[i], sigma, hu[i]);
     }
 }
@@ -158,11 +111,11 @@ generated quantities{
      // hu vector: binomial model
      vector[N] hu;
      // correlation matrices: lognormal model
-     matrix[S_N,S_N] Rho_a;
-    Rho_a = multiply_lower_tri_self_transpose(L_Rho_a);
+     matrix[3,3] Rho_v;
+    Rho_v = multiply_lower_tri_self_transpose(L_Rho_v);
     for ( i in 1:N ) {
-        mu[i] = (abar[S[i]] + a[C[i], S[i]]) + b1[S[i]] * Y[i] + b2[S[i]] * PC1[i] + b3[S[i]] * Y[i]*PC1[i];
-        hu[i] =  a_hu[S[i]] + b1_hu[S[i]] * Y[i] + b2[S[i]] * PC1[i] + b3[S[i]] * Y[i]*PC1[i];
+        mu[i] = a[S[i]] + b1[S[i]] * Y[i] + b2[S[i]] * PC1[i];
+        hu[i] =  a_hu + b1_hu * Y[i];
     }
     for ( i in 1:N ) log_lik[i] = hurdle_lognormal_logit_lpdf(M[i] | mu[i], sigma, hu[i]);
 }

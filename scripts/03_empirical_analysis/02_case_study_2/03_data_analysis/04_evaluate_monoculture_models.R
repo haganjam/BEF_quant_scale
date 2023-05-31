@@ -75,10 +75,8 @@ for(i in 1:nrow(df_obs)) {
   # get the mean prediction from the lognormal model on the natural scale
   x <- 
     with(df_obs, 
-         (post$abar[, S[i]] + post$a[, , S[i]][, C[i]]) + 
-           post$b1[, S[i]] * Y[i] + 
-           post$b2[, S[i]] * PC1[i] + 
-           post$b3[, S[i]] * Y[i] * PC1[i] )
+         post$a[, S[i]] + post$b1[, S[i]]* Y[i] + post$b2[, S[i]]* PC1[i])
+  
   if(ppd) {
     x <- rlnorm(n = length(x), x, post$sigma)
   } else {
@@ -88,11 +86,7 @@ for(i in 1:nrow(df_obs)) {
   # get the probability of 0
   y <- 
     with(df_obs, 
-         post$a_hu[, S[i]] * Y[i] + 
-           post$b1_hu[, S[i]] * Y[i] +
-           post$b2[, S[i]] * PC1[i] + 
-           post$b3[, S[i]] * Y[i] * PC1[i]
-           )
+         post$a_hu + post$b1_hu * Y[i] )
   y <- 1 - plogis(y)
   if(ppd) {
     y <- rbinom(n = length(y), size = 1, prob = y)
@@ -124,10 +118,11 @@ m2_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysi
 
 # check the traceplots
 pars <- m2_fit@model_pars
-pars <- pars[!(grepl("Rho", pars) | grepl("Z", pars)  | pars == "mu" | pars == "hu" | pars == "log_lik" | pars == "lp__")]
+pars <- pars[!(grepl("Rho", pars) | grepl("Z", pars) | pars == "v" | pars == "mu" | pars == "hu" | pars == "log_lik" | pars == "lp__")]
 
 # check the traceplots
 par_sel <- sample(pars, 1)
+print(par_sel)
 traceplot(m2_fit, pars = par_sel)
 
 # extract the diagnostic parameters
@@ -161,9 +156,8 @@ for(i in 1:nrow(df_obs)) {
   # get the mean prediction from the lognormal model on the natural scale
   x <- 
     with(df_obs, 
-         (post$abar[, S[i]] + post$a[, , S[i]][, C[i]]) + 
-           post$b1[, S[i]] * Y[i] + 
-           post$b2[, S[i]] * PC1[i] )
+         post$a[, S[i]] + post$b1[, S[i]]* Y[i])
+  
   if(ppd) {
     x <- rlnorm(n = length(x), x, post$sigma)
   } else {
@@ -173,9 +167,7 @@ for(i in 1:nrow(df_obs)) {
   # get the probability of 0
   y <- 
     with(df_obs, 
-         post$a_hu[, S[i]] * Y[i] + 
-           post$b1_hu[, S[i]] * Y[i] +
-           post$b2[, S[i]] * PC1[i] )
+         post$a_hu + post$b1_hu * Y[i] )
   y <- 1 - plogis(y)
   if(ppd) {
     y <- rbinom(n = length(y), size = 1, prob = y)
@@ -190,7 +182,7 @@ mu2 <- do.call("cbind", mu2)
 
 # plot the predicted values
 plot(apply(mu2[, n_obs_mono], 2, mean), df_obs[n_obs_mono,]$M)
-points(apply(mu2[, n_obs_mono], 2, mean)[k_high1], df_obs[n_obs_mono,]$M[k_high1], col = "red")
+points(apply(mu2[, n_obs_mono], 2, mean)[k_high2], df_obs[n_obs_mono,]$M[k_high2], col = "red")
 abline(0, 1)
 
 # calculate the r2 value
@@ -211,6 +203,7 @@ pars <- pars[!(grepl("Rho", pars) | grepl("Z", pars)  | pars == "mu" | pars == "
 
 # check the traceplots
 par_sel <- sample(pars, 1)
+print(par_sel)
 traceplot(m3_fit, pars = par_sel)
 
 # extract the diagnostic parameters
@@ -244,9 +237,8 @@ for(i in 1:nrow(df_obs)) {
   # get the mean prediction from the lognormal model on the natural scale
   x <- 
     with(df_obs, 
-         (post$abar[, S[i]] + post$a[, , S[i]][, C[i]]) + 
-           post$b1[, S[i]] * Y[i] + 
-           post$b2[, S[i]] * PC1[i] )
+         post$a[, S[i]] + post$b1[, S[i]]* Y[i])
+  
   if(ppd) {
     x <- rlnorm(n = length(x), x, post$sigma)
   } else {
@@ -256,8 +248,7 @@ for(i in 1:nrow(df_obs)) {
   # get the probability of 0
   y <- 
     with(df_obs, 
-         post$a_hu[, S[i]] * Y[i] + 
-           post$b1_hu[, S[i]] * Y[i])
+         post$a_hu + post$b1_hu * Y[i] )
   y <- 1 - plogis(y)
   if(ppd) {
     y <- rbinom(n = length(y), size = 1, prob = y)
@@ -272,7 +263,7 @@ mu3 <- do.call("cbind", mu3)
 
 # plot the predicted values
 plot(apply(mu3[, n_obs_mono], 2, mean), df_obs[n_obs_mono,]$M)
-points(apply(mu3[, n_obs_mono], 2, mean)[k_high1], df_obs[n_obs_mono,]$M[k_high1], col = "red")
+points(apply(mu3[, n_obs_mono], 2, mean)[k_high3], df_obs[n_obs_mono,]$M[k_high3], col = "red")
 abline(0, 1)
 
 # calculate the r2 value
@@ -326,8 +317,8 @@ for(i in 1:nrow(df_obs)) {
   # get the mean prediction from the lognormal model on the natural scale
   x <- 
     with(df_obs, 
-         (post$abar[, S[i]] + post$a[, , S[i]][, C[i]]) + 
-           (post$b1[, S[i]] * Y[i]))
+         post$a[, S[i]] + post$b1* Y[i] + post$b2* PC1[i])
+  
   if(ppd) {
     x <- rlnorm(n = length(x), x, post$sigma)
   } else {
@@ -337,7 +328,7 @@ for(i in 1:nrow(df_obs)) {
   # get the probability of 0
   y <- 
     with(df_obs, 
-         post$a_hu[, S[i]] * Y[i] + post$b1_hu[, S[i]] * Y[i] )
+         post$a_hu + post$b1_hu * Y[i] + post$b2_hu* PC1[i] )
   y <- 1 - plogis(y)
   if(ppd) {
     y <- rbinom(n = length(y), size = 1, prob = y)
@@ -352,7 +343,7 @@ mu4 <- do.call("cbind", mu4)
 
 # plot the predicted values
 plot(apply(mu4[, n_obs_mono], 2, mean), df_obs[n_obs_mono,]$M)
-points(apply(mu4[, n_obs_mono], 2, mean)[k_high1], df_obs[n_obs_mono,]$M[k_high1], col = "red")
+points(apply(mu4[, n_obs_mono], 2, mean)[k_high4], df_obs[n_obs_mono,]$M[k_high4], col = "red")
 abline(0, 1)
 
 # calculate the r2 value
@@ -407,7 +398,7 @@ for(i in 1:nrow(df_obs)) {
   # get the mean prediction from the lognormal model on the natural scale
   x <- 
     with(df_obs, 
-         post$a[, S[i]] + post$b1[, S[i]] * Y[i])
+         post$a[, S[i]] + post$b1* Y[i] + post$b2* PC1[i])
   
   if(ppd) {
     x <- rlnorm(n = length(x), x, post$sigma)
@@ -418,7 +409,7 @@ for(i in 1:nrow(df_obs)) {
   # get the probability of 0
   y <- 
     with(df_obs, 
-         post$a_hu[, S[i]] * Y[i] + post$b1_hu[, S[i]] * Y[i] )
+         post$a_hu + post$b1_hu * Y[i] )
   y <- 1 - plogis(y)
   if(ppd) {
     y <- rbinom(n = length(y), size = 1, prob = y)
@@ -433,7 +424,7 @@ mu5 <- do.call("cbind", mu5)
 
 # plot the predicted values
 plot(apply(mu5[, n_obs_mono], 2, mean), df_obs[n_obs_mono,]$M)
-points(apply(mu5[, n_obs_mono], 2, mean)[k_high1], df_obs[n_obs_mono,]$M[k_high1], col = "red")
+points(apply(mu5[, n_obs_mono], 2, mean)[k_high5], df_obs[n_obs_mono,]$M[k_high5], col = "red")
 abline(0, 1)
 
 # calculate the r2 value
@@ -444,6 +435,87 @@ print(r)
 # check the overall predicted distributions
 max(apply(mu5, 2, mean))
 max(apply(mu5, 2, max))
+
+# model 6
+m6_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model6_fit.rds")
+
+# check the traceplots
+pars <- m6_fit@model_pars
+pars <- pars[!(grepl("Rho", pars) | grepl("Z", pars)  | pars == "mu" | pars == "hu" | pars == "log_lik" | pars == "lp__")]
+
+# check the traceplots
+par_sel <- sample(pars, 1)
+print(par_sel)
+traceplot(m6_fit, pars = par_sel)
+
+# extract the diagnostic parameters
+diag <- rstan::summary(m6_fit)
+diag$summary[grepl(par_sel, row.names(diag$summary)), ]
+
+# calculate the PSIS loocv estimate
+# ref: http://ritsokiguess.site/docs/2019/06/25/going-to-the-loo-using-stan-for-model-comparison/
+log_lik_6 <- loo::extract_log_lik(m6_fit, merge_chains = F)
+r_eff_6 <- loo::relative_eff(log_lik_6)
+
+# calculate the loocv estimating using PSIS
+loo_6 <- rstan::loo(log_lik_6, r_eff = r_eff_6)
+print(loo_6)
+
+# check individual points
+k_high6 <- which(pareto_k_influence_values(loo_6) > 0.7)
+
+# check the data with high k-values
+View(v[k_high6, ])
+
+# plot the model predictions
+post <- extract(m6_fit)
+
+# use the posterior predictive distribution
+ppd <- TRUE
+
+mu6 <- vector("list", length = nrow(df_obs))
+for(i in 1:nrow(df_obs)) {
+  
+  # get the mean prediction from the lognormal model on the natural scale
+  x <- 
+    with(df_obs, 
+         post$a[, S[i]] + post$b1* Y[i])
+  
+  if(ppd) {
+    x <- rlnorm(n = length(x), x, post$sigma)
+  } else {
+    x <- exp(x + (0.5*(post$sigma^2)))
+  }
+  
+  # get the probability of 0
+  y <- 
+    with(df_obs, 
+         post$a_hu + post$b1_hu * Y[i] )
+  y <- 1 - plogis(y)
+  if(ppd) {
+    y <- rbinom(n = length(y), size = 1, prob = y)
+  }
+  
+  mu6[[i]] <- (x*y)
+  
+}
+
+# bind into a matrix
+mu6 <- do.call("cbind", mu6)
+
+# plot the predicted values
+plot(apply(mu6[, n_obs_mono], 2, mean), df_obs[n_obs_mono,]$M)
+points(apply(mu6[, n_obs_mono], 2, mean)[k_high6], df_obs[n_obs_mono,]$M[k_high6], col = "red")
+abline(0, 1)
+
+# calculate the r2 value
+r <- apply(mu6[,n_obs_mono], 2, mean) - df_obs[n_obs_mono,]$M
+r <- 1 - (var2(r)/var2(df_obs[n_obs_mono,]$M))
+print(r)
+
+# check the overall predicted distributions
+max(apply(mu6, 2, mean))
+max(apply(mu6, 2, max))
 
 # compare the different models
 loo_compare(loo_1, loo_2, loo_3, loo_4, loo_5)

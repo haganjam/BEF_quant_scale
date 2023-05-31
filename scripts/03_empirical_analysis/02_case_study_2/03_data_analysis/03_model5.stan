@@ -53,6 +53,8 @@ data{
      int<lower=1> C_N;
      vector[N] M;
      vector[N] Y;
+     vector[N] PC1;
+     vector[N] PC2;
     array[N] int C;
     array[N] int S;
 }
@@ -61,31 +63,19 @@ parameters{
      real<lower=0> sigma;
      // standard normal deviations: log-normal model
      vector[S_N] Za;
-     vector[S_N] Zb1;
      // parameters: log-normal model
      real<lower=0> sigma_a;
      real abar;
-     real<lower=0> sigma_b1;
-     real b1bar;
+     real b1;
+     real b2;
      // parameters: binomial
-     vector[S_N] Za_hu;
-     vector[S_N] Zb1_hu;
-     real<lower=0> sigma_a_hu;
-     real abar_hu;
-     real<lower=0> sigma_b1_hu;
-     real b1bar_hu;
+     real a_hu;
+     real b1_hu;
 }
 transformed parameters{
      // transformed parameters: log-normal model
      vector[S_N] a;
-     vector[S_N] b1;
      a = abar + (Za*sigma_a);
-     b1 = b1bar + (Zb1*sigma_b1);
-     // transformed parameters: binomial model
-     vector[S_N] a_hu;
-     vector[S_N] b1_hu;
-     a_hu = abar_hu + (Za_hu*sigma_a_hu);
-     b1_hu = b1bar_hu + (Zb1_hu*sigma_b1_hu);
 }
 model{
     // vector of means: log-normal linear model 
@@ -97,21 +87,16 @@ model{
     // linear model priors: log-normal
     abar ~ uniform( -4.5 , 4.5 );
     sigma_a ~ exponential( 3 );
-    b1bar ~ normal(0.5, 1);
-    sigma_b1 ~ exponential( 3 );
+    b1 ~ normal(0, 2);
+    b2 ~ normal(0, 2);
     // linear model priors: binomial model
-    abar_hu ~ normal( 0.5 , 1 );
-    sigma_a_hu ~ exponential( 3 );
-    b1bar_hu ~ normal( 0.5 , 1 );
-    sigma_b1_hu ~ exponential( 3 );
+    a_hu ~ normal(0, 2);
+    b1_hu ~ normal(0, 2);
     // standard normal vectors
     to_vector( Za ) ~ normal( 0 , 1 );
-    to_vector( Zb1 ) ~ normal( 0 , 1 );
-    to_vector( Za_hu ) ~ normal( 0 , 1 );
-    to_vector( Zb1_hu ) ~ normal( 0 , 1 );
     for ( i in 1:N ) {
-        mu[i] = a[S[i]] + b1[S[i]] * Y[i];
-        hu[i] = a_hu[S[i]] + b1_hu[S[i]] * Y[i];
+        mu[i] = a[S[i]] + b1*Y[i] + b2*PC1[i];
+        hu[i] = a_hu + b1_hu * Y[i];
         target += hurdle_lognormal_logit_lpdf(M[i] | mu[i], sigma, hu[i]);
     }
 }
@@ -123,8 +108,8 @@ generated quantities{
      // hu vector: binomial model
      vector[N] hu;
     for ( i in 1:N ) {
-        mu[i] = a[S[i]] + b1[S[i]] * Y[i];
-        hu[i] = a_hu[S[i]] + b1_hu[S[i]] * Y[i];
+        mu[i] = a[S[i]] + b1*Y[i] + b2*PC1[i];
+        hu[i] = a_hu + b1_hu*Y[i];
     }
     for ( i in 1:N ) log_lik[i] = hurdle_lognormal_logit_lpdf(M[i] | mu[i], sigma, hu[i]);
 }
