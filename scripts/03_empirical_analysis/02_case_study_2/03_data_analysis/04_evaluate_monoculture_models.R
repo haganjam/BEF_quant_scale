@@ -612,6 +612,7 @@ loo_compare(list( "m0" = loo_0,
 k_mult <- table(c(k_high0, k_high1, k_high2, k_high3, k_high4, k_high5, k_high6))
 df_obs[as.integer(names(k_mult[k_mult>1])),]
 
+
 # make a fit to sample plot of the best fitting model: m0
 
 # pull into a data.frame for plotting
@@ -653,7 +654,7 @@ p1 <-
                 width = 0, alpha = 0.5, size = 0.25, show.legend = FALSE) +
   ylab("Predicted monoculture (g)") +
   xlab("Observed monoculture (g)") +
-  facet_wrap(~C, scales = "free", nrow = 5, ncol = 2) +
+  facet_wrap(~C, scales = "free") +
   scale_y_continuous(limits = c(0, 31)) +
   scale_x_continuous(limits = c(0, 10)) +
   scale_colour_manual(values = viridis(n = 5, begin = 0.1, end = 0.9, option = "C")) +
@@ -691,13 +692,39 @@ df_samples <-
 # plot the overlap between the observed and the predicted data
 ggplot() +
   geom_density(data = df_plot %>% filter(Obs_pred == "Observed"),
-               mapping = aes(x = M_obs), fill = "red", colour = "white", alpha = 1,
-               n = 64) +
+               mapping = aes(x = M_obs), fill = "red", colour = "white", alpha = 1) +
   geom_density(data = df_samples,
                mapping = aes(x = M_pred, group = sample), alpha = 0.05,
-               linewidth = 0.25, n = 64, fill = "grey", colour = "grey") +
+               linewidth = 0.25, fill = "grey", colour = "grey") +
   facet_wrap(~ OTU, scales = "free") +
   theme_meta()
+
+# check some of the predictions
+df_plot %>% 
+  filter(OTU == "Hydro") %>%
+  select(Obs_pred, M_obs, M_pred_mu, M_pred_PIlow, M_pred_PIhigh) %>%
+  View()
+
+df_plot %>% 
+  filter(OTU == "Hydro") %>%
+  pull(M_obs) %>%
+  max(., na.rm = TRUE)
+
+x <- df_plot %>% 
+  filter(OTU == "Hydro") %>%
+  filter(Obs_pred == "Observed")
+
+plot(x$Y, x$M_obs)
+plot(x$PC2, x$M_obs)
+plot(x$PC1, x$M_obs)
+
+ggplot(data = x,
+       mapping = aes(x = T, y = M_obs)) +
+  geom_point() +
+  facet_wrap(~C) +
+  theme_meta()
+
+
 
 # calculate the MESS index: Zurell et al. (2012)
 
