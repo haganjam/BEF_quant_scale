@@ -132,4 +132,32 @@ rlkjcorr <- function (n, K, eta = 1) {
   return(R)
 }
 
+# calculate environmental overlap mask
+# extension of MESS that was proposed by Elith et al. 2010 MethodsEcolEvol 1:330-342.
+# taken from Appendix S1: Zurell et al. (2012, Diversity and Distributions)
+
+eo.mask=function(traindata,newdata,nbin=5,type="EO")
+{
+  # a bin size of one corresponds to MESS
+  # type 'EO' returns a vector of zeros and ones for analog(0) and novel(1) environments
+  # type 'ID' returns a character vector defining the combination of bins each data entry 
+  # belongs to - this may help finding the problem maker parts of the prediction space
+  
+  train.minima=apply(traindata,2,min)
+  train.maxima=apply(traindata,2,max)
+  
+  train.ids=apply(apply(ceiling(apply(round(
+    sweep(sweep(traindata, 2, train.minima, "-"), 2, train.maxima - train.minima, "/")*nbin,4),
+    c(1,2),FUN=function(x){if(x==0)x=1 else x=x})),
+    c(1,2),FUN=function(x){if(x<1)x=0 else if(x>nbin)x=nbin+1 else x=x}),1,paste,collapse=".")
+  
+  new.ids=apply(apply(ceiling(apply(round(
+    sweep(sweep(newdata[,names(train.minima)], 2, train.minima, "-"), 2, train.maxima - train.minima, "/")*nbin,4),
+    c(1,2),FUN=function(x){if(x==0)x=1 else x=x})),
+    c(1,2),FUN=function(x){if(x<1)x=0 else if(x>nbin)x=nbin+1 else x=x}),1,paste,collapse=".")
+  
+  if (type=="ID") return(new.ids)
+  else if (type=="EO") return(sapply(new.ids%in%train.ids,FUN=function(x){if(x==T) x=0 else if(x==F)x=1}))    
+} 
+
 ### END

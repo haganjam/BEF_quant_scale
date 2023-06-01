@@ -10,6 +10,7 @@
 # load the required libraries
 library(readr)
 library(dplyr)
+library(tidyr)
 library(ggplot2)
 library(rstan)
 library(loo)
@@ -64,10 +65,10 @@ k_high0 <- which(pareto_k_influence_values(loo_0) > 0.7)
 View(v[k_high0, ])
 
 # plot the model predictions
-post <- extract(m0_fit)
+post <- rstan::extract(m0_fit)
 
 # use the posterior predictive distribution
-ppd <- TRUE
+ppd = TRUE
 
 mu0 <- vector("list", length = nrow(df_obs))
 for(i in 1:nrow(df_obs)) {
@@ -614,11 +615,20 @@ df_obs[as.integer(names(k_mult[k_mult>1])),]
 # make a fit to sample plot of the best fitting model: m0
 
 # pull into a data.frame for plotting
+
+# rename the cluster variable
 C <- factor(df_obs$cluster_id)
 levels(C) <- paste0("Cluster ", LETTERS[1:10])
+
+# add an OTU column
+OTU <- factor(df_obs$S)
+levels(OTU) <- c("Barn", "Bryo", "Asci", "Hydro", "Ciona")
+
+# make a data.frame for plotting
 df_plot <- data.frame(M_obs = df_obs$M,
                       Obs_pred = ifelse(is.na(df_obs$M), "Predicted", "Observed"),
                       S = as.character(df_obs$S),
+                      OTU = OTU,
                       C = C,
                       T = as.character(df_obs$time),
                       Y = df_obs$Y,
@@ -636,19 +646,17 @@ summary(df_plot)
 p1 <- 
   ggplot(data = df_plot %>% filter(!is.na(M_obs))) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed", colour = "red") +
-  geom_point(mapping = aes(x = M_obs, y = M_pred_mu, colour = S),
+  geom_point(mapping = aes(x = M_obs, y = M_pred_mu, colour = OTU),
              shape = 16, alpha = 0.75) + 
   geom_errorbar(mapping = aes(x = M_obs, ymin = M_pred_PIlow, ymax = M_pred_PIhigh, 
-                              colour = S),
+                              colour = OTU),
                 width = 0, alpha = 0.5, size = 0.25, show.legend = FALSE) +
   ylab("Predicted monoculture (g)") +
   xlab("Observed monoculture (g)") +
   facet_wrap(~C, scales = "free", nrow = 5, ncol = 2) +
   scale_y_continuous(limits = c(0, 31)) +
   scale_x_continuous(limits = c(0, 10)) +
-  scale_colour_manual(name = "OTU",
-                      labels = c("Barn", "Bryo", "Asci", "Hydro", "Ciona"),
-                      values = viridis(n = 5, begin = 0.1, end = 0.9, option = "C")) +
+  scale_colour_manual(values = viridis(n = 5, begin = 0.1, end = 0.9, option = "C")) +
   guides(colour = guide_legend(override.aes = list(shape = 16, size = 4, alpha = 1))) +
   theme_meta() +
   theme(legend.position = "top",
@@ -656,21 +664,64 @@ p1 <-
 plot(p1)
 
 # check the overlap between the predicted values and the observed values
-apply(mu0, 1, function(x) sum(x == 0))
-n <- 100
-mu0[sample(1:nrow(mu0), n), ]
+n <- 25
+samples <- mu0[sample(1:nrow(mu0), n), ]
 
-# coerce the matrix
-apply(mu0, 2, HPDI, 0.90)[1,]
-j <- 3
-x <- mu0[,j]
+df_samples <- data.frame(V1 = samples[1,])
+for(i in 2:nrow(samples)) {
+  df_samples[[i]] <- samples[i,]
+}
 
-y <- HPDI(samples = x, prob = 0.90)
-y[1]
-y[2]
+# add identifier columns
+df_samples$Obs_pred <- df_plot$Obs_pred
+df_samples$OTU <- df_plot$OTU
 
-z <- x[ (x > y[1]) & (x < y[2]) ]
+# filter the predicted samples
+df_samples <- 
+  df_samples %>%
+  filter(Obs_pred == "Predicted")
 
-length(z)
+# pull into the long-format
+df_samples <- 
+  df_samples %>%
+  pivot_longer(cols = paste0("V", 1:n),
+               names_to = "sample",
+               values_to = "M_pred")
+
+# plot the overlap between the observed and the predicted data
+ggplot() +
+  geom_density(data = df_plot %>% filter(Obs_pred == "Observed"),
+               mapping = aes(x = M_obs), fill = "red", colour = "white", alpha = 1,
+               n = 64) +
+  geom_density(data = df_samples,
+               mapping = aes(x = M_pred, group = sample), alpha = 0.05,
+               linewidth = 0.25, n = 64, fill = "grey", colour = "grey") +
+  facet_wrap(~ OTU, scales = "free") +
+  theme_meta()
+
+# calculate the MESS index: Zurell et al. (2012)
+
+# create a reference dataset
+df_ref <- 
+  df_plot %>% 
+  filter(Obs_pred == "Observed") %>%
+  dplyr::select(Y, PC1)
+
+# create a test dataset
+df_test <- 
+  df_plot %>% 
+  filter(Obs_pred == "Predicted") %>%
+  dplyr::select(Y, PC1)
+
+# calculate the MESS index: Zurell et al. (2012)
+MESS <- eo.mask(traindata = df_ref, 
+                newdata = df_test, nbin = 20, type="EO")
+
+# add the MESS index to the test data
+df_test$MESS <- MESS
+
+# check how many data point are predicting out of the range
+(sum(df_test$MESS)/nrow(df_test))*100
+
 
 ### END
