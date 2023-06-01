@@ -643,7 +643,7 @@ p1 <-
                 width = 0, alpha = 0.5, size = 0.25, show.legend = FALSE) +
   ylab("Predicted monoculture (g)") +
   xlab("Observed monoculture (g)") +
-  facet_wrap(~C, scales = "free") +
+  facet_wrap(~C, scales = "free", nrow = 5, ncol = 2) +
   scale_y_continuous(limits = c(0, 31)) +
   scale_x_continuous(limits = c(0, 10)) +
   scale_colour_manual(name = "OTU",
@@ -656,5 +656,21 @@ p1 <-
 plot(p1)
 
 # check the overlap between the predicted values and the observed values
+apply(mu0, 1, function(x) sum(x == 0))
+n <- 100
+mu0[sample(1:nrow(mu0), n), ]
+
+# coerce the matrix
+apply(mu0, 2, HPDI, 0.90)[1,]
+j <- 3
+x <- mu0[,j]
+
+y <- HPDI(samples = x, prob = 0.90)
+y[1]
+y[2]
+
+z <- x[ (x > y[1]) & (x < y[2]) ]
+
+length(z)
 
 ### END
