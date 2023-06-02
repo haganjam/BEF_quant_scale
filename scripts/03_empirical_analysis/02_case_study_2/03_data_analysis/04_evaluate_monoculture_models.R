@@ -539,4 +539,8 @@ df_test$MESS <- MESS
 # check how many data point are predicting out of the range
 (sum(df_test$MESS)/nrow(df_test))*100
 
+# how how many zeros there are, on average, for each sample from the posterior
+mean(apply(pred_ln0, 1, function(x) sum(x == 0)))/ncol(pred_ln0)
+sum(df_m_obs$M == 0)/nrow(df_m_obs)
+
 ### END
