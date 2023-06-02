@@ -30,590 +30,405 @@ df_obs$C <- as.integer(as.factor(df_obs$cluster_id))
 df_obs$T <- as.integer(as.factor(df_obs$time))/3
 df_obs$S <- as.integer(as.factor(df_obs$OTU))
 
-# which rows have observed monoculture
-n_obs_mono <- which(!is.na(df_obs$M))
+# subset out the data with missing monocultures
+df_m_obs <- 
+  df_obs %>%
+  filter(!is.na(M))
+
+# function to get a list of model parameters
+# stan_object: stan model object
+stan_pars <- function(stan_object) {
+  
+  # check the traceplots
+  pars <- stan_object@model_pars
+  pars <- pars[!(grepl("Rho", pars) | grepl("Z", pars) | 
+                   grepl("V", pars) | grepl("v", pars) | 
+                   grepl("z", pars)  | pars == "mu" | 
+                   pars == "hu" | pars == "log_lik" | pars == "lp__")]
+  
+  return(pars)
+  
+}
+
+# function to get the loocv estimate using PSIS
+# stan_object: stan model object
+loo_est <- function(stan_object) {
+  
+  # calculate the PSIS loocv estimate
+  # ref: http://ritsokiguess.site/docs/2019/06/25/going-to-the-loo-using-stan-for-model-comparison/
+  log_lik <- loo::extract_log_lik(stan_object, merge_chains = F)
+  r_eff <- loo::relative_eff(log_lik)
+  
+  # calculate the loocv estimating using PSIS
+  loo_score <- rstan::loo(log_lik, r_eff = r_eff)
+  
+  return(loo_score)
+  
+}
+
+# function to obtain model predictions
+# samples: samples from the posterior distribution
+# data: dataset to predict from
+# mu_dist: lognormal or gamma
+stan_predict <- function(samples, data, mu_dist = "lognormal") {
+  
+  pred_list <- vector("list", length = nrow(data))
+  for(i in 1:nrow(data)) {
+    
+    # get the mean prediction from the lognormal model on the natural scale
+    x <- samples[["mu"]][,i]
+    
+    if(mu_dist == "lognormal") {
+      x <- rlnorm(n = length(x), x, samples[["sigma"]])
+    } else if(mu_dist == "gamma") {
+      x <- exp(x)
+      x <- rgamma(n = length(x), shape = (x*x)/samples[["phi"]], rate = (x)/samples[["phi"]])
+    }
+    
+    # get the probability of 0
+    y <- samples[["hu"]][,i]
+    y <- 1 - plogis(y)
+    y <- rbinom(n = length(y), size = 1, prob = y)
+    
+    pred_list[[i]] <- (x*y)
+    
+  }
+  
+  # bind into a matrix
+  pred_mat <- do.call("cbind", pred_list)
+  
+  return(pred_mat)
+  
+}
+
+
+# Lognormal hurdle models
 
 # model 0
-m0_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model0_fit.rds")
+ln0_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model0_fit.rds")
 
-# check the traceplots
-pars <- m0_fit@model_pars
-pars <- pars[!(grepl("Rho", pars) | grepl("Z", pars) | pars == "mu" | pars == "hu" | pars == "log_lik" | pars == "lp__")]
+# get the parameter names
+pars <- stan_pars(stan_object = ln0_fit)
 
 # check the traceplots
 par_sel <- sample(pars, 1)
 print(par_sel)
-rstan::traceplot(m0_fit, pars = par_sel)
+rstan::traceplot(ln0_fit, pars = par_sel)
 
-# extract the diagnostic parameters
-diag <- rstan::summary(m0_fit)
-diag$summary[grepl(par_sel, row.names(diag$summary)), ]
-
-# calculate the PSIS loocv estimate
-# ref: http://ritsokiguess.site/docs/2019/06/25/going-to-the-loo-using-stan-for-model-comparison/
-log_lik_0 <- loo::extract_log_lik(m0_fit, merge_chains = F)
-r_eff_0 <- loo::relative_eff(log_lik_0)
-
-# calculate the loocv estimating using PSIS
-loo_0 <- rstan::loo(log_lik_0, r_eff = r_eff_0)
-print(loo_0)
-
-# check individual points
-k_high0 <- which(pareto_k_influence_values(loo_0) > 0.7)
-
-# check the data with high k-values
-View(v[k_high0, ])
+# get the loo estimate
+loo_est(stan_object = ln0_fit)
 
 # plot the model predictions
-post <- rstan::extract(m0_fit)
+post <- rstan::extract(ln0_fit)
 
-# use the posterior predictive distribution
-ppd = TRUE
+# get the predicted values from the stan model object
+pred_ln0 <- stan_predict(samples = post, data = df_m_obs, mu_dist = "lognormal")
 
-mu0 <- vector("list", length = nrow(df_obs))
+# plot the predicted values
+plot(apply(pred_ln0, 2, mean), df_m_obs$M)
+abline(0, 1)
+
+# check the maximum prediction
+max(apply(pred_ln0, 2, max))
+
+# model 1
+ln1_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model1_fit.rds")
+
+# get the parameter names
+pars <- stan_pars(stan_object = ln1_fit)
+
+# check the traceplots
+par_sel <- sample(pars, 1)
+print(par_sel)
+rstan::traceplot(ln1_fit, pars = par_sel)
+
+# get the loo estimate
+loo_est(stan_object = ln1_fit)
+
+# plot the model predictions
+post <- rstan::extract(ln1_fit)
+
+# get the predicted values from the stan model object
+pred_ln1 <- stan_predict(samples = post, data = df_m_obs, mu_dist = "lognormal")
+
+# plot the predicted values
+plot(apply(pred_ln1, 2, mean), df_m_obs$M)
+abline(0, 1)
+
+# check the maximum prediction
+max(apply(pred_ln1, 2, max))
+
+# model 2
+ln2_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model2_fit.rds")
+
+# get the parameter names
+pars <- stan_pars(stan_object = ln2_fit)
+
+# check the traceplots
+par_sel <- sample(pars, 1)
+print(par_sel)
+rstan::traceplot(ln2_fit, pars = par_sel)
+
+# get the loo estimate
+loo_est(stan_object = ln2_fit)
+
+# plot the model predictions
+post <- rstan::extract(ln2_fit)
+
+# get the predicted values from the stan model object
+pred_ln2 <- stan_predict(samples = post, data = df_m_obs, mu_dist = "lognormal")
+
+# plot the predicted values
+plot(apply(pred_ln2, 2, mean), df_m_obs$M)
+abline(0, 1)
+
+# check the maximum prediction
+max(apply(pred_ln2, 2, max))
+
+# model 3
+ln3_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model3_fit.rds")
+
+# get the parameter names
+pars <- stan_pars(stan_object = ln3_fit)
+
+# check the traceplots
+par_sel <- sample(pars, 1)
+print(par_sel)
+rstan::traceplot(ln3_fit, pars = par_sel)
+
+# get the loo estimate
+loo_est(stan_object = ln3_fit)
+
+# plot the model predictions
+post <- rstan::extract(ln3_fit)
+
+# get the predicted values from the stan model object
+pred_ln3 <- stan_predict(samples = post, data = df_m_obs, mu_dist = "lognormal")
+
+# plot the predicted values
+plot(apply(pred_ln3, 2, mean), df_m_obs$M)
+abline(0, 1)
+
+# check the maximum prediction
+max(apply(pred_ln3, 2, max))
+
+# model 4
+ln4_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model4_fit.rds")
+
+# get the parameter names
+pars <- stan_pars(stan_object = ln4_fit)
+
+# check the traceplots
+par_sel <- sample(pars, 1)
+print(par_sel)
+rstan::traceplot(ln4_fit, pars = par_sel)
+
+# get the loo estimate
+loo_est(stan_object = ln4_fit)
+
+# plot the model predictions
+post <- rstan::extract(ln4_fit)
+
+# get the predicted values from the stan model object
+pred_ln4 <- stan_predict(samples = post, data = df_m_obs, mu_dist = "lognormal")
+
+# plot the predicted values
+plot(apply(pred_ln4, 2, mean), df_m_obs$M)
+abline(0, 1)
+
+# check the maximum prediction
+max(apply(pred_ln4,2, max))
+
+# model 5
+ln5_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model5_fit.rds")
+
+# get the parameter names
+pars <- stan_pars(stan_object = ln5_fit)
+
+# check the traceplots
+par_sel <- sample(pars, 1)
+print(par_sel)
+rstan::traceplot(ln5_fit, pars = par_sel)
+
+# get the loo estimate
+loo_est(stan_object = ln5_fit)
+
+# plot the model predictions
+post <- rstan::extract(ln5_fit)
+
+# get the predicted values from the stan model object
+pred_ln5 <- stan_predict(samples = post, data = df_m_obs, mu_dist = "lognormal")
+
+# plot the predicted values
+plot(apply(pred_ln5, 2, mean), df_m_obs$M)
+abline(0, 1)
+
+# check the maximum prediction
+max(apply(pred_ln5,2, max))
+
+# model 6
+ln6_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model6_fit.rds")
+
+# get the parameter names
+pars <- stan_pars(stan_object = ln6_fit)
+
+# check the traceplots
+par_sel <- sample(pars, 1)
+print(par_sel)
+rstan::traceplot(ln6_fit, pars = par_sel)
+
+# get the loo estimate
+loo_est(stan_object = ln6_fit)
+
+# plot the model predictions
+post <- rstan::extract(ln6_fit)
+
+# get the predicted values from the stan model object
+pred_ln6 <- stan_predict(samples = post, data = df_m_obs, mu_dist = "lognormal")
+
+# plot the predicted values
+plot(apply(pred_ln6, 2, mean), df_m_obs$M)
+abline(0, 1)
+
+# check the maximum prediction
+max(apply(pred_ln6, max))
+
+
+# Gamma hurdle models
+
+# model 0
+g0_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_gamma_model0_fit.rds")
+
+# get the parameter names
+pars <- stan_pars(stan_object = g0_fit)
+
+# check the traceplots
+par_sel <- sample(pars, 1)
+print(par_sel)
+rstan::traceplot(g0_fit, pars = par_sel)
+
+# get the loo estimate
+loo_est(stan_object = g0_fit)
+
+# plot the model predictions
+post <- rstan::extract(g0_fit)
+
+# get the predicted values from the stan model object
+pred_g0 <- stan_predict(samples = post, data = df_m_obs, mu_dist = "gamma")
+
+# plot the predicted values
+plot(apply(pred_g0, 2, mean), df_m_obs$M)
+abline(0, 1)
+
+# check the maximum prediction
+max(apply(pred_g0, 2,max))
+
+# model 1
+g1_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_gamma_model1_fit.rds")
+
+# get the parameter names
+pars <- stan_pars(stan_object = g1_fit)
+
+# check the traceplots
+par_sel <- sample(pars, 1)
+print(par_sel)
+rstan::traceplot(g1_fit, pars = par_sel)
+
+# get the loo estimate
+loo_est(stan_object = g1_fit)
+
+# plot the model predictions
+post <- rstan::extract(g1_fit)
+
+# get the predicted values from the stan model object
+pred_g1 <- stan_predict(samples = post, data = df_m_obs, mu_dist = "gamma")
+
+# plot the predicted values
+plot(apply(pred_g1, 2, mean), df_m_obs$M)
+abline(0, 1)
+
+# check the maximum prediction
+max(apply(pred_g1, 2, max))
+
+# model 0
+g2_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_gamma_model2_fit.rds")
+
+# get the parameter names
+pars <- stan_pars(stan_object = g2_fit)
+
+# check the traceplots
+par_sel <- sample(pars, 1)
+print(par_sel)
+rstan::traceplot(g2_fit, pars = par_sel)
+
+# get the loo estimate
+loo_est(stan_object = g2_fit)
+
+# plot the model predictions
+post <- rstan::extract(g2_fit)
+
+# get the predicted values from the stan model object
+pred_g2 <- stan_predict(samples = post, data = df_m_obs, mu_dist = "gamma")
+
+# plot the predicted values
+plot(apply(pred_g2, 2, mean), df_m_obs$M)
+abline(0, 1)
+
+# check the maximum prediction
+max(apply(pred_g2, 2, max))
+
+
+# compare the different models by approximating leave-one-out CV
+
+# get a vector of model names
+mod_names <- c(paste0("ln", 0:6, "_fit"), paste0("g", 0:2, "_fit"))
+
+loo_fit <- vector("list", length = length(mod_names))
+for(i in 1:length(mod_names)) {
+  
+  # extract the model fit
+  mod_fit <- eval(parse(text = mod_names[i]))
+  
+  # put the loo estimate into a list
+  loo_fit[[i]] <- loo_est(mod_fit)
+  
+}
+names(loo_fit) <- mod_names
+
+# compare the different models using the loo score
+loo_compare(loo_fit)
+
+# which model is the best fit?
+# ln0
+
+# extract the posterior distribution
+post <- rstan::extract(ln0_fit)
+
+# make a fit to sample plot of the best fitting model
+pred_ln0 <- vector("list", length = nrow(df_obs))
 for(i in 1:nrow(df_obs)) {
   
-  # get the mean prediction from the lognormal model on the natural scale
+  # get predictions for all values using the ln0 model
   x <- 
     with(df_obs, 
          post$a[, S[i]] + post$b1[, S[i]]* Y[i] + post$b2[, S[i]]* PC1[i])
   
-  if(ppd) {
-    x <- rlnorm(n = length(x), x, post$sigma)
-  } else {
-    x <- exp(x + (0.5*(post$sigma^2)))
-  }
+  x <- rlnorm(n = length(x), x, post$sigma)
   
-  # get the probability of 0
+  # get the probability of zero for each observation
   y <- 
     with(df_obs, 
          post$a_hu[, S[i]] + post$b1_hu[, S[i]]* Y[i] )
   y <- 1 - plogis(y)
-  if(ppd) {
-    y <- rbinom(n = length(y), size = 1, prob = y)
-  }
+  y <- rbinom(n = length(y), size = 1, prob = y)
   
-  mu0[[i]] <- (x*y)
-  
-}
-
-# bind into a matrix
-mu0 <- do.call("cbind", mu0)
-
-# plot the predicted values
-plot(apply(mu0[, n_obs_mono], 2, mean), df_obs[n_obs_mono,]$M)
-points(apply(mu0[, n_obs_mono], 2, mean)[k_high0], df_obs[n_obs_mono,]$M[k_high0], col = "red")
-abline(0, 1)
-
-# calculate the r2 value
-r <- apply(mu0[,n_obs_mono], 2, mean) - df_obs[n_obs_mono,]$M
-r <- 1 - (var2(r)/var2(df_obs[n_obs_mono,]$M))
-print(r)
-
-# check the overall predicted distributions
-max(apply(mu0, 2, mean))
-max(apply(mu0, 2, max))
-
-# model 1
-m1_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model1_fit.rds")
-
-# check the traceplots
-pars <- m1_fit@model_pars
-pars <- pars[!(grepl("Rho", pars) | grepl("Z", pars) | pars == "mu" | pars == "hu" | pars == "log_lik" | pars == "lp__")]
-
-# check the traceplots
-par_sel <- sample(pars, 1)
-print(par_sel)
-rstan::traceplot(m1_fit, pars = par_sel)
-
-# extract the diagnostic parameters
-diag <- rstan::summary(m1_fit)
-diag$summary[grepl(par_sel, row.names(diag$summary)), ]
-
-# calculate the PSIS loocv estimate
-# ref: http://ritsokiguess.site/docs/2019/06/25/going-to-the-loo-using-stan-for-model-comparison/
-log_lik_1 <- loo::extract_log_lik(m1_fit, merge_chains = F)
-r_eff_1 <- loo::relative_eff(log_lik_1)
-
-# calculate the loocv estimating using PSIS
-loo_1 <- rstan::loo(log_lik_1, r_eff = r_eff_1)
-print(loo_1)
-
-# check individual points
-k_high1 <- which(pareto_k_influence_values(loo_1) > 0.7)
-
-# check the data with high k-values
-View(v[k_high1, ])
-
-# plot the model predictions
-post <- extract(m1_fit)
-
-# use the posterior predictive distribution
-ppd <- TRUE
-
-mu1 <- vector("list", length = nrow(df_obs))
-for(i in 1:nrow(df_obs)) {
-
-  # get the mean prediction from the lognormal model on the natural scale
-  x <- 
-    with(df_obs, 
-         post$a[, S[i]] + post$b1[, S[i]]* Y[i] + post$b2[, S[i]]* PC1[i])
-  
-  if(ppd) {
-    x <- rlnorm(n = length(x), x, post$sigma)
-  } else {
-    x <- exp(x + (0.5*(post$sigma^2)))
-  }
-  
-  # get the probability of 0
-  y <- 
-    with(df_obs, 
-         post$a_hu + post$b1_hu * Y[i] )
-  y <- 1 - plogis(y)
-  if(ppd) {
-    y <- rbinom(n = length(y), size = 1, prob = y)
-  }
-  
-  mu1[[i]] <- (x*y)
+  # multiply the model predictions together
+  pred_ln0[[i]] <- (x*y)
   
 }
 
 # bind into a matrix
-mu1 <- do.call("cbind", mu1)
-
-# plot the predicted values
-plot(apply(mu1[, n_obs_mono], 2, mean), df_obs[n_obs_mono,]$M)
-points(apply(mu1[, n_obs_mono], 2, mean)[k_high1], df_obs[n_obs_mono,]$M[k_high1], col = "red")
-abline(0, 1)
-
-# calculate the r2 value
-r <- apply(mu1[,n_obs_mono], 2, mean) - df_obs[n_obs_mono,]$M
-r <- 1 - (var2(r)/var2(df_obs[n_obs_mono,]$M))
-print(r)
-
-# check the overall predicted distributions
-max(apply(mu1, 2, mean))
-max(apply(mu1, 2, max))
-
-# model 2
-m2_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model2_fit.rds")
-
-# check the traceplots
-pars <- m2_fit@model_pars
-pars <- pars[!(grepl("Rho", pars) | grepl("Z", pars) | pars == "v" | pars == "mu" | pars == "hu" | pars == "log_lik" | pars == "lp__")]
-
-# check the traceplots
-par_sel <- sample(pars, 1)
-print(par_sel)
-traceplot(m2_fit, pars = par_sel)
-
-# extract the diagnostic parameters
-diag <- rstan::summary(m2_fit)
-diag$summary[grepl(par_sel, row.names(diag$summary)), ]
-
-# calculate the PSIS loocv estimate
-# ref: http://ritsokiguess.site/docs/2019/06/25/going-to-the-loo-using-stan-for-model-comparison/
-log_lik_2 <- loo::extract_log_lik(m2_fit, merge_chains = F)
-r_eff_2 <- loo::relative_eff(log_lik_2)
-
-# calculate the loocv estimating using PSIS
-loo_2 <- rstan::loo(log_lik_2, r_eff = r_eff_2)
-print(loo_2)
-
-# check individual points
-k_high2 <- which(pareto_k_influence_values(loo_2) > 0.7)
-
-# check the data with high k-values
-View(v[k_high2, ])
-
-# plot the model predictions
-post <- extract(m2_fit)
-
-# use the posterior predictive distribution
-ppd <- TRUE
-
-mu2 <- vector("list", length = nrow(df_obs))
-for(i in 1:nrow(df_obs)) {
-  
-  # get the mean prediction from the lognormal model on the natural scale
-  x <- 
-    with(df_obs, 
-         post$a[, S[i]] + post$b1[, S[i]]* Y[i])
-  
-  if(ppd) {
-    x <- rlnorm(n = length(x), x, post$sigma)
-  } else {
-    x <- exp(x + (0.5*(post$sigma^2)))
-  }
-  
-  # get the probability of 0
-  y <- 
-    with(df_obs, 
-         post$a_hu + post$b1_hu * Y[i] )
-  y <- 1 - plogis(y)
-  if(ppd) {
-    y <- rbinom(n = length(y), size = 1, prob = y)
-  }
-  
-  mu2[[i]] <- (x*y)
-  
-}
-
-# bind into a matrix
-mu2 <- do.call("cbind", mu2)
-
-# plot the predicted values
-plot(apply(mu2[, n_obs_mono], 2, mean), df_obs[n_obs_mono,]$M)
-points(apply(mu2[, n_obs_mono], 2, mean)[k_high2], df_obs[n_obs_mono,]$M[k_high2], col = "red")
-abline(0, 1)
-
-# calculate the r2 value
-r <- apply(mu2[,n_obs_mono], 2, mean) - df_obs[n_obs_mono,]$M
-r <- 1 - (var2(r)/var2(df_obs[n_obs_mono,]$M))
-print(r)
-
-# check the overall predicted distributions
-max(apply(mu2, 2, mean))
-max(apply(mu2, 2, max))
-
-# model 3
-m3_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model3_fit.rds")
-
-# check the traceplots
-pars <- m3_fit@model_pars
-pars <- pars[!(grepl("Rho", pars) | grepl("Z", pars)  | pars == "mu" | pars == "hu" | pars == "log_lik" | pars == "lp__")]
-
-# check the traceplots
-par_sel <- sample(pars, 1)
-print(par_sel)
-traceplot(m3_fit, pars = par_sel)
-
-# extract the diagnostic parameters
-diag <- rstan::summary(m3_fit)
-diag$summary[grepl(par_sel, row.names(diag$summary)), ]
-
-# calculate the PSIS loocv estimate
-# ref: http://ritsokiguess.site/docs/2019/06/25/going-to-the-loo-using-stan-for-model-comparison/
-log_lik_3 <- loo::extract_log_lik(m3_fit, merge_chains = F)
-r_eff_3 <- loo::relative_eff(log_lik_3)
-
-# calculate the loocv estimating using PSIS
-loo_3 <- rstan::loo(log_lik_3, r_eff = r_eff_3)
-print(loo_3)
-
-# check individual points
-k_high3 <- which(pareto_k_influence_values(loo_3) > 0.7)
-
-# check the data with high k-values
-View(v[k_high3, ])
-
-# plot the model predictions
-post <- extract(m3_fit)
-
-# use the posterior predictive distribution
-ppd <- TRUE
-
-mu3 <- vector("list", length = nrow(df_obs))
-for(i in 1:nrow(df_obs)) {
-  
-  # get the mean prediction from the lognormal model on the natural scale
-  x <- 
-    with(df_obs, 
-         post$a[, S[i]] + post$b1[, S[i]]* Y[i])
-  
-  if(ppd) {
-    x <- rlnorm(n = length(x), x, post$sigma)
-  } else {
-    x <- exp(x + (0.5*(post$sigma^2)))
-  }
-  
-  # get the probability of 0
-  y <- 
-    with(df_obs, 
-         post$a_hu + post$b1_hu * Y[i] )
-  y <- 1 - plogis(y)
-  if(ppd) {
-    y <- rbinom(n = length(y), size = 1, prob = y)
-  }
-  
-  mu3[[i]] <- (x*y)
-  
-}
-
-# bind into a matrix
-mu3 <- do.call("cbind", mu3)
-
-# plot the predicted values
-plot(apply(mu3[, n_obs_mono], 2, mean), df_obs[n_obs_mono,]$M)
-points(apply(mu3[, n_obs_mono], 2, mean)[k_high3], df_obs[n_obs_mono,]$M[k_high3], col = "red")
-abline(0, 1)
-
-# calculate the r2 value
-r <- apply(mu3[,n_obs_mono], 2, mean) - df_obs[n_obs_mono,]$M
-r <- 1 - (var2(r)/var2(df_obs[n_obs_mono,]$M))
-print(r)
-
-# check the overall predicted distributions
-max(apply(mu3, 2, mean))
-max(apply(mu3, 2, max))
-
-# model 4
-m4_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model4_fit.rds")
-
-# check the traceplots
-pars <- m4_fit@model_pars
-pars <- pars[!(grepl("Rho", pars) | grepl("Z", pars)  | pars == "mu" | pars == "hu" | pars == "log_lik" | pars == "lp__")]
-
-# check the traceplots
-par_sel <- sample(pars, 1)
-traceplot(m4_fit, pars = par_sel)
-
-# extract the diagnostic parameters
-diag <- rstan::summary(m4_fit)
-diag$summary[grepl(par_sel, row.names(diag$summary)), ]
-
-# calculate the PSIS loocv estimate
-# ref: http://ritsokiguess.site/docs/2019/06/25/going-to-the-loo-using-stan-for-model-comparison/
-log_lik_4 <- loo::extract_log_lik(m4_fit, merge_chains = F)
-r_eff_4 <- loo::relative_eff(log_lik_4)
-
-# calculate the loocv estimating using PSIS
-loo_4 <- rstan::loo(log_lik_4, r_eff = r_eff_4)
-print(loo_4)
-
-# check individual points
-k_high4 <- which(pareto_k_influence_values(loo_4) > 0.7)
-
-# check the data with high k-values
-View(v[k_high4, ])
-
-# plot the model predictions
-post <- extract(m4_fit)
-
-# use the posterior predictive distribution
-ppd <- TRUE
-
-mu4 <- vector("list", length = nrow(df_obs))
-for(i in 1:nrow(df_obs)) {
-  
-  # get the mean prediction from the lognormal model on the natural scale
-  x <- 
-    with(df_obs, 
-         post$a[, S[i]] + post$b1* Y[i] + post$b2* PC1[i])
-  
-  if(ppd) {
-    x <- rlnorm(n = length(x), x, post$sigma)
-  } else {
-    x <- exp(x + (0.5*(post$sigma^2)))
-  }
-  
-  # get the probability of 0
-  y <- 
-    with(df_obs, 
-         post$a_hu + post$b1_hu * Y[i] + post$b2_hu* PC1[i] )
-  y <- 1 - plogis(y)
-  if(ppd) {
-    y <- rbinom(n = length(y), size = 1, prob = y)
-  }
-  
-  mu4[[i]] <- (x*y)
-  
-}
-
-# bind into a matrix
-mu4 <- do.call("cbind", mu4)
-
-# plot the predicted values
-plot(apply(mu4[, n_obs_mono], 2, mean), df_obs[n_obs_mono,]$M)
-points(apply(mu4[, n_obs_mono], 2, mean)[k_high4], df_obs[n_obs_mono,]$M[k_high4], col = "red")
-abline(0, 1)
-
-# calculate the r2 value
-r <- apply(mu4[,n_obs_mono], 2, mean) - df_obs[n_obs_mono,]$M
-r <- 1 - (var2(r)/var2(df_obs[n_obs_mono,]$M))
-print(r)
-
-# check the overall predicted distributions
-max(apply(mu4, 2, mean))
-max(apply(mu4, 2, max))
-
-# model 5
-m5_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model5_fit.rds")
-
-# check the traceplots
-pars <- m5_fit@model_pars
-pars <- pars[!(grepl("Rho", pars) | grepl("Z", pars)  | pars == "mu" | pars == "hu" | pars == "log_lik" | pars == "lp__")]
-
-# check the traceplots
-par_sel <- sample(pars, 1)
-print(par_sel)
-traceplot(m5_fit, pars = par_sel)
-
-# extract the diagnostic parameters
-diag <- rstan::summary(m5_fit)
-diag$summary[grepl(par_sel, row.names(diag$summary)), ]
-
-# calculate the PSIS loocv estimate
-# ref: http://ritsokiguess.site/docs/2019/06/25/going-to-the-loo-using-stan-for-model-comparison/
-log_lik_5 <- loo::extract_log_lik(m5_fit, merge_chains = F)
-r_eff_5 <- loo::relative_eff(log_lik_5)
-
-# calculate the loocv estimating using PSIS
-loo_5 <- rstan::loo(log_lik_5, r_eff = r_eff_5)
-print(loo_5)
-
-# check individual points
-k_high5 <- which(pareto_k_influence_values(loo_5) > 0.7)
-
-# check the data with high k-values
-View(v[k_high5, ])
-
-# plot the model predictions
-post <- extract(m5_fit)
-
-# use the posterior predictive distribution
-ppd <- TRUE
-
-mu5 <- vector("list", length = nrow(df_obs))
-for(i in 1:nrow(df_obs)) {
-  
-  # get the mean prediction from the lognormal model on the natural scale
-  x <- 
-    with(df_obs, 
-         post$a[, S[i]] + post$b1* Y[i] + post$b2* PC1[i])
-  
-  if(ppd) {
-    x <- rlnorm(n = length(x), x, post$sigma)
-  } else {
-    x <- exp(x + (0.5*(post$sigma^2)))
-  }
-  
-  # get the probability of 0
-  y <- 
-    with(df_obs, 
-         post$a_hu + post$b1_hu * Y[i] )
-  y <- 1 - plogis(y)
-  if(ppd) {
-    y <- rbinom(n = length(y), size = 1, prob = y)
-  }
-  
-  mu5[[i]] <- (x*y)
-  
-}
-
-# bind into a matrix
-mu5 <- do.call("cbind", mu5)
-
-# plot the predicted values
-plot(apply(mu5[, n_obs_mono], 2, mean), df_obs[n_obs_mono,]$M)
-points(apply(mu5[, n_obs_mono], 2, mean)[k_high5], df_obs[n_obs_mono,]$M[k_high5], col = "red")
-abline(0, 1)
-
-# calculate the r2 value
-r <- apply(mu5[,n_obs_mono], 2, mean) - df_obs[n_obs_mono,]$M
-r <- 1 - (var2(r)/var2(df_obs[n_obs_mono,]$M))
-print(r)
-
-# check the overall predicted distributions
-max(apply(mu5, 2, mean))
-max(apply(mu5, 2, max))
-
-# model 6
-m6_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model6_fit.rds")
-
-# check the traceplots
-pars <- m6_fit@model_pars
-pars <- pars[!(grepl("Rho", pars) | grepl("Z", pars)  | pars == "mu" | pars == "hu" | pars == "log_lik" | pars == "lp__")]
-
-# check the traceplots
-par_sel <- sample(pars, 1)
-print(par_sel)
-traceplot(m6_fit, pars = par_sel)
-
-# extract the diagnostic parameters
-diag <- rstan::summary(m6_fit)
-diag$summary[grepl(par_sel, row.names(diag$summary)), ]
-
-# calculate the PSIS loocv estimate
-# ref: http://ritsokiguess.site/docs/2019/06/25/going-to-the-loo-using-stan-for-model-comparison/
-log_lik_6 <- loo::extract_log_lik(m6_fit, merge_chains = F)
-r_eff_6 <- loo::relative_eff(log_lik_6)
-
-# calculate the loocv estimating using PSIS
-loo_6 <- rstan::loo(log_lik_6, r_eff = r_eff_6)
-print(loo_6)
-
-# check individual points
-k_high6 <- which(pareto_k_influence_values(loo_6) > 0.7)
-
-# check the data with high k-values
-View(v[k_high6, ])
-
-# plot the model predictions
-post <- extract(m6_fit)
-
-# use the posterior predictive distribution
-ppd <- TRUE
-
-mu6 <- vector("list", length = nrow(df_obs))
-for(i in 1:nrow(df_obs)) {
-  
-  # get the mean prediction from the lognormal model on the natural scale
-  x <- 
-    with(df_obs, 
-         post$a[, S[i]] + post$b1* Y[i])
-  
-  if(ppd) {
-    x <- rlnorm(n = length(x), x, post$sigma)
-  } else {
-    x <- exp(x + (0.5*(post$sigma^2)))
-  }
-  
-  # get the probability of 0
-  y <- 
-    with(df_obs, 
-         post$a_hu + post$b1_hu * Y[i] )
-  y <- 1 - plogis(y)
-  if(ppd) {
-    y <- rbinom(n = length(y), size = 1, prob = y)
-  }
-  
-  mu6[[i]] <- (x*y)
-  
-}
-
-# bind into a matrix
-mu6 <- do.call("cbind", mu6)
-
-# plot the predicted values
-plot(apply(mu6[, n_obs_mono], 2, mean), df_obs[n_obs_mono,]$M)
-points(apply(mu6[, n_obs_mono], 2, mean)[k_high6], df_obs[n_obs_mono,]$M[k_high6], col = "red")
-abline(0, 1)
-
-# calculate the r2 value
-r <- apply(mu6[,n_obs_mono], 2, mean) - df_obs[n_obs_mono,]$M
-r <- 1 - (var2(r)/var2(df_obs[n_obs_mono,]$M))
-print(r)
-
-# check the overall predicted distributions
-max(apply(mu6, 2, mean))
-max(apply(mu6, 2, max))
-
-# compare the different models
-loo_compare(list( "m0" = loo_0, 
-                  "m1" = loo_1, 
-                  "m2" = loo_2, 
-                  "m3" = loo_3, 
-                  "m4" = loo_4, 
-                  "m5" = loo_5, 
-                  "m6" = loo_6) )
-
-# are similar points leading to the high values
-k_mult <- table(c(k_high0, k_high1, k_high2, k_high3, k_high4, k_high5, k_high6))
-df_obs[as.integer(names(k_mult[k_mult>1])),]
-
-
-# make a fit to sample plot of the best fitting model: m0
+pred_ln0 <- do.call("cbind", pred_ln0)
 
 # pull into a data.frame for plotting
 
@@ -635,9 +450,9 @@ df_plot <- data.frame(M_obs = df_obs$M,
                       Y = df_obs$Y,
                       PC1 = df_obs$PC1,
                       PC2 = df_obs$PC2,
-                      M_pred_mu = apply(mu0, 2, mean),
-                      M_pred_PIlow = apply(mu0, 2, HPDI, 0.90)[1,],
-                      M_pred_PIhigh = apply(mu0, 2, HPDI, 0.90)[2,])
+                      M_pred_mu = apply(pred_ln0, 2, mean),
+                      M_pred_PIlow = apply(pred_ln0, 2, HPDI, 0.90)[1,],
+                      M_pred_PIhigh = apply(pred_ln0, 2, HPDI, 0.90)[2,])
 
 
 # check the min and max
@@ -666,7 +481,7 @@ plot(p1)
 
 # check the overlap between the predicted values and the observed values
 n <- 25
-samples <- mu0[sample(1:nrow(mu0), n), ]
+samples <- pred_ln0[sample(1:nrow(pred_ln0), n), ]
 
 df_samples <- data.frame(V1 = samples[1,])
 for(i in 2:nrow(samples)) {
@@ -699,32 +514,6 @@ ggplot() +
   facet_wrap(~ OTU, scales = "free") +
   theme_meta()
 
-# check some of the predictions
-df_plot %>% 
-  filter(OTU == "Hydro") %>%
-  select(Obs_pred, M_obs, M_pred_mu, M_pred_PIlow, M_pred_PIhigh) %>%
-  View()
-
-df_plot %>% 
-  filter(OTU == "Hydro") %>%
-  pull(M_obs) %>%
-  max(., na.rm = TRUE)
-
-x <- df_plot %>% 
-  filter(OTU == "Hydro") %>%
-  filter(Obs_pred == "Observed")
-
-plot(x$Y, x$M_obs)
-plot(x$PC2, x$M_obs)
-plot(x$PC1, x$M_obs)
-
-ggplot(data = x,
-       mapping = aes(x = T, y = M_obs)) +
-  geom_point() +
-  facet_wrap(~C) +
-  theme_meta()
-
-
 
 # calculate the MESS index: Zurell et al. (2012)
 
@@ -749,6 +538,5 @@ df_test$MESS <- MESS
 
 # check how many data point are predicting out of the range
 (sum(df_test$MESS)/nrow(df_test))*100
-
 
 ### END

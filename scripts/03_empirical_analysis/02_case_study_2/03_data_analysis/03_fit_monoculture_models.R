@@ -60,125 +60,174 @@ df_m_obs <-
        T = df_m_obs$time,
        S = df_m_obs$OTU)
 
+
+# Lognormal hurdle models
+
 # model 0
 
 # compile the model
-m0 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model0.stan",
+ln0 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model0.stan",
                         verbose = TRUE)
 
 # sample the stan model
-m0_fit <- rstan::sampling(m0, data = df_m_obs, 
+ln0_fit <- rstan::sampling(ln0, data = df_m_obs, 
                           iter = 3000, chains = 4, algorithm = c("NUTS"),
                           control = list(adapt_delta = 0.99),
                           cores = 4)
 
-# check for divergent transitions
-check_divergences(m0_fit)
-
 # save the stan model fit object
-m0_fit@stanmodel@dso <- new("cxxdso")
-saveRDS(m0_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model0_fit.rds")
+ln0_fit@stanmodel@dso <- new("cxxdso")
+saveRDS(ln0_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model0_fit.rds")
 
 # model 1
 
 # compile the model
-m1 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model1.stan",
+ln1 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model1.stan",
                         verbose = TRUE)
 
 # sample the stan model
-m1_fit <- rstan::sampling(m1, data = df_m_obs, 
+ln1_fit <- rstan::sampling(ln1, data = df_m_obs, 
                           iter = 3000, chains = 4, algorithm = c("NUTS"),
                           control = list(adapt_delta = 0.99),
                           cores = 4)
 
 # save the stan model fit object
-m1_fit@stanmodel@dso <- new("cxxdso")
-saveRDS(m1_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model1_fit.rds")
+ln1_fit@stanmodel@dso <- new("cxxdso")
+saveRDS(ln1_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model1_fit.rds")
 
 # model 2
 
 # compile the model
-m2 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model2.stan",
+ln2 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model2.stan",
                         verbose = TRUE)
 
 # sample the stan model
-m2_fit <- rstan::sampling(m2, data = df_m_obs, 
+ln2_fit <- rstan::sampling(ln2, data = df_m_obs, 
                           iter = 3000, chains = 4, algorithm = c("NUTS"),
                           control = list(adapt_delta = 0.99),
                           cores = 4)
 
 # save the stan model fit object
-m2_fit@stanmodel@dso <- new("cxxdso")
-saveRDS(m2_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model2_fit.rds")
+ln2_fit@stanmodel@dso <- new("cxxdso")
+saveRDS(ln2_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model2_fit.rds")
 
 # model 3
 
 # compile the model
-m3 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model3.stan",
+ln3 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model3.stan",
                         verbose = TRUE)
 
 # sample the stan model
-m3_fit <- rstan::sampling(m3, data = df_m_obs, 
+ln3_fit <- rstan::sampling(ln3, data = df_m_obs, 
                           iter = 3000, chains = 4, algorithm = c("NUTS"), 
                           control = list(adapt_delta = 0.99),
                           cores = 4)
 
 # save the stan model fit object
-m3_fit@stanmodel@dso <- new("cxxdso")
-saveRDS(m3_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model3_fit.rds")
+ln3_fit@stanmodel@dso <- new("cxxdso")
+saveRDS(ln3_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model3_fit.rds")
 
 # model 4
 
 # compile the model
-m4 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model4.stan",
+ln4 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model4.stan",
                         verbose = TRUE)
 
 # sample the stan model
-m4_fit <- rstan::sampling(m4, data = df_m_obs, 
+ln4_fit <- rstan::sampling(ln4, data = df_m_obs, 
                           iter = 3000, chains = 4, algorithm = c("NUTS"),
                           cores = 4)
 
-# check the model
-pairs(m4_fit, pars = c("abar"))
-
 # save the stan model fit object
-m4_fit@stanmodel@dso <- new("cxxdso")
-saveRDS(m4_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model4_fit.rds")
+ln4_fit@stanmodel@dso <- new("cxxdso")
+saveRDS(ln4_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model4_fit.rds")
 
 # model 5
 
 # compile the model
-m5 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model5.stan",
+ln5 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model5.stan",
                         verbose = TRUE)
 
 # sample the stan model
-m5_fit <- rstan::sampling(m5, data = df_m_obs, 
+ln5_fit <- rstan::sampling(ln5, data = df_m_obs, 
                           iter = 2000, chains = 4, algorithm = c("NUTS"),
                           seed = 54856, cores = 4)
 
 # save the stan model fit object
-m5_fit@stanmodel@dso <- new("cxxdso")
-saveRDS(m5_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model5_fit.rds")
+ln5_fit@stanmodel@dso <- new("cxxdso")
+saveRDS(ln5_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model5_fit.rds")
 
 # model 6
 
 # compile the model
-m6 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model6.stan",
+ln6 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model6.stan",
                         verbose = TRUE)
 
 # sample the stan model
-m6_fit <- rstan::sampling(m6, data = df_m_obs, 
+ln6_fit <- rstan::sampling(ln6, data = df_m_obs, 
                           iter = 3000, chains = 4, algorithm = c("NUTS"),
+                          control = list(adapt_delta = 0.99, stepsize = 0.01,
+                                         max_treedepth = 12),
                           cores = 4)
 
-# check for divergent transitions
-pairs(m6_fit, pars = "a")
+# save the stan model fit object
+ln6_fit@stanmodel@dso <- new("cxxdso")
+saveRDS(ln6_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model6_fit.rds")
 
-pairs(m6_fit, pars = "a")
-pairs(m6_fit, pars = c("sigma", "sigma_a", "b1", "a_hu", "b1_hu"))
+# Gamma hurdle models
+
+# model 0
+
+# compile the model
+g0 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_gamma_model0.stan",
+                        verbose = TRUE)
+
+# sample the stan model
+g0_fit <- rstan::sampling(g0, data = df_m_obs, 
+                          iter = 3000, chains = 4, algorithm = c("NUTS"),
+                          control = list(adapt_delta = 0.99,
+                                         stepsize = 0.01,
+                                         max_treedepth = 12),
+                          cores = 4)
 
 # save the stan model fit object
-m6_fit@stanmodel@dso <- new("cxxdso")
-saveRDS(m5_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_model6_fit.rds")
+g0_fit@stanmodel@dso <- new("cxxdso")
+saveRDS(g0_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_gamma_model0_fit.rds")
+
+# model 1
+
+# compile the model
+g1 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_gamma_model1.stan",
+                        verbose = TRUE)
+
+# sample the stan model
+g1_fit <- rstan::sampling(g1, data = df_m_obs, 
+                          iter = 3000, chains = 4, algorithm = c("NUTS"),
+                          control = list(adapt_delta = 0.99,
+                                         stepsize = 0.01,
+                                         max_treedepth = 12),
+                          cores = 4)
+
+# save the stan model fit object
+g1_fit@stanmodel@dso <- new("cxxdso")
+saveRDS(g1_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_gamma_model1_fit.rds")
+
+# model 2
+
+# compile the model
+g2 <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_gamma_model2.stan",
+                        verbose = TRUE)
+
+# sample the stan model
+g2_fit <- rstan::sampling(g2, data = df_m_obs, 
+                          iter = 3000, chains = 4, algorithm = c("NUTS"),
+                          control = list(adapt_delta = 0.99,
+                                         stepsize = 0.01,
+                                         max_treedepth = 12),
+                          cores = 4)
+
+# save the stan model fit object
+g2_fit@stanmodel@dso <- new("cxxdso")
+saveRDS(g2_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_gamma_model2_fit.rds")
 
 ### END

@@ -57,6 +57,8 @@ model{
     }
 }
 generated quantities{
+     // log-likelihood vector
+     vector[N] log_lik;
      // mu vector: lognormal model
      vector[N] mu;
      // hu vector: binomial model
@@ -64,5 +66,11 @@ generated quantities{
     for ( i in 1:N ) {
         mu[i] = a[S[i]] + b1 * Y[i];
         hu[i] = a_hu + b1_hu * Y[i];
+      if (M[i] == 0) {
+        log_lik[i] = bernoulli_lpmf(1 | inv_logit(hu[i]) );
+      } else {
+        log_lik[i] = bernoulli_lpmf(0 | inv_logit(hu[i]) ) +
+                    gamma_lpdf(M[i] | exp(mu[i])*exp(mu[i])/phi, exp(mu[i])/phi);
+       }
     }
 }
