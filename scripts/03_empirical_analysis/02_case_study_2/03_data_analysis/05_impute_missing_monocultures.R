@@ -13,239 +13,67 @@ library(readr)
 library(dplyr)
 library(tidyr)
 
-# load relevant plotting themes
+# load plotting theme
 source("scripts/Function_plotting_theme.R")
+source("scripts/03_empirical_analysis/helper_functions.R")
 
 # load the analysis data
-data <- read_csv(here("data/case_study_2/data_clean/biomass_env_analysis_data.csv"))
+df_obs <- read_csv("data/case_study_2/data_clean/biomass_env_analysis_data.csv")
 
-# make a Y2 variable
-data$Y2 <- data$Y^2
+# load the model predictions
+m0_pred <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/04_m0_predictions.rds")
 
-# pivot mixture data longer
-mix <- 
-  data %>%
-  select(cluster_id, buoy_id, time, OTU, Y) %>%
-  pivot_wider(id_cols = c("cluster_id", "buoy_id", "time"),
-              names_from = "OTU",
-              values_from = "Y")
-
-# join these data together
-data <- full_join(data, mix, by = c("cluster_id", "buoy_id", "time"))
-
-# set the OTUs
-sp <- sort(unique(data$OTU))
-
-# get a list of file names
-files <- list.files(here("results/"))
-
-# get a file name list of posterior distributions
-files_post <- files[grepl(pattern = "posterior", x = files )]
-
-# get a file name list of model objects
-files_mod <- files[grepl(pattern = "model_object", x = files )]
-
-# choose how many samples to draw from the posterior
-n_samp <- 1000
-
-sp_mono <- vector("list", length = length(sp))
-names(sp_mono) <- sp
-for (i in 1:length(sp)) {
-
-  # load the posterior distrbution
-  post <- readRDS(paste0(here("results"), "/", files_post[i]))
+df_imp <- vector("list", length = nrow(m0_pred))
+for(i in 1:nrow(m0_pred)) {
   
-  # load the model object
-  model_ob <- readRDS(paste0(here("results"), "/", files_mod[i]))
+  # add predictions from one sample from the posterior distribution
+  df_obs[["M_imp"]] <- m0_pred[i,]
   
-  # assign input variables to the names
-  data_NA <- 
-    data %>%
-    filter(OTU == sp[i], is.na(M))
-  
-  # extract the variable names
-  var_names <- names(model_ob@data)
-  var_names <- var_names[var_names != "M"]
-  
-  # extract the parameter names
-  post_names <- names(post)
-  
-  # extract the correct distribution
-  dist <- gsub(pattern = "d", replacement = "r", x = model_ob@formula[[1]][[3]] )
-  dist <- paste0(dist[1], "(n = length(Y),", dist[2], ",", dist[3], ")")
-  
-  # get these predictions for n samples
-  post_pred <- 
-    
-    sapply(1:n_samp, function(x) {
-      
-      for(j in var_names) {
-        
-        assign(x = j, data_NA[[j]])
-        
-      }
-      
-      # take a sample from the posterior distribution
-      sample_id <- sample(x = 1:length(post[[1]]), 1)
-      
-      # assign the parameter values to the names
-      post_samp <- sapply(post, function(x) x[sample_id] )
-      
-      # write a loop and assign a sample from the posterior distribution to a parameter name
-      for (k in 1:length(post_names)) {
-        
-        assign(x = post_names[k], value = post_samp[k])
-        
-      }
-      
-      # calculate mu: set-up the expression
-      form <- parse(text = model_ob@formula[[2]][[3]])
-      
-      # evaluate the expression
-      u <- eval(form)
-      
-      # run the u values through the distribution
-      dist <- parse(text = dist )
-      M1 <- eval(dist)
-      
-      # if the value is less than zero then set it to zero
-      M1 <- ifelse(M1 < 0, 0, M1)
-      
-      return(M1)
-      
-    } )
-  
-  # return the matrix predictions
-  sp_mono[[i]] <- post_pred
+  # write to a list
+  df_imp[[i]] <- df_obs
   
 }
 
-# check if the data have the correct dimensions
-all(data %>%
-      filter(is.na(M)) %>%
-      group_by(OTU) %>%
-      summarise(n = n()) %>%
-      pull(n) == sapply(sp_mono, nrow)
-    ) 
-
-# check the monoculture predictions
-data_obs <- 
-  data %>%
-  filter(!is.na(M)) %>%
-  mutate(obs_pred = "Observed") %>%
-  select(obs_pred, OTU, M) %>%
-  arrange(obs_pred, OTU)
-
-# how many observed samples do we have
-data_obs %>%
-  group_by(OTU) %>%
-  summarise(n = n())
-
-# how many missing samples do we have?
-data %>%
-  filter(is.na(M)) %>%
-  group_by(OTU) %>%
-  summarise(n = n())
-
-data_pred <- 
+# for each sample, add the samples to the NA values
+df_imp <- 
   
-  mapply(function(data, name) {
+  lapply(df_imp, function(x) {
   
-  y <- sapply(data, function(x) return(x) )
-  z <- tibble(obs_pred = "Predicted",
-              OTU = name,
-              M = y)
-  return(z)
+  # add the imputations to the missing data only
+  x$M[which(is.na(x$M))] <- x$M_imp[which(is.na(x$M))]
   
-}, sp_mono, names(sp_mono), SIMPLIFY = FALSE )
-
-# bind into a data.frame
-data_pred <- bind_rows(data_pred)
-
-# bind the predictions into a data.frame with the observations
-data_comb <- bind_rows(data_obs, data_pred)
-
-# change the OTU name
-data_comb$OTU <- factor(data_comb$OTU)
-levels(data_comb$OTU) <- c("Barn", "Bryo", "Asci", "Hydro", "Ciona")
-
-# calculate summary statistics
-data_sum <- 
-  data_comb %>%
-  group_by(obs_pred, OTU) %>%
-  summarise(M = mean(M))
-
-# plot these data as density plots
-p1 <- 
-  ggplot() +
-  geom_density(data = data_comb,
-               mapping = aes(x = M, colour = obs_pred, fill = obs_pred), 
-               alpha = 0.4) +
-  geom_vline(data = data_sum,
-             mapping = aes(xintercept = M, colour = obs_pred),
-             show.legend = FALSE, linetype = "dashed") +
-  facet_wrap(~OTU, scales = "free") +
-  scale_colour_viridis_d(option = "C", end = 0.9) +
-  scale_fill_viridis_d(option = "C", end = 0.9) +
-  labs(colour = NULL, fill = NULL) + 
-  xlab("Monoculture biomass (g)") +
-  ylab("Density") +
-  scale_y_continuous(expand = c(0, 0)) +
-  theme_meta() +
-  theme(legend.position = "top")
-
-ggsave(filename = here("figures/figA1_S6.png"), p1, dpi = 350,
-       units = "cm", width = 20, height = 15)
-
-# is there a site-bias in the missing monocultures?
-data_bias <- 
-  data %>%
-  select(cluster_id, PC1, PC2, OTU, M)
-data_bias$M2 <- ifelse(is.na(data_bias$M), "Missing", "Observed")
-data_bias$M2 <- factor(data_bias$M2, levels = c("Observed", "Missing"))
-
-# plot a PCA of the observed versus missing data for the different species
-p2 <- 
-  ggplot(data = data_bias,
-       mapping = aes(x = PC1, y = PC2, colour = M2)) +
-  geom_point(alpha = 0.9, shape = 1, size = 2) +
-  facet_wrap(~OTU, scales = "free") +
-  scale_colour_viridis_d(option = "C", end = 0.9) +
-  ylab("PC2 (32%)") +
-  xlab("PC1 (38%)") +
-  labs(colour = NULL) +
-  theme_meta() +
-  theme(legend.position = "top") +
-  theme(legend.key=element_blank(),
-        legend.background=element_blank())
-
-ggsave(filename = here("figures/figA1_S7.png"), p2, dpi = 350,
-       units = "cm", width = 20, height = 15)
-
-# save the monoculture predictions as a .rds file
-saveRDS(object = sp_mono, file = here("results/benthic_mono_pred.rds"))
+  # remove the M_imp column
+  x <- dplyr::select(x, -M_imp)
+  
+  return(x)
+  
+})
 
 # remove the unnecessary columns in the data data.frame and put data in correct format
-data_M <- 
-  data %>%
-  select(cluster_id, buoy_id, time, OTU, M, Y) %>%
-  rename(place = buoy_id, species = OTU) %>%
-  mutate(place = as.integer(as.factor(place)),
-         time = as.integer(as.factor(time)),
-         species = as.integer(as.factor(species))) %>%
-  group_by(cluster_id) %>%
-  mutate(sample = as.integer(as.factor(paste0(place, time))) ) %>%
-  ungroup() %>%
-  select(cluster_id, sample, place, time, species, M, Y) %>%
-  mutate(M1 = M)
+df_imp <- 
+  
+  lapply(df_imp, function(x) {
+  
+  x %>%
+    select(cluster_id, buoy_id, time, OTU, M, Y) %>%
+    rename(place = buoy_id, species = OTU) %>%
+    mutate(place = as.integer(as.factor(place)),
+           time = as.integer(as.factor(time)),
+           species = as.integer(as.factor(species))) %>%
+    group_by(cluster_id) %>%
+    mutate(sample = as.integer(as.factor(paste0(place, time))) ) %>%
+    ungroup() %>%
+    select(cluster_id, sample, place, time, species, M, Y)
+  
+} )
 
 # save the monoculture predictions as a .rds file
-saveRDS(object = data_M, file = here("results/benthic_BEF_data.rds"))
+saveRDS(object = df_imp, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/05_complete_data.rds")
 
 # generate 100 different Dirichlet distribution
-start_RA <- sapply(1:100, function(x) gtools::rdirichlet(n = 1, rep(3, length(unique(data_M$species))) ) )
+start_RA <- sapply(1:100, function(x) gtools::rdirichlet(n = 1, rep(3, length(unique(df_imp[[1]]$species))) ) )
 
 # save the Dirichlet distribution
-saveRDS(object = start_RA, file = here("results/benthic_start_RA.rds"))
+saveRDS(object = start_RA, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/05_start_RYE.rds")
 
 ### END

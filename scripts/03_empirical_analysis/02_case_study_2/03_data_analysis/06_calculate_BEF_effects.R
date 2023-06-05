@@ -2,9 +2,9 @@
 #' @title: Calculate the BEF effects using the modeled monoculture data
 #' 
 #' @description: This script calculates Isbell et al.'s (2018) biodiversity effects 
-#' on the benthic marine fouling communitiesusing all the variation in the 
+#' on the benthic marine fouling communities using all the variation in the 
 #' modelled monocultures along with the uncertainty from the Dirichlet distribution.
-#'  This script is very computationally intensive and was run in parellel on a computer cluster using 10
+#' This script is very computationally intensive and was run in parellel on a computer cluster using 10
 #' cores (Albiorix: http://mtop.github.io/albiorix/).
 #' 
 #' @authors: James G. Hagan (james_hagan(at)outlook.com)
@@ -12,26 +12,95 @@
 
 # load the required libraries
 library(dplyr)
-library(here)
 library(foreach)
 library(doParallel)
 
 # load the relevant functions
-source(here("BEF_quant_scale/scripts/01_partition_functions/02_isbell_2018_partition.R"))
+source("scripts/01_partition_functions/01_isbell_2018_partition.R")
 
 # load the analysis data
-data_M <- readRDS(here("BEF_quant_scale/results/benthic_BEF_data.rds"))
+df_imp <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/05_complete_data.rds")
 
 # load the starting relative abundance data
-start_RA <- readRDS(here("BEF_quant_scale/results/benthic_start_RA.rds"))
+start_RA <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/05_start_RYE.rds")
 
-# load the monoculture prediction data
-sp_mono <- readRDS(file = here("BEF_quant_scale/results/benthic_mono_pred.rds"))
+# test some of the code
+# extract a single dataset
+data <- df_imp[[1]]
 
-# check how many samples from the posterior distribution there are
-n_samp <- (sapply(sp_mono, function(x) ncol(x)))
-all(n_samp == max(n_samp))
-n_samp <- max(n_samp)
+# for each cluster we lapply
+clust_list <- split(data, data[["cluster_id"]])
+
+lapply()
+
+x <- df_imp[[1]] %>% filter(cluster_id == "A")
+
+y <- 
+  
+  apply(start_RA, 2, function(RA) {
+    
+    # extract the cluster id
+    cluster_id <- unique(x[["cluster_id"]])
+    
+    # calculate the BEF effects
+    BEF_post <- Isbell_2018_sampler(data = x[, names(x) != "cluster_id"], RYe = RA, RYe_post = FALSE)
+    names(BEF_post[["L.Beff"]])[names(BEF_post[["L.Beff"]]) == "L.Beff"] <- "Beff"
+    
+    # combine the general biodiversity effects and local effects into one data.frame
+    BEF_post <- rbind(BEF_post[["Beff"]], BEF_post[["L.Beff"]])
+    
+    # convert to a data.frame
+    BEF_post <- as.data.frame(BEF_post, row.names = NULL)
+    
+    # add the cluster id variable
+    BEF_post[["cluster_id"]] <- cluster_id
+    
+    return(BEF_post)
+    
+  })
+
+
+
+
+
+    
+RYe_reps <- 
+  
+  apply(
+    
+    X = start_RA, 
+    
+    MARGIN = 2, 
+    
+    FUN = function(RA) {
+      
+      # calculate the biodiversity effects for each of the potential starting abundances
+      BEF_post <- Isbell_2018_sampler(data = df_imp[[1]], RYe = RA, RYe_post = FALSE)
+      names(BEF_post[["L.Beff"]])[names(BEF_post[["L.Beff"]]) == "L.Beff"] <- "Beff"
+      
+      # combine the general biodiversity effects and local effects into one data.frame
+      BEF_post <- rbind(BEF_post[["Beff"]], BEF_post[["L.Beff"]])
+      
+      # convert to a data.frame
+      BEF_post <- as.data.frame(BEF_post, row.names = NULL)
+      
+      return(BEF_post)
+      
+    } )
+      
+# bind into a data.frame
+bind_rows(RYe_reps, .id = "RA")
+
+
+# bind the rows from the different clusters
+BEF_eff <- bind_rows(BEF.x, .id = "cluster_id")
+
+
+
+
+
+
+
 
 # set-up a parallel for-loop
 n.cores <- 10
