@@ -50,11 +50,9 @@ functions {
 data{
      int<lower=1> N;
      int<lower=1> S_N;
-     int<lower=1> C_N;
      vector[N] M;
      vector[N] Y;
      vector[N] PC1;
-    array[N] int C;
     array[N] int S;
 }
 parameters{
