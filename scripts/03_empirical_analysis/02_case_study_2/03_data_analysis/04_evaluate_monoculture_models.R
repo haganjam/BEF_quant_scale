@@ -404,6 +404,9 @@ loo_compare(loo_fit)
 # extract the posterior distribution
 post <- rstan::extract(ln0_fit)
 
+# get 1000 samples from the posterior distribution
+id_samp <- sample(1:6000, 1000)
+
 # make a fit to sample plot of the best fitting model
 pred_ln0 <- vector("list", length = nrow(df_obs))
 for(i in 1:nrow(df_obs)) {
@@ -411,14 +414,18 @@ for(i in 1:nrow(df_obs)) {
   # get predictions for all values using the ln0 model
   x <- 
     with(df_obs, 
-         post$a[, S[i]] + post$b1[, S[i]]* Y[i] + post$b2[, S[i]]* PC1[i])
+         post$a[id_samp, S[i]] + 
+           post$b1[id_samp, S[i]]* Y[i] + 
+           post$b2[id_samp, S[i]]* PC1[i])
   
   x <- rlnorm(n = length(x), x, post$sigma)
   
   # get the probability of zero for each observation
   y <- 
     with(df_obs, 
-         post$a_hu[, S[i]] + post$b1_hu[, S[i]]* Y[i] )
+         post$a_hu[id_samp, S[i]] + 
+           post$b1_hu[id_samp, S[i]]* Y[i] )
+  
   y <- 1 - plogis(y)
   y <- rbinom(n = length(y), size = 1, prob = y)
   
@@ -429,6 +436,9 @@ for(i in 1:nrow(df_obs)) {
 
 # bind into a matrix
 pred_ln0 <- do.call("cbind", pred_ln0)
+
+# save this output
+saveRDS(pred_ln0, "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/04_m0_predictions.rds")
 
 # pull into a data.frame for plotting
 
@@ -467,9 +477,9 @@ p1 <-
   geom_errorbar(mapping = aes(x = M_obs, ymin = M_pred_PIlow, ymax = M_pred_PIhigh, 
                               colour = OTU),
                 width = 0, alpha = 0.5, size = 0.25, show.legend = FALSE) +
-  ylab("Predicted monoculture (g)") +
-  xlab("Observed monoculture (g)") +
-  facet_wrap(~C, scales = "free") +
+  ylab("Predicted monoculture dry biomass (g)") +
+  xlab("Observed monoculture dry biomass (g)") +
+  facet_wrap(~C, scales = "free", nrow = 4, ncol = 3) +
   scale_y_continuous(limits = c(0, 31)) +
   scale_x_continuous(limits = c(0, 10)) +
   scale_colour_manual(values = viridis(n = 5, begin = 0.1, end = 0.9, option = "C")) +
@@ -478,6 +488,9 @@ p1 <-
   theme(legend.position = "top",
         legend.key = element_rect(fill = NA))
 plot(p1)
+
+ggsave(filename = "figures/figA2_SX.png", p1, dpi = 300,
+       units = "cm", width = 18, height = 24)
 
 # check the overlap between the predicted values and the observed values
 n <- 25
@@ -505,14 +518,21 @@ df_samples <-
                values_to = "M_pred")
 
 # plot the overlap between the observed and the predicted data
-ggplot() +
+p2 <- 
+  ggplot() +
   geom_density(data = df_plot %>% filter(Obs_pred == "Observed"),
                mapping = aes(x = M_obs), fill = "red", colour = "white", alpha = 1) +
   geom_density(data = df_samples,
                mapping = aes(x = M_pred, group = sample), alpha = 0.05,
                linewidth = 0.25, fill = "grey", colour = "grey") +
-  facet_wrap(~ OTU, scales = "free") +
+  ylab("Density") +
+  xlab("Monoculture dry biomass (g)") +
+  facet_wrap(~ OTU, scales = "free", nrow = 3, ncol = 2) +
   theme_meta()
+plot(p2)
+
+ggsave(filename = "figures/figA2_SY.png", p2, dpi = 300,
+       units = "cm", width = 12, height = 18)
 
 
 # calculate the MESS index: Zurell et al. (2012)

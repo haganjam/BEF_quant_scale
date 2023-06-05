@@ -85,8 +85,8 @@ model{
     // standard deviation of the log-normal distribution
     sigma ~ exponential( 4 );
     // linear model priors: log-normal
-    abar ~ uniform( -4.5 , 4.5 );
-    sigma_a ~ exponential( 3 );
+    abar ~ normal(0, 2);
+    sigma_a ~ exponential( 2 );
     b1 ~ normal(0, 2);
     b2 ~ normal(0, 2);
     // linear model priors: binomial model
