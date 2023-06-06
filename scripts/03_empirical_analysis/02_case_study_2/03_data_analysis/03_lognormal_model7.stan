@@ -1,5 +1,5 @@
 //
-// Gamma hurdle model
+// LogNormal-Hurdle: Model 7
 //
 data{
      int<lower=1> N;
@@ -7,12 +7,14 @@ data{
      int<lower=1> C_N;
      vector[N] M;
      vector[N] Y;
+     vector[N] PC1;
+     vector[N] PC2;
     array[N] int C;
     array[N] int S;
 }
 parameters{
      // standard deviation: log-normal model
-     real<lower=0> phi;
+     real<lower=0> sigma;
      // standard normal deviations: log-normal model
      vector[S_N] Za;
      // parameters: log-normal model
@@ -34,25 +36,24 @@ model{
     // vector of means: binomial linear model 
      vector[N] hu;
     // standard deviation of the log-normal distribution
-    phi ~ exponential( 2 );
+    sigma ~ exponential( 4 );
     // linear model priors: log-normal
-    abar ~ normal(0, 3);
-    sigma_a ~ exponential( 3 );
+    abar ~ normal(0, 2);
+    sigma_a ~ exponential( 2 );
     b1 ~ normal(0, 2);
     // linear model priors: binomial model
     a_hu ~ normal(0, 2);
     b1_hu ~ normal(0, 2);
     // standard normal vectors
     to_vector( Za ) ~ normal( 0 , 1 );
-    // likelihood: Gamma hurdle
-    for (i in 1:N) {
+    for ( i in 1:N ) {
         mu[i] = a[S[i]] + b1 * Y[i];
         hu[i] = a_hu + b1_hu * Y[i];
       if (M[i] == 0) {
         target += bernoulli_lpmf(1 | inv_logit(hu[i]) );
       } else {
         target += bernoulli_lpmf(0 | inv_logit(hu[i]) ) +
-                  gamma_lpdf(M[i] | exp(mu[i])*exp(mu[i])/phi, exp(mu[i])/phi);
+                  lognormal_lpdf(M[i] | mu[i], sigma);
        }
     }
 }
@@ -70,7 +71,7 @@ generated quantities{
         log_lik[i] = bernoulli_lpmf(1 | inv_logit(hu[i]) );
       } else {
         log_lik[i] = bernoulli_lpmf(0 | inv_logit(hu[i]) ) +
-                    gamma_lpdf(M[i] | exp(mu[i])*exp(mu[i])/phi, exp(mu[i])/phi);
+                  lognormal_lpdf(M[i] | mu[i], sigma);
        }
     }
 }

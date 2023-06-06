@@ -98,7 +98,7 @@ for(j in 1:N_rep) {
   V <- matrix(rnorm(n = 3*Ns, mean = 0, sd = 1), nrow = 3, ncol = Ns)
   
   # obtain the Cholesky factor from this matrix
-  L_v <- chol(Rho_par)
+  L_v <- chol(Rho_v)
   
   # get the offsets from the z-scores
   v <- t(diag(sigma_v) %*% L_v %*% V )
@@ -127,7 +127,7 @@ for(j in 1:N_rep) {
   Z <- matrix(rnorm(n = 2*Ns, mean = 0, sd = 1), nrow = 2, ncol = Ns)
   
   # obtain the Cholesky factor from this matrix
-  L_z <- chol(Rho_hu)
+  L_z <- chol(Rho_z)
   
   # get the offsets from the z-scores
   z <- t(diag(sigma_z) %*% L_z %*% Z )
@@ -235,10 +235,49 @@ m_sim <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_dat
 # sample the stan model
 m_sim_fit <- rstan::sampling(m_sim, data = dat, 
                              iter = 1000, chains = 4, algorithm = c("NUTS"),
-                             cores = 4)
+                             control = list(adapt_delta = 0.99),
+                             cores = 4,
+                             seed = 485749)
 
 # check the model output
 print(m_sim_fit)
+
+# extract the diagnostic parameters
+diag1 <- as.data.frame(rstan::summary(m_sim_fit)$summary)
+
+# compare to custom likelihood model
+
+# compile the model
+m_cust <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/lognormal_custom_likelihood_test.stan",
+                           verbose = TRUE)
+
+# sample the stan model
+m_cust_fit <- rstan::sampling(m_cust, data = dat, 
+                             iter = 1000, chains = 4, algorithm = c("NUTS"),
+                             control = list(adapt_delta = 0.99),
+                             cores = 4,
+                             seed = 485749)
+
+# check the output
+print(m_cust_fit)
+
+# extract the diagnostic parameters
+diag2 <- as.data.frame(rstan::summary(m_cust_fit)$summary)
+
+# compare the two
+plot(diag1[-which(diag2$mean == min(diag2$mean)), ]$mean, 
+     diag2[-which(diag2$mean == min(diag2$mean)), ]$mean)
+abline(0, 1)
+
+# compare a few random rows completely
+row_id <- sample(1:nrow(diag1), 5)
+
+diag1[row_id,1:5] %>% round(2)
+diag2[row_id,1:5] %>% round(2)
+
+# compare the loo scores
+rstan::loo(m_sim_fit)
+rstan::loo(m_cust_fit)
 
 # check the model parameters
 pars <- m_sim_fit@model_pars
