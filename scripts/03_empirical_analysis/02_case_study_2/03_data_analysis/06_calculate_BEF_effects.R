@@ -16,13 +16,13 @@ library(foreach)
 library(doParallel)
 
 # load the relevant functions
-source("scripts/01_partition_functions/01_isbell_2018_partition.R")
+source("BEF_quant_scale/scripts/01_partition_functions/01_isbell_2018_partition.R")
 
 # load the analysis data
-df_imp <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/05_complete_data.rds")
+df_imp <- readRDS("BEF_quant_scale/scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/05_complete_data.rds")
 
 # load the starting relative abundance data
-start_RA <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/05_start_RYE.rds")
+start_RA <- readRDS("BEF_quant_scale/scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/05_start_RYE.rds")
 
 # set-up a parallel for-loop
 n.cores <- 10
@@ -111,6 +111,6 @@ BEF_list <- dplyr::select(BEF_list, cluster_id, mono_rep, RYE, Beff, Value)
 BEF_list <- dplyr::arrange(BEF_list, cluster_id, mono_rep, RYE, Beff, Value)
 
 # save this object
-saveRDS(object = BEF_list, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/06_BEF_effects_output.rds")
+saveRDS(object = BEF_list, file = "BEF_quant_scale/results/BEF_effects_case_study_2.rds")
 
 ### END
