@@ -142,8 +142,6 @@ raw_cov <- function(x, y) {
 
 Isbell_2018_part <- function(data, RYe) {
   
-  library(dplyr)
-  
   # test if the input data is a data.frame
   test_1 <- function(x) {
     
@@ -230,8 +228,8 @@ Isbell_2018_part <- function(data, RYe) {
   
   # sort the data.frame
   df <- 
-    data %>%
-    arrange(sample, time, place, species)
+    data |>
+    dplyr::arrange(sample, time, place, species)
   
   # define expected relative yields
   df$RYe <- rep(RYe, n_unique(df$sample))
@@ -247,10 +245,10 @@ Isbell_2018_part <- function(data, RYe) {
   
   # calculate observed proportion of each species in mixture (po,ijk, Isbell et al. 2018)
   df <- 
-    df %>%
-    group_by(sample) %>%
-    mutate(Poi = if_else(is.na(Y/sum(Y)), 0, Y/sum(Y))  ) %>%
-    ungroup()
+    df |>
+    dplyr::group_by(sample) |>
+    dplyr::mutate(Poi = if_else(is.na(Y/sum(Y)), 0, Y/sum(Y))  ) |>
+    dplyr::ungroup()
   
   # calculate change in observed proportion relative to the expectation (d.po,ijk, Isbell et al. 2018)
   df$d.Poi <- (df$Poi - df$RYe)
@@ -315,16 +313,16 @@ Isbell_2018_part <- function(data, RYe) {
   
   # 10. Local complementarity and local selection
   LC_LS <- 
-    df %>%
-    group_by(sample) %>%
-    summarise(dRY_m = mean(dRY),
-              M_m = mean(M),
-              cov_m = raw_cov(dRY, M),
-              n = n()) %>%
-    mutate(LC = n*dRY_m*M_m,
-           LS = n*cov_m) %>%
-    summarise(LC = sum(LC),
-              LS = sum(LS))
+    df |>
+    dplyr::group_by(sample) |>
+    dplyr::summarise(dRY_m = mean(dRY),
+                     M_m = mean(M),
+                     cov_m = raw_cov(dRY, M),
+                     n = n()) |>
+    dplyr::mutate(LC = n*dRY_m*M_m,
+                  LS = n*cov_m) |>
+    dplyr::summarise(LC = sum(LC),
+                     LS = sum(LS))
   
   # 10. Local complementarity
   LC <- LC_LS$LC
@@ -385,8 +383,6 @@ Isbell_2018_part <- function(data, RYe) {
 
 Isbell_2018_sampler <- function(data, RYe_post = FALSE, N = 100, alpha_par = 4, RYe) {
   
-  library(dplyr)
-  
   if (!RYe_post) {
     
     # test for RYe values
@@ -415,7 +411,7 @@ Isbell_2018_sampler <- function(data, RYe_post = FALSE, N = 100, alpha_par = 4, 
       
     }
     
-    Beff_post <- bind_rows(Beff_post, .id = "sample")
+    Beff_post <- dplyr::bind_rows(Beff_post, .id = "sample")
     
     return(Beff_post)
     
