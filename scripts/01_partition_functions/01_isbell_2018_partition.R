@@ -1,4 +1,3 @@
-
 #'
 #' @title Function to implement Isbell et al.'s (2018, Ecology Letters) biodiversity effect partition
 #' 
@@ -142,6 +141,8 @@ raw_cov <- function(x, y) {
 #' 
 
 Isbell_2018_part <- function(data, RYe) {
+  
+  library(dplyr)
   
   # test if the input data is a data.frame
   test_1 <- function(x) {
@@ -383,6 +384,8 @@ Isbell_2018_part <- function(data, RYe) {
 #' 
 
 Isbell_2018_sampler <- function(data, RYe_post = FALSE, N = 100, alpha_par = 4, RYe) {
+  
+  library(dplyr)
   
   if (!RYe_post) {
     
