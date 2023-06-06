@@ -79,7 +79,7 @@ for(j in 1:N_rep) {
   sigma <- round(rexp(n = 1, rate = 5), 3)
   
   # sample the alpha bar parameter
-  abar <- round(runif(n = 1, min = -2.5, max = 2.5), 1)
+  abar <- round(rnorm(n = 1, mean = 0, sd = 1), 1)
   
   # sample the b1 bar parameter
   b1bar <- round(rnorm(n = 1, mean = 0, sd = 1), 1)
@@ -88,7 +88,7 @@ for(j in 1:N_rep) {
   b2bar <- round(rnorm(n = 1, mean = 0, sd = 1), 1)
   
   # sample the sigma parameter of the multivariate normal
-  sigma_v <- round(rexp(n = 3, rate = 4), 3)
+  sigma_v <- round(rexp(n = 3, rate = 3), 3)
   
   # sample the correlation matrix
   x <- round(rlkjcorr(n = 1, K = 3, eta = 2), 2)
@@ -111,13 +111,13 @@ for(j in 1:N_rep) {
   # logistic regression model
   
   # sample the alpha bar parameter
-  abar_hu <- round(runif(n = 1, min = -2.5, max = 2.5), 1)
+  abar_hu <- round(rnorm(n = 1, mean = 0, sd = 1.5), 1)
   
   # sample the b1 bar parameter
-  b1bar_hu <- round(rnorm(n = 1, mean = 0, sd = 1), 1)
+  b1bar_hu <- round(rnorm(n = 1, mean = 0, sd = 1.5), 1)
   
   # sample the sigma parameter of the multivariate normal
-  sigma_z <- round(rexp(n = 2, rate = 4), 3)
+  sigma_z <- round(rexp(n = 2, rate = 3), 3)
   
   # sample the correlation matrix
   x <- round(rlkjcorr(n = 1, K = 2, eta = 2), 2)
@@ -172,9 +172,9 @@ for(j in 1:N_rep) {
                         vbar = c(abar, b1bar, b2bar),
                         sigma_v = sigma_v,
                         Rho_v = Rho_v,
-                        a = a,
-                        b1 = b1,
-                        b2 = b2,
+                        a = round(a, 2),
+                        b1 = round(b1, 2),
+                        b2 = round(b2, 2),
                         zbar = c(abar_hu, b1bar_hu),
                         sigma_z = sigma_z,
                         Rho_z = Rho_z,
@@ -206,7 +206,7 @@ p1 <-
                               colour = as.character(S), group = rep),
                 width = 0, position = position_dodge(0.2),
                 alpha = 0.2) +
-  facet_wrap(~C) +
+  facet_wrap(~C, scales = "free") +
   theme(legend.position = "none")
 plot(p1)
 
@@ -229,55 +229,22 @@ dat <-
        S = df_sim$S)
 
 # compile the model
-m_sim <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model0.stan",
+m_sim <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model1.stan",
                         verbose = TRUE)
 
 # sample the stan model
 m_sim_fit <- rstan::sampling(m_sim, data = dat, 
-                             iter = 1000, chains = 4, algorithm = c("NUTS"),
-                             control = list(adapt_delta = 0.99),
-                             cores = 4,
-                             seed = 485749)
+                             iter = 3000, warmup = 1000, 
+                             chains = 4, algorithm = c("NUTS"),
+                             control = list(adapt_delta = 0.99, max_treedepth = 12),
+                             cores = 4, 
+                             seed = 49679)
 
 # check the model output
 print(m_sim_fit)
 
-# extract the diagnostic parameters
-diag1 <- as.data.frame(rstan::summary(m_sim_fit)$summary)
-
-# compare to custom likelihood model
-
-# compile the model
-m_cust <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/lognormal_custom_likelihood_test.stan",
-                           verbose = TRUE)
-
-# sample the stan model
-m_cust_fit <- rstan::sampling(m_cust, data = dat, 
-                             iter = 1000, chains = 4, algorithm = c("NUTS"),
-                             control = list(adapt_delta = 0.99),
-                             cores = 4,
-                             seed = 485749)
-
-# check the output
-print(m_cust_fit)
-
-# extract the diagnostic parameters
-diag2 <- as.data.frame(rstan::summary(m_cust_fit)$summary)
-
-# compare the two
-plot(diag1[-which(diag2$mean == min(diag2$mean)), ]$mean, 
-     diag2[-which(diag2$mean == min(diag2$mean)), ]$mean)
-abline(0, 1)
-
-# compare a few random rows completely
-row_id <- sample(1:nrow(diag1), 5)
-
-diag1[row_id,1:5] %>% round(2)
-diag2[row_id,1:5] %>% round(2)
-
-# compare the loo scores
+# check the loo score
 rstan::loo(m_sim_fit)
-rstan::loo(m_cust_fit)
 
 # check the model parameters
 pars <- m_sim_fit@model_pars
@@ -297,21 +264,22 @@ pars_rows <- gsub(pattern = "\\[(.*?)\\]", replace = "", row.names(diag))
 # compare estimated and simulated parameter values
 
 # simulated parameter values
-par_list[[id]]
+x <- par_list[[id]]
+print(x)
 
 # estimated parameter values
 diag[pars_rows %in% names(x),]
 
 # check parameter by parameter
-par_vec <- names(par_list[[id]])
+par_vec <- names(x)
 
 # which number?
-n <- 6
+n <- 13
 
 # simulated value
-par_list[[id]][par_vec == par_vec[n]]
+x[par_vec == par_vec[n]]
 
 # estimated value
-diag[par_vec[n] == pars_rows, ]$mean
+round(diag[par_vec[n] == pars_rows, ]$mean, 3)
 
 ### END

@@ -19,6 +19,9 @@ library(loo)
 source("scripts/Function_plotting_theme.R")
 source("scripts/03_empirical_analysis/helper_functions.R")
 
+# set a seed for reproducibility
+set.seed(4597)
+
 # load the analysis data
 df_obs <- read_csv("data/case_study_2/data_clean/biomass_env_analysis_data.csv")
 
@@ -103,33 +106,6 @@ stan_predict <- function(samples, data, mu_dist = "lognormal") {
 
 
 # Lognormal hurdle models
-
-# model 0
-ln0_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model0_fit.rds")
-
-# get the parameter names
-pars <- stan_pars(stan_object = ln0_fit)
-
-# check the traceplots
-par_sel <- sample(pars, 1)
-print(par_sel)
-rstan::traceplot(ln0_fit, pars = par_sel)
-
-# get the loo estimate
-loo_est(stan_object = ln0_fit)
-
-# plot the model predictions
-post <- rstan::extract(ln0_fit)
-
-# get the predicted values from the stan model object
-pred_ln0 <- stan_predict(samples = post, data = df_m_obs, mu_dist = "lognormal")
-
-# plot the predicted values
-plot(apply(pred_ln0, 2, mean), df_m_obs$M)
-abline(0, 1)
-
-# check the maximum prediction
-max(apply(pred_ln0, 2, max))
 
 # model 1
 ln1_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model1_fit.rds")
@@ -237,7 +213,7 @@ plot(apply(pred_ln4, 2, mean), df_m_obs$M)
 abline(0, 1)
 
 # check the maximum prediction
-max(apply(pred_ln4,2, max))
+max(apply(pred_ln4, 2, max))
 
 # model 5
 ln5_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model5_fit.rds")
@@ -291,97 +267,39 @@ plot(apply(pred_ln6, 2, mean), df_m_obs$M)
 abline(0, 1)
 
 # check the maximum prediction
-max(apply(pred_ln6, max))
+max(apply(pred_ln6,2, max))
 
-
-# Gamma hurdle models
-
-# model 0
-g0_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_gamma_model0_fit.rds")
+# model 7
+ln7_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model7_fit.rds")
 
 # get the parameter names
-pars <- stan_pars(stan_object = g0_fit)
+pars <- stan_pars(stan_object = ln7_fit)
 
 # check the traceplots
 par_sel <- sample(pars, 1)
 print(par_sel)
-rstan::traceplot(g0_fit, pars = par_sel)
+rstan::traceplot(ln7_fit, pars = par_sel)
 
 # get the loo estimate
-loo_est(stan_object = g0_fit)
+loo_est(stan_object = ln7_fit)
 
 # plot the model predictions
-post <- rstan::extract(g0_fit)
+post <- rstan::extract(ln7_fit)
 
 # get the predicted values from the stan model object
-pred_g0 <- stan_predict(samples = post, data = df_m_obs, mu_dist = "gamma")
+pred_ln7 <- stan_predict(samples = post, data = df_m_obs, mu_dist = "lognormal")
 
 # plot the predicted values
-plot(apply(pred_g0, 2, mean), df_m_obs$M)
+plot(apply(pred_ln7, 2, mean), df_m_obs$M)
 abline(0, 1)
 
 # check the maximum prediction
-max(apply(pred_g0, 2,max))
-
-# model 1
-g1_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_gamma_model1_fit.rds")
-
-# get the parameter names
-pars <- stan_pars(stan_object = g1_fit)
-
-# check the traceplots
-par_sel <- sample(pars, 1)
-print(par_sel)
-rstan::traceplot(g1_fit, pars = par_sel)
-
-# get the loo estimate
-loo_est(stan_object = g1_fit)
-
-# plot the model predictions
-post <- rstan::extract(g1_fit)
-
-# get the predicted values from the stan model object
-pred_g1 <- stan_predict(samples = post, data = df_m_obs, mu_dist = "gamma")
-
-# plot the predicted values
-plot(apply(pred_g1, 2, mean), df_m_obs$M)
-abline(0, 1)
-
-# check the maximum prediction
-max(apply(pred_g1, 2, max))
-
-# model 0
-g2_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_gamma_model2_fit.rds")
-
-# get the parameter names
-pars <- stan_pars(stan_object = g2_fit)
-
-# check the traceplots
-par_sel <- sample(pars, 1)
-print(par_sel)
-rstan::traceplot(g2_fit, pars = par_sel)
-
-# get the loo estimate
-loo_est(stan_object = g2_fit)
-
-# plot the model predictions
-post <- rstan::extract(g2_fit)
-
-# get the predicted values from the stan model object
-pred_g2 <- stan_predict(samples = post, data = df_m_obs, mu_dist = "gamma")
-
-# plot the predicted values
-plot(apply(pred_g2, 2, mean), df_m_obs$M)
-abline(0, 1)
-
-# check the maximum prediction
-max(apply(pred_g2, 2, max))
-
+max(apply(pred_ln7, 2, max))
 
 # compare the different models by approximating leave-one-out CV
 
 # get a vector of model names
-mod_names <- c(paste0("ln", 0:6, "_fit"), paste0("g", 0:2, "_fit"))
+mod_names <- paste0("ln", 1:7, "_fit")
 
 loo_fit <- vector("list", length = length(mod_names))
 for(i in 1:length(mod_names)) {
@@ -399,16 +317,19 @@ names(loo_fit) <- mod_names
 loo_compare(loo_fit)
 
 # which model is the best fit?
-# ln0
+# ln1
 
 # extract the posterior distribution
-post <- rstan::extract(ln0_fit)
+post <- rstan::extract(ln1_fit)
+
+# compute the total number of samples
+N <- (ln1_fit@stan_args[[1]]$iter - ln1_fit@stan_args[[1]]$warmup)*length(ln1_fit@stan_args)
 
 # get 1000 samples from the posterior distribution
-id_samp <- sample(1:6000, 1000)
+id_samp <- sample(1:N, 1000)
 
 # make a fit to sample plot of the best fitting model
-pred_ln0 <- vector("list", length = nrow(df_obs))
+pred_ln1 <- vector("list", length = nrow(df_obs))
 for(i in 1:nrow(df_obs)) {
   
   # get predictions for all values using the ln0 model
@@ -430,15 +351,15 @@ for(i in 1:nrow(df_obs)) {
   y <- rbinom(n = length(y), size = 1, prob = y)
   
   # multiply the model predictions together
-  pred_ln0[[i]] <- (x*y)
+  pred_ln1[[i]] <- (x*y)
   
 }
 
 # bind into a matrix
-pred_ln0 <- do.call("cbind", pred_ln0)
+pred_ln1 <- do.call("cbind", pred_ln1)
 
 # save this output
-saveRDS(pred_ln0, "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/04_m0_predictions.rds")
+saveRDS(pred_ln1, "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/04_m1_predictions.rds")
 
 # pull into a data.frame for plotting
 
@@ -460,9 +381,9 @@ df_plot <- data.frame(M_obs = df_obs$M,
                       Y = df_obs$Y,
                       PC1 = df_obs$PC1,
                       PC2 = df_obs$PC2,
-                      M_pred_mu = apply(pred_ln0, 2, mean),
-                      M_pred_PIlow = apply(pred_ln0, 2, HPDI, 0.90)[1,],
-                      M_pred_PIhigh = apply(pred_ln0, 2, HPDI, 0.90)[2,])
+                      M_pred_mu = apply(pred_ln1, 2, mean),
+                      M_pred_PIlow = apply(pred_ln1, 2, HPDI, 0.90)[1,],
+                      M_pred_PIhigh = apply(pred_ln1, 2, HPDI, 0.90)[2,])
 
 
 # check the min and max
@@ -494,7 +415,7 @@ ggsave(filename = "figures/figA2_SX.png", p1, dpi = 300,
 
 # check the overlap between the predicted values and the observed values
 n <- 25
-samples <- pred_ln0[sample(1:nrow(pred_ln0), n), ]
+samples <- pred_ln1[sample(1:nrow(pred_ln1), n), ]
 
 df_samples <- data.frame(V1 = samples[1,])
 for(i in 2:nrow(samples)) {
@@ -560,7 +481,7 @@ df_test$MESS <- MESS
 (sum(df_test$MESS)/nrow(df_test))*100
 
 # how how many zeros there are, on average, for each sample from the posterior
-mean(apply(pred_ln0, 1, function(x) sum(x == 0)))/ncol(pred_ln0)
+mean(apply(pred_ln1, 1, function(x) sum(x == 0)))/ncol(pred_ln1)
 sum(df_m_obs$M == 0)/nrow(df_m_obs)
 
 ### END

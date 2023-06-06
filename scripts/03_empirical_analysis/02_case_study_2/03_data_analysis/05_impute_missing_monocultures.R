@@ -17,17 +17,20 @@ library(tidyr)
 source("scripts/Function_plotting_theme.R")
 source("scripts/03_empirical_analysis/helper_functions.R")
 
+# set a seed for reproducibility
+set.seed(5497)
+
 # load the analysis data
 df_obs <- read_csv("data/case_study_2/data_clean/biomass_env_analysis_data.csv")
 
 # load the model predictions
-m0_pred <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/04_m0_predictions.rds")
+m1_pred <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/04_m1_predictions.rds")
 
-df_imp <- vector("list", length = nrow(m0_pred))
-for(i in 1:nrow(m0_pred)) {
+df_imp <- vector("list", length = nrow(m1_pred))
+for(i in 1:nrow(m1_pred)) {
   
   # add predictions from one sample from the posterior distribution
-  df_obs[["M_imp"]] <- m0_pred[i,]
+  df_obs[["M_imp"]] <- m1_pred[i,]
   
   # write to a list
   df_imp[[i]] <- df_obs

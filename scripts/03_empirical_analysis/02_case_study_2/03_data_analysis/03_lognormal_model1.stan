@@ -48,14 +48,14 @@ model{
     // vector of means: binomial linear model 
      vector[N] hu;
     // standard deviation of the log-normal distribution
-    sigma ~ exponential( 4 );
+    sigma ~ exponential( 5 );
     // linear model priors: log-normal
-    vbar ~ normal(0, 2);
-    sigma_v ~ exponential( 2 );
+    vbar ~ normal(0, 1);
+    sigma_v ~ exponential( 3 );
     L_Rho_v ~ lkj_corr_cholesky( 2 );
     // linear model priors: binomial
-    zbar ~ normal(0, 2);
-    sigma_z ~ exponential( 2 );
+    zbar ~ normal(0, 1.5);
+    sigma_z ~ exponential( 3 );
     L_Rho_z ~ lkj_corr_cholesky( 2 );
     // standard normal vectors
     to_vector( V ) ~ normal( 0 , 1 );
@@ -91,7 +91,7 @@ generated quantities{
         log_lik[i] = bernoulli_lpmf(1 | inv_logit(hu[i]) );
       } else {
         log_lik[i] = bernoulli_lpmf(0 | inv_logit(hu[i]) ) +
-                  lognormal_lpdf(M[i] | mu[i], sigma);
+                     lognormal_lpdf(M[i] | mu[i], sigma);
        }
     }
 }

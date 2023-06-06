@@ -36,14 +36,14 @@ model{
     // vector of means: binomial linear model 
      vector[N] hu;
     // standard deviation of the log-normal distribution
-    sigma ~ exponential( 4 );
+    sigma ~ exponential( 5 );
     // linear model priors: log-normal
-    abar ~ normal(0, 2);
-    sigma_a ~ exponential( 2 );
-    b1 ~ normal(0, 2);
+    abar ~ normal(0, 1);
+    sigma_a ~ exponential( 3 );
+    b1 ~ normal(0, 1);
     // linear model priors: binomial model
-    a_hu ~ normal(0, 2);
-    b1_hu ~ normal(0, 2);
+    a_hu ~ normal(0, 1.5);
+    b1_hu ~ normal(0, 1.5);
     // standard normal vectors
     to_vector( Za ) ~ normal( 0 , 1 );
     for ( i in 1:N ) {
