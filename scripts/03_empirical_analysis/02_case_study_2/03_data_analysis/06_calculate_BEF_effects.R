@@ -1,11 +1,11 @@
 #'
-#' @title: Calculate the BEF effects using the modeled monoculture data
+#' @title: Calculate the BEF effects using the imputed monoculture data
 #' 
 #' @description: This script calculates Isbell et al.'s (2018) biodiversity effects 
 #' on the benthic marine fouling communities using all the variation in the 
 #' modelled monocultures along with the uncertainty from the Dirichlet distribution.
-#' This script is very computationally intensive and was run in parellel on a computer cluster using 10
-#' cores (Albiorix: http://mtop.github.io/albiorix/).
+#' This script is very computationally intensive and was run in parellel on a computer
+#' cluster using 10 cores (Albiorix: http://mtop.github.io/albiorix/).
 #' 
 #' @authors: James G. Hagan (james_hagan(at)outlook.com)
 #'
@@ -24,84 +24,6 @@ df_imp <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysi
 # load the starting relative abundance data
 start_RA <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/05_start_RYE.rds")
 
-# test some of the code
-# extract a single dataset
-data <- df_imp[[1]]
-
-# for each cluster we lapply
-clust_list <- split(data, data[["cluster_id"]])
-
-lapply()
-
-x <- df_imp[[1]] %>% filter(cluster_id == "A")
-
-y <- 
-  
-  apply(start_RA, 2, function(RA) {
-    
-    # extract the cluster id
-    cluster_id <- unique(x[["cluster_id"]])
-    
-    # calculate the BEF effects
-    BEF_post <- Isbell_2018_sampler(data = x[, names(x) != "cluster_id"], RYe = RA, RYe_post = FALSE)
-    names(BEF_post[["L.Beff"]])[names(BEF_post[["L.Beff"]]) == "L.Beff"] <- "Beff"
-    
-    # combine the general biodiversity effects and local effects into one data.frame
-    BEF_post <- rbind(BEF_post[["Beff"]], BEF_post[["L.Beff"]])
-    
-    # convert to a data.frame
-    BEF_post <- as.data.frame(BEF_post, row.names = NULL)
-    
-    # add the cluster id variable
-    BEF_post[["cluster_id"]] <- cluster_id
-    
-    return(BEF_post)
-    
-  })
-
-
-
-
-
-    
-RYe_reps <- 
-  
-  apply(
-    
-    X = start_RA, 
-    
-    MARGIN = 2, 
-    
-    FUN = function(RA) {
-      
-      # calculate the biodiversity effects for each of the potential starting abundances
-      BEF_post <- Isbell_2018_sampler(data = df_imp[[1]], RYe = RA, RYe_post = FALSE)
-      names(BEF_post[["L.Beff"]])[names(BEF_post[["L.Beff"]]) == "L.Beff"] <- "Beff"
-      
-      # combine the general biodiversity effects and local effects into one data.frame
-      BEF_post <- rbind(BEF_post[["Beff"]], BEF_post[["L.Beff"]])
-      
-      # convert to a data.frame
-      BEF_post <- as.data.frame(BEF_post, row.names = NULL)
-      
-      return(BEF_post)
-      
-    } )
-      
-# bind into a data.frame
-bind_rows(RYe_reps, .id = "RA")
-
-
-# bind the rows from the different clusters
-BEF_eff <- bind_rows(BEF.x, .id = "cluster_id")
-
-
-
-
-
-
-
-
 # set-up a parallel for-loop
 n.cores <- 10
 
@@ -114,79 +36,81 @@ my.cluster <- parallel::makeCluster(
 # register it to be used by %dopar%
 doParallel::registerDoParallel(cl = my.cluster)
 
-BEF_eff <- foreach(
+BEF_list <- foreach(
   
-  i = 1:n_samp
+  i = 1:length(df_imp)
   
 ) %dopar% { 
   
-  # load the dplyr package
-  library(dplyr)
+  # extract the focal data.frame
+  data <- df_imp[[i]]
   
-  # add monoculture predictions from one sample into the data.frame
-  for(j in 1:length(sp_mono)) {
+  # split the data into a list by cluster
+  clust_list <- split(data, data[["cluster_id"]])
+  
+  # iterate over each cluster
+  clust_rep <- 
     
-    data_M[which( (is.na(data_M[["M"]])) & (data_M[["species"]] == j) ), ][["M1"]] <- sp_mono[[j]][,i]
-    
-  }
-  
-  # rename the monoculture columns
-  data_M2 <- 
-    data_M %>%
-    select(cluster_id, sample, place, time, species, M1, Y) %>%
-    rename(M = M1)
-  
-  # split the data by cluster_id
-  clus_df <- split(data_M2[, -1], data_M2$cluster_id)
-  
-  BEF.x <- 
-    
-    lapply(clus_df, function(data_in) {
+    lapply(clust_list, function(x) {
       
-      RYe_reps <- 
+      # iterate over all possible initial RYE values
+      RYE_rep <- 
         
-        apply(
+        apply(start_RA, 2, function(RA) {
           
-          X = start_RA, 
+          # extract the cluster id
+          cluster_id <- unique(x[["cluster_id"]])
           
-          MARGIN = 2, 
+          # calculate the BEF effects
+          BEF_post <- Isbell_2018_sampler(data = x[, names(x) != "cluster_id"], RYe = RA, RYe_post = FALSE)
+          names(BEF_post[["L.Beff"]])[names(BEF_post[["L.Beff"]]) == "L.Beff"] <- "Beff"
           
-          FUN = function(RA) {
-            
-            # calculate the biodiversity effects for each of the potential starting abundances
-            BEF_post.x <- Isbell_2018_sampler(data = data_in, RYe = RA, RYe_post = FALSE)
-            names(BEF_post.x[["L.Beff"]])[names(BEF_post.x[["L.Beff"]]) == "L.Beff"] <- "Beff"
-            
-            # combine the general biodiversity effects and local effects into one data.frame
-            BEF_post.x <- rbind(BEF_post.x[["Beff"]], BEF_post.x[["L.Beff"]])
-            
-            # convert to a data.frame
-            BEF_post.x <- as.data.frame(BEF_post.x, row.names = NULL)
-            
-            return(BEF_post.x)
-            
-          } )
+          # combine the general biodiversity effects and local effects into one data.frame
+          BEF_post <- rbind(BEF_post[["Beff"]], BEF_post[["L.Beff"]])
+          
+          # convert to a data.frame
+          BEF_post <- as.data.frame(BEF_post, row.names = NULL)
+          
+          # add the cluster id variable
+          BEF_post[["cluster_id"]] <- cluster_id
+          
+          return(BEF_post)
+          
+        })
       
-      # bind into a data.frame
-      return(bind_rows(RYe_reps, .id = "RA"))
+      # bind into a data.fram
+      RYE_rep <- dplyr::bind_rows(RYE_rep, .id = "RYE")
       
-    } )
+      return(RYE_rep)
+      
+    })
   
-  # bind the rows from the different clusters
-  BEF_eff <- bind_rows(BEF.x, .id = "cluster_id")
+  # bind the list into a data.frame
+  clust_df <- dplyr::bind_rows(clust_rep)
   
-  # return the BEF_eff
-  return(BEF_eff)
+  # convert to a tibble
+  clust_df <- dplyr::as_tibble(clust_df)
+  
+  # reorder the columns
+  clust_df <- dplyr::select(clust_df, cluster_id, RYE, Beff, Value)
+  
+  return(clust_df)
   
   }
 
 # bind into a data.frame
-BEF_eff <- 
-  bind_rows(BEF_eff, .id = "mono_sample") %>%
-  as_tibble() %>%
-  arrange(cluster_id, mono_sample, RA, Value)
+BEF_list <- dplyr::bind_rows(BEF_list, .id = "mono_rep")
+
+# convert to a tibble
+BEF_list <- dplyr::as_tibble(BEF_list)
+
+# rearrange the columns
+BEF_list <- dplyr::select(BEF_list, cluster_id, mono_rep, RYE, Beff, Value)
+
+# arrange by column
+BEF_list <- dplyr::arrange(BEF_list, cluster_id, mono_rep, RYE, Beff, Value)
 
 # save this object
-saveRDS(object = BEF_eff, file = here("BEF_quant_scale/results/benthic_BEF_effects.rds"))
+saveRDS(object = BEF_list, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/06_BEF_effects_output.rds")
 
 ### END
