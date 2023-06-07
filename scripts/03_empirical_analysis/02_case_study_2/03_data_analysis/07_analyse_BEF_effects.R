@@ -16,96 +16,126 @@ library(ggplot2)
 library(ggpubr)
 library(betapart)
 library(vegan)
-library(here)
 library(corrplot)
 
 # load plotting theme
-source(here("scripts/Function_plotting_theme.R"))
+source("scripts/Function_plotting_theme.R")
+source("scripts/03_empirical_analysis/helper_functions.R")
 
-# load the relevant data
-BEF_dat <- readRDS(here("results/benthic_BEF_effects.rds"))
+# estimates of the different BEF effects
+BEF_dat <- readRDS("results/BEF_effects_case_study_2.rds")
 head(BEF_dat)
 dim(BEF_dat)
 summary(BEF_dat)
 
-# reorder the columns
-BEF_dat <- 
-  BEF_dat %>%
-  select(cluster_id, mono_sample, RA, Beff, Value)
+# load in the environmental dispersion data
+env_disp <- readRDS(file = "results/benthic_env_dispersion.rds")
+head(env_disp)
 
-# check how many of each effect there are
+# add the environmental dispersion data to the BEF effects data
+BEF_dat <- full_join(env_disp, BEF_dat, by = "cluster_id")
+head(BEF_dat)
+
+# check how many of each effect there are: Should be 100 000
 BEF_dat %>%
   group_by(cluster_id, Beff) %>%
   summarise(n = n())
 
-# check how many unique cluster_id, mono_samp and RA there are
-pre_trim <- length(unique(paste0(BEF_dat$cluster_id, BEF_dat$mono_sample, BEF_dat$RA)))
-
-# trim the distributions to the 99% quantiles to prevent the few gigantic outliers
-head(BEF_dat)
-BEF_trim <- 
-  BEF_dat %>%
-  group_by(cluster_id, Beff) %>%
-  mutate(q99 = quantile(Value, 0.99),
-         q01 = quantile(Value, 0.01)) %>%
-  mutate(within_PI = if_else( (Value < q99) & (Value > q01), 1, 0 )) %>%
-  ungroup() %>%
-  group_by(cluster_id, mono_sample, RA) %>%
-  mutate(within_PI = if_else( any(within_PI != 1), 1, 0 )) %>%
-  ungroup() %>%
-  filter(within_PI != 1) %>%
-  select(-q99, -q01, -within_PI)
-
-BEF_trim %>%
-  group_by(cluster_id, Beff) %>%
-  summarise(n = n(), .groups = "drop") %>%
-  pull(n) %>%
-  mean()
-
-# unique cluster_id, mono_samp, RA after trimming
-post_trim <- length(unique(paste0(BEF_trim$cluster_id, BEF_trim$mono_sample, BEF_trim$RA)))
-
-# check the difference
-((pre_trim - post_trim)/pre_trim)*100
-
 # check the internal consistency of the net biodiversity effects
-BEF_trim %>%
+BEF_dat %>%
   filter(cluster_id == "A") %>%
   filter( !(Beff %in% c("NBE", "LS", "LC", "TS", "IT")) ) %>%
-  group_by(mono_sample, RA) %>%
+  group_by(mono_rep, RYE) %>%
   summarise(s = sum(Value))
 
 BEF_dat %>%
   filter(cluster_id == "A", Beff == "NBE")
 
+# remove cluster F because it only has two usable sites
+BEF_dat <- 
+  BEF_dat %>%
+  filter(cluster_id != "F")
+
+# remove the LS and LC effects
+BEF_dat <- 
+  BEF_dat %>%
+  filter( !(Beff %in% c("LS", "LS")) )
+
 # what is the magnitude of different biodiversity effects?
 
-# summarise the data into a pooled estimate
-BEF_pool <- 
-  BEF_trim %>%
+# calculate the summary dataset
+BEF_sum <- 
+  BEF_dat %>%
   group_by(cluster_id, Beff) %>%
   summarise(Value_m = round(mean(Value), 2),
-            PI_low = rethinking::PI(Value, 0.90)[1],
-            PI_high = rethinking::PI(Value, 0.90)[2], .groups = "drop")
+            HPDI_low = HPDI(Value, 0.89)[1],
+            HPDI_high = HPDI(Value, 0.89)[2], .groups = "drop")
+  
 
-# pooled average and PI
-BEF_trim %>%
-  filter(cluster_id != "F") %>%
-  group_by(Beff) %>%
-  summarise(Value_m = round(mean(Value), 2),
-            PI_low = rethinking::PI(Value, 0.90)[1],
-            PI_high = rethinking::PI(Value, 0.90)[2], .groups = "drop")
+# get a nice colour palette
+col_pal <- wesanderson::wes_palette("Darjeeling1", n = 9, type = "continuous")
 
-# is the mean within the percentile interval 90
-BEF_pool %>%
-  mutate(within_PI = if_else((Value_m > PI_low) & (Value_m < PI_high), 1, 0 )) %>%
-  filter(within_PI != 1) %>%
-  View()
+# compare the NBE, TC and TS among different clusters
+x <- 
+  BEF_dat %>% 
+  filter(Beff %in% c("NBE", "TC", "TS")) %>%
+  group_by(cluster_id, Beff) %>%
+  sample_n(size = 100)
 
-# remove cluster F because it only had two usable sites
-BEF_pool <- 
-  BEF_pool %>%
-  filter(cluster_id != "F")
+x$Beff <- factor(x$Beff, levels = c("TS", "TC", "NBE"))
+
+x_sum <-
+  BEF_sum %>%
+  filter(Beff %in% c("NBE", "TC", "TS"))
+
+x_sum$Beff <- factor(x_sum$Beff, levels = c("TS", "TC", "NBE"))
+
+ggplot() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point(data = x, 
+             mapping = aes(x = Beff, y = Value, colour = Beff, group = cluster_id), 
+              position = position_jitterdodge(jitter.width = 0.1,
+                                              dodge.width = 0.75),
+             alpha = 0.2, shape = 1) +
+  geom_errorbar(data = x_sum,
+             mapping = aes(x = Beff, ymin = HPDI_low, ymax = HPDI_high, 
+                           colour = Beff, group = cluster_id),
+             position = position_dodge(width = 0.75), width = 0) +
+  geom_point(data = x_sum,
+             mapping = aes(x = Beff, y = Value_m, fill = Beff, group = cluster_id),
+             position = position_dodge(width = 0.75), shape = 23, size = 1.5,
+             colour = "black") +
+  scale_colour_manual(values = col_pal[3:1]) +
+  scale_fill_manual(values = col_pal[3:1]) +
+  theme_meta() +
+  xlab(NULL) +
+  ylab("") +
+  theme(legend.position = "none") +
+  coord_flip()
+
+# compare the NBE, TC and TS among different clusters
+y <- 
+  BEF_dat %>% 
+  filter(Beff %in% c("TS", "NO", "IT")) %>%
+  group_by(cluster_id, Beff) %>%
+  sample_n(size = 100)
+
+y$Beff <- factor(y$Beff, levels = c("IT", "NO", "TS"))
+
+ggplot(data = y) +
+  geom_point(mapping = aes(x = Beff, y = Value, 
+                           colour = Beff, group = cluster_id), 
+             position = position_jitterdodge(jitter.width = 0.1,
+                                             dodge.width = 0.75),
+             alpha = 0.5, shape = 1) +
+  scale_colour_manual(values = col_pal[5:3]) +
+  theme_meta() +
+  theme(legend.position = "none") +
+  coord_flip()
+
+
+
+
 
 # check some numbers of the manuscript
 BEF_pool %>%
@@ -250,7 +280,7 @@ BEF_pool %>%
 # do insurance effects depend on environmental heterogeneity?
 
 # load in the environmental dispersion data
-env_disp <- readRDS(file = here("results/benthic_env_dispersion.rds"))
+env_disp <- readRDS(file = "results/benthic_env_dispersion.rds")
 head(env_disp)
 
 # using the original data, subset NBE and IT and calculate proportion of IT
