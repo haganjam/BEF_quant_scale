@@ -75,65 +75,83 @@ BEF_sum <-
 # get a nice colour palette
 col_pal <- wesanderson::wes_palette("Darjeeling1", n = 9, type = "continuous")
 
-# compare the NBE, TC and TS among different clusters
-x <- 
-  BEF_dat %>% 
-  filter(Beff %in% c("NBE", "TC", "TS")) %>%
+# get 100 samples for each biodiversity effect
+id <- dplyr::distinct(BEF_dat[,c("mono_rep", "RYE")])
+id <- id[sample(1:nrow(id), 200), ]
+id$id_est <- paste(id$mono_rep, id$RYE, sep = "_")
+head(id)
+
+# get a subset for plotting
+BEF_plot <- 
+  BEF_dat %>%
   group_by(cluster_id, Beff) %>%
-  sample_n(size = 100)
+  filter(paste(mono_rep, RYE, sep = "_") %in% id$id_est) %>%
+  ungroup()
 
-x$Beff <- factor(x$Beff, levels = c("TS", "TC", "NBE"))
+# plot the different biodiversity in different clusters
 
-x_sum <-
-  BEF_sum %>%
-  filter(Beff %in% c("NBE", "TC", "TS"))
+# set-up the parameter lists
+BEF_pars <- list(p1 =  c("TS", "TC", "NBE"),
+                 p2 = c("IT", "NO", "TS"),
+                 p3 = c("ST", "TI", "SI",  "AS", "IT"))
 
-x_sum$Beff <- factor(x_sum$Beff, levels = c("TS", "TC", "NBE"))
+# set-up the colour lists
+BEF_col <- list(p1 = col_pal[3:1],
+                p2 = col_pal[5:3],
+                p3 = col_pal[9:5])
 
-ggplot() +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  geom_point(data = x, 
-             mapping = aes(x = Beff, y = Value, colour = Beff, group = cluster_id), 
-              position = position_jitterdodge(jitter.width = 0.1,
-                                              dodge.width = 0.75),
-             alpha = 0.2, shape = 1) +
-  geom_errorbar(data = x_sum,
-             mapping = aes(x = Beff, ymin = HPDI_low, ymax = HPDI_high, 
-                           colour = Beff, group = cluster_id),
-             position = position_dodge(width = 0.75), width = 0) +
-  geom_point(data = x_sum,
-             mapping = aes(x = Beff, y = Value_m, fill = Beff, group = cluster_id),
-             position = position_dodge(width = 0.75), shape = 23, size = 1.5,
-             colour = "black") +
-  scale_colour_manual(values = col_pal[3:1]) +
-  scale_fill_manual(values = col_pal[3:1]) +
-  theme_meta() +
-  xlab(NULL) +
-  ylab("") +
-  theme(legend.position = "none") +
-  coord_flip()
+# plot the ith plot
+plot_list <- vector("list", length = length(BEF_pars))
+for(i in 1:length(BEF_pars)) {
+  
+  x <- 
+    BEF_plot %>% 
+    filter(Beff %in% BEF_pars[[i]])
+  
+  x$Beff <- factor(x$Beff, levels = BEF_pars[[i]])
+  
+  x_sum <-
+    BEF_sum %>%
+    filter(Beff %in% BEF_pars[[i]])
+  
+  x_sum$Beff <- factor(x_sum$Beff, levels = BEF_pars[[i]])
+  
+  p <-
+    ggplot() +
+    geom_hline(yintercept = 0, linetype = "dashed") +
+    geom_point(data = x, 
+               mapping = aes(x = Beff, y = Value, colour = Beff, group = cluster_id), 
+               position = position_jitterdodge(jitter.width = 0.1,
+                                               dodge.width = 0.75),
+               alpha = 0.2, shape = 1) +
+    geom_errorbar(data = x_sum,
+                  mapping = aes(x = Beff, ymin = HPDI_low, ymax = HPDI_high, 
+                                colour = Beff, group = cluster_id),
+                  position = position_dodge(width = 0.75), width = 0) +
+    geom_point(data = x_sum,
+               mapping = aes(x = Beff, y = Value_m, fill = Beff, group = cluster_id),
+               position = position_dodge(width = 0.75), shape = 23, size = 2.5,
+               colour = "black") +
+    geom_label(data = x_sum, 
+               mapping = aes(x = Beff, y = Value_m, label = cluster_id, group = cluster_id),
+               colour = "white", position = position_dodge(0.75),
+               label.size = NA, alpha = 0, size = 1.75) +
+    scale_colour_manual(values = BEF_col[[i]]) +
+    scale_fill_manual(values = BEF_col[[i]]) +
+    theme_meta() +
+    xlab(NULL) +
+    ylab("") +
+    theme(legend.position = "none") +
+    coord_flip()
+  
+  plot_list[[i]] <- p
+  
+}
 
-# compare the NBE, TC and TS among different clusters
-y <- 
-  BEF_dat %>% 
-  filter(Beff %in% c("TS", "NO", "IT")) %>%
-  group_by(cluster_id, Beff) %>%
-  sample_n(size = 100)
-
-y$Beff <- factor(y$Beff, levels = c("IT", "NO", "TS"))
-
-ggplot(data = y) +
-  geom_point(mapping = aes(x = Beff, y = Value, 
-                           colour = Beff, group = cluster_id), 
-             position = position_jitterdodge(jitter.width = 0.1,
-                                             dodge.width = 0.75),
-             alpha = 0.5, shape = 1) +
-  scale_colour_manual(values = col_pal[5:3]) +
-  theme_meta() +
-  theme(legend.position = "none") +
-  coord_flip()
-
-
+# check the plots
+plot_list[[1]]
+plot_list[[2]]
+plot_list[[3]]
 
 
 
