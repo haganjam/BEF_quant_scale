@@ -100,6 +100,11 @@ BEF_col <- list(p1 = col_pal[3:1],
                 p2 = col_pal[5:3],
                 p3 = col_pal[9:5])
 
+# set-up some segments for plot comparisons
+segments <- data.frame(xstart = 0,
+                       xend = 0.3,
+                       effect = 30)
+
 # plot the ith plot
 plot_list <- vector("list", length = length(BEF_pars))
 for(i in 1:length(BEF_pars)) {
@@ -136,6 +141,10 @@ for(i in 1:length(BEF_pars)) {
                mapping = aes(x = Beff, y = Value_m, label = cluster_id, group = cluster_id),
                colour = "white", position = position_dodge(0.75),
                label.size = NA, alpha = 0, size = 1.75) +
+    geom_segment(data = segments,
+                 mapping = aes(x = xstart, xend = xend,
+                               y = effect, yend = effect),
+                 size = 1.25, colour = "red") +
     scale_colour_manual(values = BEF_col[[i]]) +
     scale_fill_manual(values = BEF_col[[i]]) +
     theme_meta() +
