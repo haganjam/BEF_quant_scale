@@ -316,6 +316,9 @@ names(loo_fit) <- mod_names
 # compare the different models using the loo score
 loo_compare(loo_fit)
 
+loo_fit[[1]]$estimates
+loo_fit[[2]]$estimates
+
 # which model is the best fit?
 # ln1
 
