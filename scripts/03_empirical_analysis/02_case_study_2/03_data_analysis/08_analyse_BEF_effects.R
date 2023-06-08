@@ -168,11 +168,14 @@ for(i in 1:length(BEF_pars)) {
   p <-
     ggplot() +
     geom_hline(yintercept = 0, linetype = "dashed") +
+    geom_hline(yintercept = 30, 
+               linetype = "dashed", colour = "red", 
+               alpha = 0.5, linewidth = 0.25) +
     geom_point(data = x, 
                mapping = aes(x = Beff, y = Value, colour = Beff, group = cluster_id), 
                position = position_jitterdodge(jitter.width = 0.15,
                                                dodge.width = 0.9),
-               alpha = 0.1, shape = 1, size = 1, stroke = 0.20) +
+               alpha = 0.15, shape = 1, size = 1.4, stroke = 0.20) +
     geom_errorbar(data = x_sum,
                   mapping = aes(x = Beff, ymin = HPDI_low, ymax = HPDI_high, 
                                 colour = Beff, group = cluster_id),
@@ -203,13 +206,13 @@ plot_list[[1]]
 plot_list[[2]]
 plot_list[[3]]
 
+# export the plots
 ggsave(filename = "figures/fig_4i.png", plot_list[[1]],
        dpi = 500, units = "cm", width = 10, height = 6)
 ggsave(filename = "figures/fig_4ii.png", plot_list[[2]],
        dpi = 500, units = "cm", width = 10, height = 4)
 ggsave(filename = "figures/fig_4iii.png", plot_list[[3]],
        dpi = 500, units = "cm", width = 10, height = 8)
-
 
 # check some numbers of the manuscript
 BEF_pool %>%
