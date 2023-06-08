@@ -15,7 +15,7 @@ library(readr)
 library(ggplot2)
 library(ggpubr)
 library(vegan)
-library(corrplot)
+library(metafor)
 
 # load plotting theme
 source("scripts/Function_plotting_theme.R")
@@ -66,10 +66,25 @@ BEF_dat <-
 BEF_sum <- 
   BEF_dat %>%
   group_by(cluster_id, Beff) %>%
-  summarise(Value_m = round(mean(Value), 2),
+  summarise(Value_m = mean(Value),
+            Value_sd = sd(Value),
+            n = n(),
             HPDI_low = HPDI(Value, 0.89)[1],
             HPDI_high = HPDI(Value, 0.89)[2], .groups = "drop")
   
+# get the NBE
+x <- 
+  BEF_sum %>%
+  filter(Beff == "TI")
+
+# calculate the effect size
+y <- escalc(mi = x$Value_m, sdi = x$Value_sd, ni = x$n, measure = "MN")
+
+# calculate the grand mean
+z <- rma(yi, vi, method = "REML", data = y,
+         slab = x$cluster_id)
+z$fit.stats
+z$b
 
 # get a nice colour palette
 col_pal <- wesanderson::wes_palette("Darjeeling1", n = 9, type = "continuous")
