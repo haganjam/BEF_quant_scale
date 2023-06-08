@@ -88,7 +88,8 @@ for(i in 1:length(meta_list)) {
   y <- escalc(mi = x$Value_m, sdi = x$Value_sd, ni = x$n, measure = "MN")
   
   # calculate the grand mean
-  z <- rma(yi, vi, method = "REML", data = y, slab = x$cluster_id)
+  z <- rma(yi, vi, method = "ML", data = y, slab = x$cluster_id,
+           test = "t")
   beta <- z$beta[,1]
   names(beta) <- NULL
   row.names(beta) <- NULL
@@ -97,8 +98,11 @@ for(i in 1:length(meta_list)) {
   df <- tibble(Beff = beff_vec[i],
                grand_mean = beta,
                CI95_low = z$ci.lb,
-               CI95_high = z$ci.ub)
-                   
+               CI95_high = z$ci.ub,
+               SE = z$se,
+               tval = z$zval,
+               df = z$dfs,
+               pval = z$pval)
   
   meta_list[[i]] <- df
   
@@ -106,6 +110,16 @@ for(i in 1:length(meta_list)) {
 
 # bind into a data.frame
 BEF_grand <- bind_rows(meta_list)
+
+# output this table
+BEF_grand$Beff <- factor(BEF_grand$Beff,
+                         levels = c("NBE", "TC", "TS", "NO", "IT", "AS", "SI", "TI", "ST"))
+
+# rearrange the effects into the correct order
+table2 <- arrange(BEF_grand, Beff)
+
+# output the table as a .csv file
+write_csv(x = table2, file = "figures/table_2.csv")
 
 # get a nice colour palette
 col_pal <- wesanderson::wes_palette("Darjeeling1", n = 9, type = "continuous")
