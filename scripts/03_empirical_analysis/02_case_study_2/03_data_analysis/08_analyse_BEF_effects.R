@@ -14,7 +14,6 @@ library(tidyr)
 library(readr)
 library(ggplot2)
 library(ggpubr)
-library(betapart)
 library(vegan)
 library(corrplot)
 
@@ -77,7 +76,10 @@ col_pal <- wesanderson::wes_palette("Darjeeling1", n = 9, type = "continuous")
 
 # get 100 samples for each biodiversity effect
 id <- dplyr::distinct(BEF_dat[,c("mono_rep", "RYE")])
-id <- id[sample(1:nrow(id), 200), ]
+
+# set seed for reproducibility
+set.seed(487532)
+id <- id[sample(1:nrow(id), 100), ]
 id$id_est <- paste(id$mono_rep, id$RYE, sep = "_")
 head(id)
 
@@ -92,17 +94,17 @@ BEF_plot <-
 
 # set-up the parameter lists
 BEF_pars <- list(p1 =  c("TS", "TC", "NBE"),
-                 p2 = c("IT", "NO", "TS"),
-                 p3 = c("ST", "TI", "SI",  "AS", "IT"))
+                 p2 = c("IT", "NO"),
+                 p3 = c("ST", "TI", "SI",  "AS"))
 
 # set-up the colour lists
 BEF_col <- list(p1 = col_pal[3:1],
-                p2 = col_pal[5:3],
-                p3 = col_pal[9:5])
+                p2 = col_pal[5:4],
+                p3 = col_pal[9:6])
 
 # set-up some segments for plot comparisons
 segments <- data.frame(xstart = 0,
-                       xend = 0.3,
+                       xend = 0.15,
                        effect = 30)
 
 # plot the ith plot
@@ -126,30 +128,31 @@ for(i in 1:length(BEF_pars)) {
     geom_hline(yintercept = 0, linetype = "dashed") +
     geom_point(data = x, 
                mapping = aes(x = Beff, y = Value, colour = Beff, group = cluster_id), 
-               position = position_jitterdodge(jitter.width = 0.1,
-                                               dodge.width = 0.75),
-               alpha = 0.2, shape = 1) +
+               position = position_jitterdodge(jitter.width = 0.15,
+                                               dodge.width = 0.9),
+               alpha = 0.2, shape = 1, size = 1, stroke = 0.25) +
     geom_errorbar(data = x_sum,
                   mapping = aes(x = Beff, ymin = HPDI_low, ymax = HPDI_high, 
                                 colour = Beff, group = cluster_id),
-                  position = position_dodge(width = 0.75), width = 0) +
+                  position = position_dodge(width = 0.9), width = 0) +
     geom_point(data = x_sum,
                mapping = aes(x = Beff, y = Value_m, fill = Beff, group = cluster_id),
-               position = position_dodge(width = 0.75), shape = 23, size = 2.5,
-               colour = "black") +
+               position = position_dodge(width = 0.9), shape = 21, size = 2.7,
+               colour = "black", stroke = 0.1) +
     geom_label(data = x_sum, 
                mapping = aes(x = Beff, y = Value_m, label = cluster_id, group = cluster_id),
-               colour = "white", position = position_dodge(0.75),
-               label.size = NA, alpha = 0, size = 1.75) +
-    geom_segment(data = segments,
-                 mapping = aes(x = xstart, xend = xend,
-                               y = effect, yend = effect),
-                 size = 1.25, colour = "red") +
+               colour = "white", position = position_dodge(0.9),
+               label.size = NA, alpha = 0, size = 2.2,
+               fontface = "bold") +
+    # geom_segment(data = segments,
+                 # mapping = aes(x = xstart, xend = xend,
+                               # y = effect, yend = effect),
+                 # size = 1.25, colour = "red") +
     scale_colour_manual(values = BEF_col[[i]]) +
     scale_fill_manual(values = BEF_col[[i]]) +
     theme_meta() +
     xlab(NULL) +
-    ylab("") +
+    ylab(NULL) +
     theme(legend.position = "none") +
     coord_flip()
   
@@ -162,6 +165,12 @@ plot_list[[1]]
 plot_list[[2]]
 plot_list[[3]]
 
+ggsave(filename = "figures/fig_4i.png", plot_list[[1]],
+       dpi = 500, units = "cm", width = 10, height = 6)
+ggsave(filename = "figures/fig_4ii.png", plot_list[[2]],
+       dpi = 500, units = "cm", width = 10, height = 4)
+ggsave(filename = "figures/fig_4iii.png", plot_list[[3]],
+       dpi = 500, units = "cm", width = 10, height = 8)
 
 
 # check some numbers of the manuscript
