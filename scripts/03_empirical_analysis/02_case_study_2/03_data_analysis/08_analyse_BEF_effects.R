@@ -250,205 +250,100 @@ x <- BEF_trim %>%
 (x[x$Beff == "LC",]$Value_m)/((x[x$Beff == "LS",]$Value_m) - (x[x$Beff == "TS",]$Value_m) + (x[x$Beff == "LC",]$Value_m) )
 
 
-# set-up some segments for plot comparisons
-segments <- data.frame(xstart = 0,
-                       xend = 0.3,
-                       effect = 30)
-
-# which effects to plot
-eff_in <- c("LC", "TC", "LS", "TS")
-
-# plot the effects
-p1 <- 
-  ggplot(data = BEF_pool %>% 
-           filter(Beff %in% eff_in) %>%
-           mutate(Beff = factor(Beff, levels = eff_in) )) +
-  geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
-  geom_point(mapping = aes(x = Beff, y = Value_m, 
-                           colour = Beff, fill = Beff, group = cluster_id),
-             position = position_dodge(0.75), size = 3) +
-  geom_errorbar(mapping = aes(x = Beff, ymin = PI_low, ymax = PI_high,
-                              colour = Beff, group = cluster_id),
-                width = 0, position = position_dodge(0.75)) + 
-  geom_label(mapping = aes(x = Beff, y = Value_m, label = cluster_id, group = cluster_id),
-             colour = "white", position = position_dodge(0.75),
-             label.size = NA, alpha = 0, size = 2.75) +
-  scale_colour_manual(values = v_col_BEF(eff_in = eff_in )) +
-  scale_fill_manual(values = v_col_BEF(eff_in = eff_in)) +
-  geom_segment(data = segments,
-               mapping = aes(x = xstart, xend = xend,
-                             y = effect, yend = effect),
-               size = 1.25, colour = "red") +
-  ylab("Effect (g)") +
-  xlab(NULL) +
-  theme_meta() +
-  theme(legend.position = "none")
-plot(p1)
-
-# compare net biodiversity effects, total complementarity and total selection
-eff_in <- c("NBE", "TC", "NO", "IT")
-p2 <- 
-  ggplot(data = BEF_pool %>%
-           filter(Beff %in% eff_in) %>%
-           mutate(Beff = factor(Beff, levels = eff_in))
-  ) +
-  geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
-  geom_point(mapping = aes(x = Beff, y = Value_m, 
-                           colour = Beff, fill = Beff, group = cluster_id),
-             position = position_dodge(0.75), size = 3) +
-  geom_errorbar(mapping = aes(x = Beff, ymin = PI_low, ymax = PI_high,
-                              colour = Beff, group = cluster_id),
-                width = 0, position = position_dodge(0.75))  +
-  geom_label(mapping = aes(x = Beff, y = Value_m, label = cluster_id, group = cluster_id),
-             colour = "white", position = position_dodge(0.75),
-             label.size = NA, alpha = 0, size = 2.75) +
-  scale_colour_manual(values = v_col_BEF(eff_in = eff_in )) +
-  scale_fill_manual(values = v_col_BEF(eff_in = eff_in )) +
-  geom_segment(data = segments,
-               mapping = aes(x = xstart, xend = xend,
-                             y = effect, yend = effect),
-               size = 1.25, colour = "red") +
-  ylab(NULL) +
-  xlab(NULL) +
-  theme_meta() +
-  theme(legend.position = "none")
-plot(p2)
-
-# examine the distribution of the insurance effects
-eff_in <- c("AS", "TI", "SI", "ST")
-p3 <- 
-  ggplot(data = BEF_pool %>%
-           filter(Beff %in% eff_in) %>%
-           mutate(Beff = factor(Beff, levels = eff_in))
-  ) +
-  geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
-  geom_point(mapping = aes(x = Beff, y = Value_m, 
-                           colour = Beff, fill = Beff, group = cluster_id),
-             position = position_dodge(0.75), size = 3) +
-  geom_errorbar(mapping = aes(x = Beff, ymin = PI_low, ymax = PI_high,
-                              colour = Beff, group = cluster_id),
-                width = 0, position = position_dodge(0.75)) +
-  geom_label(mapping = aes(x = Beff, y = Value_m, label = cluster_id, group = cluster_id),
-             colour = "white", position = position_dodge(0.75),
-             label.size = NA, alpha = 0, size = 2.75) +
-  scale_colour_manual(values = v_col_BEF(eff_in = eff_in )) +
-  scale_fill_manual(values = v_col_BEF(eff_in = eff_in )) +
-  geom_segment(data = segments,
-               mapping = aes(x = xstart, xend = xend,
-                             y = effect, yend = effect),
-               size = 1.25, colour = "red") +
-  ylab(NULL) +
-  xlab(NULL) +
-  theme_meta() +
-  theme(legend.position = "none")
-plot(p3)
-
-# arrange this plot
-p123 <- 
-  ggarrange(p1, p2, p3, ncol = 3, nrow = 1,
-            labels = c("a", "b", "c"),
-            widths = c(1.15, 1, 1),
-            hjust = -0.05,
-            vjust = 0.9,
-            font.label = list(size = 11, face = "plain"))
-plot(p123)
-
-# save this plot
-ggsave(filename = here("figures/fig6.png"), p123,
-       unit = "cm", width = 20, height = 7.5)
-
-# check the correlations among these different effects
-BEF_pool %>%
-  select(cluster_id, Beff, Value_m) %>%
-  pivot_wider(id_cols = "cluster_id",
-              names_from = "Beff",
-              values_from = "Value_m") %>%
-  select(-cluster_id) %>%
-  cor() %>%
-  corrplot(method = c("ellipse"))
-
-
 # do insurance effects depend on environmental heterogeneity?
 
-# load in the environmental dispersion data
-env_disp <- readRDS(file = "results/benthic_env_dispersion.rds")
-head(env_disp)
+# get a list of the mean and PI
+BEF_SI <- 
+  full_join(env_disp, 
+            filter(BEF_sum, Beff == "SI"), by = "cluster_id")
 
-# using the original data, subset NBE and IT and calculate proportion of IT
-SI_env <- 
-  BEF_pool %>%
-  filter(Beff == c("SI")) %>%
-  select(-Beff) %>%
-  rename(SI = Value_m)
+# convert the different estimates into a list
+SI_list <- 
+  BEF_dat %>%
+  filter(Beff == "SI") %>%
+  mutate(Value_id = paste(mono_rep, RYE, sep = "_")) %>%
+  split(., .$Value_id)
 
-# join the env_disp data to the BEF_pool data
-SI_env <- right_join(env_disp, SI_env, by = "cluster_id")
+# check the split
+SI_list[[1]]
 
-# plot the relationship between environmental dispersion and the insurance effect
+# run a regression looped over all the different estimates
+lm_list <- vector("list", length = length(SI_list))
+for(i in 1:length(SI_list)) {
+  
+  lm_x <- lm(Value ~ field_dispersion, data =  SI_list[[i]])
+  lm_est <- coef(lm_x)
+  names(lm_est) <- NULL
+  df <- tibble(intercept = lm_est[1],
+               slope = lm_est[2])
+  
+  lm_list[[i]] <- df
+  
+}
 
-# run the simple linear regressions to test this relationship
-lm.a <- lm(SI ~ field_dispersion, data = SI_env)
-lm.a <- summary(lm.a)
-r2 <- round(lm.a$r.squared, 2)
-Fst <- round(lm.a$fstatistic[1], 2)
-df1 <- round(lm.a$fstatistic[2], 0)
-df2 <- round(lm.a$fstatistic[3], 0)
-pval <- round(lm.a$coefficients[2, 4], 2) 
+# bind into a data.frame
+lm_df <- bind_rows(lm_list, .id = "SI_rep")
 
-# check the summary of the SI_env data
-summary(SI_env)
+# check the distribution
+hist(lm_df$slope)
+mean(lm_df$slope)
 
+# sample a few of these slopes
+set.seed(4908325)
+lm_df_plot <- lm_df[sample(1:nrow(lm_df), 200), ]
+
+# get the regression line through the mean
+lm_mean <- lm(Value_m ~ field_dispersion, data = BEF_SI)
+
+# plot the relationship between SI and environmental dispersion
 p1 <- 
-  ggplot(data = SI_env) +
-  geom_point(mapping = aes(x = field_dispersion, y = SI), size = 2) +
-  geom_errorbar(mapping = aes(x = field_dispersion, 
-                              ymin = PI_low,
-                              ymax = PI_high), width = 0) +
-  annotate(geom = "text", x = 1.35, y = 3.26, label = bquote(r^2~" = "~.(r2) ), size = 2.8) +
-  annotate(geom = "text", x = 2.15, y = 3.2, label = bquote(F[.(df1)~","~.(df2)]~" = "~.(Fst) ), size = 2.8) +
-  annotate(geom = "text", x = 2.95, y = 3.24, label = bquote("P = "~.(pval) ), size = 2.8) +
+  ggplot() +
+  geom_point(data = BEF_plot %>% filter(Beff == "SI"),
+             mapping = aes(x = field_dispersion, y = Value),
+             position = position_jitter(width = 0.075), shape = 1,
+             stroke = 0.1, alpha = 0.3) +
+  geom_point(data = BEF_SI,
+                mapping = aes(x = field_dispersion, y = Value_m)) +
+  geom_errorbar(data = BEF_SI,
+                mapping = aes(x = field_dispersion, ymin = HPDI_low, ymax = HPDI_high),
+                width = 0, linewidth = 0.3) +
+  geom_abline(data = lm_df_plot,
+              mapping = aes(intercept = intercept, slope = slope, group = SI_rep),
+              linewidth = 0.1, alpha = 0.1, colour = col_pal[1]) +
+  geom_hline(yintercept = 0, linetype = "dashed", linewidth = 0.5) +
   ylab("Spatial insurance (g)") +
   xlab("Multivariate dispersion") +
-  scale_y_continuous(limits = c(-1.1, 3.6)) +
   theme_meta()
-plot(p1)
 
-
-# run the simple linear regressions to test this relationship
-lm.b <- lm(SI ~ field_dispersion, data = SI_env %>% filter(cluster_id != "H"))
-lm.b <- summary(lm.b)
-r2 <- round(lm.b$r.squared, 2)
-Fst <- round(lm.b$fstatistic[1], 2)
-df1 <- round(lm.b$fstatistic[2], 0)
-df2 <- round(lm.b$fstatistic[3], 0)
-pval <- round(lm.b$coefficients[2, 4], 2) 
-
-# plot the relationship between environmental dispersion and the insurance effect
+slope_sum <- 
+  lm_df %>%
+  summarise(slope_m = mean(slope),
+            HPDI_low = HPDI(slope, 0.95)[1],
+            HPDI_high = HPDI(slope, 0.95)[2])
+  
 p2 <- 
-  ggplot(data = SI_env %>% filter(cluster_id != "H")) +
-  geom_smooth(mapping = aes(x = field_dispersion, y = SI), 
-              method = "lm", se = TRUE, alpha = 0.25,
-              size = 0.5, colour = "red", linetype = "dashed") +
-  geom_point(mapping = aes(x = field_dispersion, y = SI), size = 2) +
-  geom_errorbar(mapping = aes(x = field_dispersion, 
-                              ymin = PI_low,
-                              ymax = PI_high), width = 0) +
-  annotate(geom = "text", x = 1.3, y = 3.26, label = bquote(r^2~" = "~.(r2) ), size = 2.8) +
-  annotate(geom = "text", x = 2.1, y = 3.2, label = bquote(F[.(df1)~","~.(df2)]~" = "~.(Fst) ), size = 2.8) +
-  annotate(geom = "text", x = 2.95, y = 3.24, label = bquote("P = "~.(pval) ), size = 2.8) +
-  ylab("") +
-  xlab("Multivariate dispersion") +
-  scale_y_continuous(limits = c(-1.1, 3.6)) +
-  theme_meta() +
-  theme(axis.title.y = element_text(size = 1))
-plot(p2)
+  ggplot() +
+  geom_line(data = lm_df,
+            mapping = aes(x = slope), stat="density", 
+            colour = col_pal[1], linewidth = 0.8,
+            alpha = 0.7) +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  geom_point(data = slope_sum,
+             mapping = aes(x = slope_m, y = 2.1), size = 2, colour = col_pal[1]) +
+  geom_errorbarh(data = slope_sum,
+                 mapping = aes(y = 2.1,xmin = HPDI_low, xmax = HPDI_high),
+                 height = 0, colour = col_pal[1], linewidth = 0.75) +
+  scale_y_continuous(limits = c(0, 2.3), expand = c(0, 0)) +
+  ylab("Density") +
+  xlab("Slope estimate") +
+  theme_meta()
 
 p12 <- ggarrange(p1, p2, labels = c("a", "b"),
-                 font.label = list(size = 11, face = "plain")
-                 )
+                 font.label = list(size = 11, face = "plain"),
+                 nrow = 1, ncol = 2, widths = c(1,0.7))
 plot(p12)
 
-ggsave(filename = here("figures/fig7.png"), p12,
-       unit = "cm", width = 14, height = 8)
+ggsave(filename = "figures/fig_5.png", p12,
+       unit = "cm", width = 15, height = 8)
 
 ### END
