@@ -58,7 +58,10 @@ BEF_dat <-
 # remove the LS and LC effects
 BEF_dat <- 
   BEF_dat %>%
-  filter( !(Beff %in% c("LS", "LS")) )
+  filter( !(Beff %in% c("LC", "LS")) )
+
+# refactor the Beff variable to get rid of LS and LC
+BEF_dat$Beff <- factor(BEF_dat$Beff)
 
 # what is the magnitude of different biodiversity effects?
 
@@ -69,22 +72,40 @@ BEF_sum <-
   summarise(Value_m = mean(Value),
             Value_sd = sd(Value),
             n = n(),
-            HPDI_low = HPDI(Value, 0.89)[1],
-            HPDI_high = HPDI(Value, 0.89)[2], .groups = "drop")
+            HPDI_low = HPDI(Value, 0.95)[1],
+            HPDI_high = HPDI(Value, 0.95)[2], .groups = "drop")
   
-# get the NBE
-x <- 
-  BEF_sum %>%
-  filter(Beff == "TI")
+# calculate the pooled effect size across clusters
+beff_vec <- unique(BEF_sum$Beff)
+meta_list <- vector("list", length = length(beff_vec))
+for(i in 1:length(meta_list)) {
+  
+  x <- 
+    BEF_sum %>%
+    filter(Beff == beff_vec[i])
+  
+  # calculate the effect size
+  y <- escalc(mi = x$Value_m, sdi = x$Value_sd, ni = x$n, measure = "MN")
+  
+  # calculate the grand mean
+  z <- rma(yi, vi, method = "REML", data = y, slab = x$cluster_id)
+  beta <- z$beta[,1]
+  names(beta) <- NULL
+  row.names(beta) <- NULL
+  
+  # pull these into a data.frame
+  df <- tibble(Beff = beff_vec[i],
+               grand_mean = beta,
+               CI95_low = z$ci.lb,
+               CI95_high = z$ci.ub)
+                   
+  
+  meta_list[[i]] <- df
+  
+}
 
-# calculate the effect size
-y <- escalc(mi = x$Value_m, sdi = x$Value_sd, ni = x$n, measure = "MN")
-
-# calculate the grand mean
-z <- rma(yi, vi, method = "REML", data = y,
-         slab = x$cluster_id)
-z$fit.stats
-z$b
+# bind into a data.frame
+BEF_grand <- bind_rows(meta_list)
 
 # get a nice colour palette
 col_pal <- wesanderson::wes_palette("Darjeeling1", n = 9, type = "continuous")
@@ -138,6 +159,12 @@ for(i in 1:length(BEF_pars)) {
   
   x_sum$Beff <- factor(x_sum$Beff, levels = BEF_pars[[i]])
   
+  x_grand <- 
+    BEF_grand %>%
+    filter(Beff %in% BEF_pars[[i]])
+  
+  x_grand$Beff <- factor(x_grand$Beff, levels = BEF_pars[[i]])
+  
   p <-
     ggplot() +
     geom_hline(yintercept = 0, linetype = "dashed") +
@@ -145,24 +172,20 @@ for(i in 1:length(BEF_pars)) {
                mapping = aes(x = Beff, y = Value, colour = Beff, group = cluster_id), 
                position = position_jitterdodge(jitter.width = 0.15,
                                                dodge.width = 0.9),
-               alpha = 0.2, shape = 1, size = 1, stroke = 0.25) +
+               alpha = 0.1, shape = 1, size = 1, stroke = 0.20) +
     geom_errorbar(data = x_sum,
                   mapping = aes(x = Beff, ymin = HPDI_low, ymax = HPDI_high, 
                                 colour = Beff, group = cluster_id),
-                  position = position_dodge(width = 0.9), width = 0) +
-    geom_point(data = x_sum,
-               mapping = aes(x = Beff, y = Value_m, fill = Beff, group = cluster_id),
-               position = position_dodge(width = 0.9), shape = 21, size = 2.7,
-               colour = "black", stroke = 0.1) +
-    geom_label(data = x_sum, 
-               mapping = aes(x = Beff, y = Value_m, label = cluster_id, group = cluster_id),
-               colour = "white", position = position_dodge(0.9),
-               label.size = NA, alpha = 0, size = 2.2,
-               fontface = "bold") +
-    # geom_segment(data = segments,
-                 # mapping = aes(x = xstart, xend = xend,
-                               # y = effect, yend = effect),
-                 # size = 1.25, colour = "red") +
+                  position = position_dodge(width = 0.9), width = 0.01, 
+                  linewidth = 0.3, alpha = 1) +
+    geom_errorbar(data = x_grand,
+                  mapping = aes(x = Beff, ymin = CI95_low, ymax = CI95_high,
+                                colour = Beff), 
+                  width = 0.05, linewidth = 0.35, colour = "black") +
+    geom_point(data = x_grand,
+               mapping = aes(x = Beff, y = grand_mean, fill = Beff),
+               position = position_dodge(width = 0.9), shape = 23, size = 2.2,
+               colour = "black", stroke = 0.5) +
     scale_colour_manual(values = BEF_col[[i]]) +
     scale_fill_manual(values = BEF_col[[i]]) +
     theme_meta() +
