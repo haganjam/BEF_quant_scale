@@ -17,9 +17,9 @@ source("scripts/01_partition_functions/01_isbell_2018_partition.R")
 results <- vector(length = length(test.data))
 for (i in 1:length(test.data)) {
   
-  u <- Isbell_2018_sampler(data = test.data[[i]], RYe = c(0.5, 0.5))
+  u <- Isbell_2018_part(data = test.data[[i]], RYe_equal = TRUE, RYe = c(0.5, 0.5))
   v <- u$Beff
-  v
+  print(v)
   
   w <- ans.data[[i]]
   x <- which(!is.na(w$Value))

@@ -127,8 +127,12 @@ raw_cov <- function(x, y) {
 #' column 4 - species: variable specifying the species name (all times and places must have all species names present)
 #' column 5 - M: monoculture functioning
 #' column 6 - Y: mixture function
-#' @param RYe expected relative yields for the species across in all times and places:
-#' numeric vector of length = (N species) and which sums to one
+#' @param RYe_equal If TRUE, we assume that species have the same RYe values across
+#' all times and places in the dataset. If FALSE, we assume that species can 
+#' differ in their RYe at different times and places (see RYe param for implementation)
+#' @param RYe if RYe_equal = TRUE, then numeric vector of length = (N species)
+#' which sums to one. If RYe_equal = FALSE, then a list with K (number of samples) numeric vectors of 
+#' length = (N species) which sum to one. 
 #' 
 #' @symbol Mi - monoculture of each species
 #' @symbol Yoi - observed yield of each species in mixture
@@ -140,7 +144,7 @@ raw_cov <- function(x, y) {
 #' @symbol Poi - observed proportion of each species in mixture (i.e. RYoi/sum(RYoi))
 #' 
 
-Isbell_2018_part <- function(data, RYe) {
+Isbell_2018_part <- function(data, RYe_equal = FALSE, RYe) {
   
   # test if the input data is a data.frame
   test_1 <- function(x) {
@@ -172,50 +176,103 @@ Isbell_2018_part <- function(data, RYe) {
   
   assertthat::assert_that(test_2(x = data))
   
-  # test if RYe is a number
-  test_3 <- function(x) {
+  if (RYe_equal) {
     
-   is.vector(x) & is.numeric(x)
+    # test if RYe is a number
+    test_3 <- function(x) {
+      
+      is.vector(x) & is.numeric(x)
+      
+    }
+    
+    assertthat::on_failure(test_3) <- function(call, env){
+      
+      paste0(call$x, " is not a numeric vector")
+      
+    }
+    
+    assertthat::assert_that(test_3(x = RYe))
+    
+    # test if the length of the RYe vector equals the number of species
+    test_4 <- function(x, y) {
+      
+      assertthat::are_equal(length(x), y)
+      
+    }
+    
+    assertthat::on_failure(test_4) <- function(call, env){
+      
+      paste0("x and y do not have equal length")
+      
+    }
+    
+    assertthat::assert_that(test_4(x = RYe, y = n_unique(data[["species"]])) )
+    
+    # test if the RYe vector sums to 1
+    test_5 <- function(x) {
+      
+      sum(x) > 0.99
+      
+    }
+    
+    assertthat::on_failure(test_5) <- function(call, env){
+      
+      paste0("RYe does not sum to one")
+      
+    }
+    
+    assertthat::assert_that(test_5(x = RYe) )
+    
+  } else if (!RYe_equal) {
+    
+    # check that the RYE is a list
+    test_6 <- function(x) {
+      
+      is.list(x)
+      
+    }
+    
+    assertthat::on_failure(test_6) <- function(call, env){
+      
+      paste0("RYe is not equal but is not a list which is the required input")
+      
+    }
+    
+    assertthat::assert_that(test_6(x = RYe) )
+    
+    # check that each element of the list has the correct number of species
+    test_7 <- function(x, y) {
+      
+      all(sapply(x, length) == n_unique(y))
+      
+    }
+    
+    assertthat::on_failure(test_7) <- function(call, env){
+      
+      paste0("not enough RYe values for each sample")
+      
+    }
+    
+    assertthat::assert_that(test_7(x = RYe, y = data[["species"]]) )
+    
+    # check that there are enough elements in the list (i.e. one for each sample)
+    test_8 <- function(x, y) {
+      
+      length(x) == n_unique(y)
+      
+    }
+    
+    assertthat::on_failure(test_8) <- function(call, env){
+      
+      paste0("not enough RYe values for the different samples")
+      
+    }
+    
+    assertthat::assert_that(test_8(x = RYe, y = data[["sample"]]) )
+    
+    RYe <- unlist(RYe)
     
   }
-  
-  assertthat::on_failure(test_3) <- function(call, env){
-    
-    paste0(call$x, " is not a numeric vector")
-    
-  }
-  
-  assertthat::assert_that(test_3(x = RYe))
-  
-  # test if the length of the RYe vector equals the number of species
-  test_4 <- function(x, y) {
-    
-    assertthat::are_equal(length(x), y)
-    
-  }
-  
-  assertthat::on_failure(test_4) <- function(call, env){
-    
-    paste0("x and y do not have equal length")
-    
-  }
-  
-  assertthat::assert_that(test_4(x = RYe, y = n_unique(data[["species"]])) )
-  
-  # test if the RYe vector sums to 1
-  test_5 <- function(x) {
-    
-    sum(x) > 0.99
-    
-  }
-  
-  assertthat::on_failure(test_5) <- function(call, env){
-    
-    paste0("RYe does not sum to one")
-    
-  }
-  
-  assertthat::assert_that(test_5(x = RYe) )
   
   # get the number of species in the data
   n_sp <- n_unique(data$species)
@@ -232,7 +289,7 @@ Isbell_2018_part <- function(data, RYe) {
     dplyr::arrange(sample, time, place, species)
   
   # define expected relative yields
-  df$RYe <- rep(RYe, n_unique(df$sample))
+  df$RYe <- RYe
   
   # define observed relative yields: Prevent dividing by zero
   df$RYo <- ifelse(df$M == 0, 0, (df$Y/df$M))
@@ -346,7 +403,7 @@ Isbell_2018_part <- function(data, RYe) {
   
   # IT = AS + TI + SI + ST
   assertthat::are_equal(round(IT, 1), round((AS + TI + SI + ST), 1) )
-
+  
   # prepare output
   
   list(Beff = data.frame(Beff = c("NBE", "TC", "TS", "NO", "IT", "AS", "TI", "SI", "ST"),
@@ -355,68 +412,6 @@ Isbell_2018_part <- function(data, RYe) {
                            Value = c(LC, LS)),
        RYe = RYe)
   
-}
-
-#'
-#' @title Isbell_2018_sampler()
-#' 
-#' @description Function to calculate Isbell et al.'s (2018, Ecology Letters) 
-#' biodiversity effect partition using species mixture and monoculture data
-#' across multiple times and places whilst incorporating uncertainty in the RYe values
-#' using the Dirichlet distribution.
-#' 
-#' @param data data.frame in the format defined by Isbell et al. (2018, Ecology Letters):
-#' column 1 - sample: variable specifying the unique place-time combination
-#' column 2 - place: variable specifying the place
-#' column 3 - time: variable specifying the time-point
-#' column 4 - species: variable specifying the species name (all times and places must have all species names present)
-#' column 5 - M: monoculture functioning
-#' column 6 - Y: mixture function
-#' @param RYe expected relative yields for the species across in all times and places:
-#' numeric vector of length = (N species) and which sums to one
-#' @param RYe_post TRUE/FALSE deciding to calculate using samples from the Dirichlet distribution for the
-#' RYe values. If TRUE, a distribution of each effects is outputted.
-#' @param N number of samples to draw from the Dirichlet distribution
-#' @param alpha_par alpha parameter determining the skewness of the Dirichlet distribution
-#' 
-#' 
-
-Isbell_2018_sampler <- function(data, RYe_post = FALSE, N = 100, alpha_par = 4, RYe) {
-  
-  if (!RYe_post) {
-    
-    # test for RYe values
-    if (any(!is.na(RYe)) & !dplyr::near(sum(RYe), 1) ) {
-      stop("Expected relative yield values do not sum to 1")
-    } 
-    
-    if (n_unique(data$species) != length(RYe) | any(is.na(RYe))) {
-      stop("Expected relative yield values are missing")
-    }
-    
-    Isbell_2018_part(data = data, RYe = RYe)
-    
-    
-  } else if (RYe_post) {
-    
-    Beff_post <- vector("list", length = N)
-    for (i in 1:N) {
-      
-      RYe <- gtools::rdirichlet(n = 1, alpha = rep(alpha_par, n_unique(data$species)))
-      RYe <- sapply(RYe, function(x) x)
-      
-      x <- Isbell_2018_part(data = data, RYe = RYe)
-      
-      Beff_post[[i]] <- x$Beff
-      
-    }
-    
-    Beff_post <- dplyr::bind_rows(Beff_post, .id = "sample")
-    
-    return(Beff_post)
-    
-  }
-
 }
 
 ### END

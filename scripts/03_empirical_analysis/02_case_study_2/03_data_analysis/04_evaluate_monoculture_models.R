@@ -461,6 +461,16 @@ plot(p2)
 ggsave(filename = "figures/figA2_SY.png", p2, dpi = 300,
        units = "cm", width = 12, height = 18)
 
+# calculate how many zeros are predicted on the observed data
+sum(df_plot$M_obs[!is.na(df_plot$M_obs)] == 0)/sum(!is.na(df_plot$M_obs))
+
+pred_zero <- 
+  apply(pred_ln1[,!is.na(df_plot$M_obs)], 2, function(x) {
+  
+  sum(x == 0)/length(x)
+  
+})
+mean(pred_zero)
 
 # calculate the MESS index: Zurell et al. (2012)
 

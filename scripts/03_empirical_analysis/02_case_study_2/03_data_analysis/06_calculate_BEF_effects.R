@@ -53,16 +53,19 @@ BEF_list <- foreach(
     
     lapply(clust_list, function(x) {
       
+      # extract the cluster id
+      cluster_id <- unique(x[["cluster_id"]])
+      
       # iterate over all possible initial RYE values
       RYE_rep <- 
         
-        apply(start_RA, 2, function(RA) {
+        lapply(start_RA[[cluster_id]], function(RA) {
           
-          # extract the cluster id
-          cluster_id <- unique(x[["cluster_id"]])
+          RYE <- vector("list", length = nrow(RA))
+          for(j in 1:nrow(RA)) { RYE[[j]] <- RA[j,] }
           
           # calculate the BEF effects
-          BEF_post <- Isbell_2018_sampler(data = x[, names(x) != "cluster_id"], RYe = RA, RYe_post = FALSE)
+          BEF_post <- Isbell_2018_part(data = x[, names(x) != "cluster_id"], RYe = RYE)
           names(BEF_post[["L.Beff"]])[names(BEF_post[["L.Beff"]]) == "L.Beff"] <- "Beff"
           
           # combine the general biodiversity effects and local effects into one data.frame
@@ -77,6 +80,7 @@ BEF_list <- foreach(
           return(BEF_post)
           
         })
+      
       
       # bind into a data.fram
       RYE_rep <- dplyr::bind_rows(RYE_rep, .id = "RYE")
