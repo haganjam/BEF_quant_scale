@@ -77,6 +77,9 @@ ln1_fit <- rstan::sampling(ln1, data = df_m_obs,
                           cores = 4,
                           seed = 58455)
 
+# get the number of unconstrained parameters: 40
+get_num_upars(ln1_fit)
+
 # save the stan model fit object
 ln1_fit@stanmodel@dso <- new("cxxdso")
 saveRDS(ln1_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model1_fit.rds")
@@ -94,6 +97,9 @@ ln2_fit <- rstan::sampling(ln2, data = df_m_obs,
                            control = list(adapt_delta = 0.99),
                            cores = 4,
                            seed = 53275)
+
+# get the number of unconstrained parameters: 27
+get_num_upars(ln2_fit)
 
 # save the stan model fit object
 ln2_fit@stanmodel@dso <- new("cxxdso")
@@ -114,6 +120,9 @@ ln3_fit <- rstan::sampling(ln3, data = df_m_obs,
                            seed = 40975
                            )
 
+# get the number of unconstrained parameters: 18
+get_num_upars(ln3_fit)
+
 # save the stan model fit object
 ln3_fit@stanmodel@dso <- new("cxxdso")
 saveRDS(ln3_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model3_fit.rds")
@@ -132,6 +141,9 @@ ln4_fit <- rstan::sampling(ln4, data = df_m_obs,
                            cores = 4,
                            seed = 50947
                            )
+
+# get the number of unconstrained parameters: 17
+get_num_upars(ln4_fit)
 
 # save the stan model fit object
 ln4_fit@stanmodel@dso <- new("cxxdso")
@@ -152,6 +164,9 @@ ln5_fit <- rstan::sampling(ln5, data = df_m_obs,
                            seed = 9840
                            )
 
+# get the number of unconstrained parameters: 14
+get_num_upars(ln5_fit)
+
 # save the stan model fit object
 ln5_fit@stanmodel@dso <- new("cxxdso")
 saveRDS(ln5_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model5_fit.rds")
@@ -170,6 +185,9 @@ ln6_fit <- rstan::sampling(ln6, data = df_m_obs,
                            cores = 4,
                            seed =  93125
                            )
+
+# get the number of unconstrained parameters: 12
+get_num_upars(ln6_fit)
 
 # save the stan model fit object
 ln6_fit@stanmodel@dso <- new("cxxdso")
@@ -190,8 +208,33 @@ ln7_fit <- rstan::sampling(ln7, data = df_m_obs,
                            seed = 45982
                            )
 
+# get the number of unconstrained parameters: 11
+get_num_upars(ln7_fit)
+
 # save the stan model fit object
 ln7_fit@stanmodel@dso <- new("cxxdso")
 saveRDS(ln7_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model7_fit.rds")
+
+# null model (intercept only)
+
+# compile the model
+ln_null <- rstan::stan_model("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model_null.stan",
+                         verbose = TRUE)
+
+# sample the stan model
+ln_null_fit <- rstan::sampling(ln_null, data = df_m_obs, 
+                           iter = 3000, warmup = 1000, 
+                           chains = 4, algorithm = c("NUTS"),
+                           control = list(adapt_delta = 0.99),
+                           cores = 4,
+                           seed = 45982
+)
+
+# get the number of unconstrained parameters: 3
+get_num_upars(ln_null_fit)
+
+# save the stan model fit object
+ln_null_fit@stanmodel@dso <- new("cxxdso")
+saveRDS(ln_null_fit, file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model_null_fit.rds")
 
 ### END

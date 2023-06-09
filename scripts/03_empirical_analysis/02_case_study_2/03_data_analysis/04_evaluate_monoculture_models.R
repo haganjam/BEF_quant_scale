@@ -296,10 +296,13 @@ abline(0, 1)
 # check the maximum prediction
 max(apply(pred_ln7, 2, max))
 
+# null model
+ln_null_fit <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/03_lognormal_model_null_fit.rds")
+
 # compare the different models by approximating leave-one-out CV
 
 # get a vector of model names
-mod_names <- paste0("ln", 1:7, "_fit")
+mod_names <- c(paste0("ln", 1:7, "_fit"), "ln_null_fit")
 
 loo_fit <- vector("list", length = length(mod_names))
 for(i in 1:length(mod_names)) {
