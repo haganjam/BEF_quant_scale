@@ -291,11 +291,11 @@ plot_list[[3]]
 
 # export the plots
 ggsave(filename = "figures/fig_3i.png", plot_list[[1]],
-       dpi = 500, units = "cm", width = 10, height = 6)
+       dpi = 500, units = "cm", width = 10, height = 4.5)
 ggsave(filename = "figures/fig_3ii.png", plot_list[[2]],
-       dpi = 500, units = "cm", width = 10, height = 4)
+       dpi = 500, units = "cm", width = 10, height = 3)
 ggsave(filename = "figures/fig_3iii.png", plot_list[[3]],
-       dpi = 500, units = "cm", width = 10, height = 8)
+       dpi = 500, units = "cm", width = 10, height = 6)
 
 
 # calculate the percentage of total complementarity due to local complementarity
