@@ -319,8 +319,44 @@ names(loo_fit) <- mod_names
 # compare the different models using the loo score
 loo_compare(loo_fit)
 
-loo_fit[[1]]$estimates
-loo_fit[[2]]$estimates
+# look at the scores individually
+looic <- lapply(loo_fit, function(x) x$estimates[3,])
+looic <- bind_rows(looic, .id = "model")
+names(looic) <- c("model", "psis_loo", "psis_loo_se")
+
+# calculate the differences
+looic$psis_loo_d <- looic$psis_loo[1] - looic$psis_loo
+looic$psis_loo_se_d <- looic$psis_loo_se[1] - looic$psis_loo_se
+
+# reorder the columns
+looic <- 
+  looic %>%
+  select(model, 
+         psis_loo, psis_loo_se,
+         psis_loo_d, psis_loo_se_d)
+
+# calculate the effective number of parameters
+ploo <- lapply(loo_fit, function(x) x$estimates[2,])
+ploo <- bind_rows(ploo, .id = "model")
+names(ploo) <- c("model", "ploo", "ploo_se")
+
+# bind these two data.frames
+table_s1 <- full_join(looic, ploo, by = "model")
+
+# calcualate the percentage of points with k > 0.5
+kvals <- 
+  
+  lapply(loo_fit, function(x) {
+  
+  sum(x$diagnostics$pareto_k > 0.5)/length(x$diagnostics$pareto_k)*100
+  
+})
+
+# add the percentage high k-values to table_s1
+table_s1$kvals <- unlist(kvals)
+
+# output the table as a .csv file
+write_csv(x = table_s1, file = "figures/tableA2_S1.csv")
 
 # which model is the best fit?
 # ln1
@@ -404,7 +440,7 @@ p1 <-
   geom_errorbar(mapping = aes(x = M_obs, ymin = M_pred_PIlow, ymax = M_pred_PIhigh, 
                               colour = OTU),
                 width = 0, alpha = 0.5, size = 0.25, show.legend = FALSE) +
-  ylab("Predicted monoculture dry biomass (g)") +
+  ylab("Imputed monoculture dry biomass (g)") +
   xlab("Observed monoculture dry biomass (g)") +
   facet_wrap(~C, scales = "free", nrow = 4, ncol = 3) +
   scale_y_continuous(limits = c(0, 31)) +
@@ -416,8 +452,8 @@ p1 <-
         legend.key = element_rect(fill = NA))
 plot(p1)
 
-ggsave(filename = "figures/figA2_SX.png", p1, dpi = 300,
-       units = "cm", width = 18, height = 24)
+ggsave(filename = "figures/figA2_S2.png", p1, dpi = 500,
+       units = "cm", width = 20, height = 24)
 
 # check the overlap between the predicted values and the observed values
 n <- 25
@@ -458,8 +494,8 @@ p2 <-
   theme_meta()
 plot(p2)
 
-ggsave(filename = "figures/figA2_SY.png", p2, dpi = 300,
-       units = "cm", width = 12, height = 18)
+ggsave(filename = "figures/figA2_S3.png", p2, dpi = 500,
+       units = "cm", width = 12, height = 16)
 
 # calculate how many zeros are predicted on the observed data
 sum(df_plot$M_obs[!is.na(df_plot$M_obs)] == 0)/sum(!is.na(df_plot$M_obs))

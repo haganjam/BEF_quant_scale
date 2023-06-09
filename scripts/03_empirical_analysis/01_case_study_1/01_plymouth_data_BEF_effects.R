@@ -16,14 +16,14 @@ library(ggbeeswarm)
 library(here)
 library(viridis)
 library(ggpubr)
-library(rethinking)
 
 # set script to call partition functions from
-source(here("scripts/01_partition_functions/01_isbell_2018_partition.R"))
-source(here("scripts/Function_plotting_theme.R"))
+source("scripts/01_partition_functions/01_isbell_2018_partition.R")
+source("scripts/Function_plotting_theme.R")
+source("scripts/03_empirical_analysis/helper_functions.R")
 
 # read in the data
-ply_dat <- read_delim( here("data/case_study_1/Plymouth_data.csv"), delim = "," )
+ply_dat <- read_delim( "data/case_study_1/Plymouth_data.csv", delim = "," )
 
 # check the data
 head(ply_dat)
@@ -157,137 +157,157 @@ ply_part <-
   mutate(sample = paste(place, time, sep = "")) %>%
   select(sample, place, time, species, M, Y)
 
-# get random relative expected yields
-dr <- sapply(1:100, function(x) gtools::rdirichlet(n = 1, rep(3,  4) ) )
-print(dr)
+# set the number of RYe replicates
+Ns <- 100
 
-RYe_reps <- 
-  apply(dr, 2, function(z) {
+start_RA <- vector("list", length = Ns)
+for(i in 1:Ns) {
+  
+  # get the number of samples required
+  N_RYE <- length(unique(ply_part$sample))
+  
+  # for each sample, get a simplex from the Dirichlet distribution
+  rye_mat <- gtools::rdirichlet(n = N_RYE, rep(3, length(unique(ply_part$species))))
+  
+  start_RA[[i]] <- rye_mat
+  
+}
+
+# iterate over all possible initial RYE values
+RYE_rep <- 
+  
+  lapply(start_RA, function(RA) {
     
-    a <- Isbell_2018_sampler(data = ply_part, RYe = z, RYe_post = FALSE)
-    return(bind_rows(a$Beff, rename(a$L.Beff, Beff = L.Beff)))
+    RYE <- vector("list", length = nrow(RA))
+    for(j in 1:nrow(RA)) { RYE[[j]] <- RA[j,] }
     
-  } )
+    # calculate the BEF effects
+    BEF_post <- Isbell_2018_part(data = ply_part, RYe = RYE)
+    names(BEF_post[["L.Beff"]])[names(BEF_post[["L.Beff"]]) == "L.Beff"] <- "Beff"
+    
+    # combine the general biodiversity effects and local effects into one data.frame
+    BEF_post <- rbind(BEF_post[["Beff"]], BEF_post[["L.Beff"]])
+    
+    # convert to a data.frame
+    BEF_post <- as.data.frame(BEF_post, row.names = NULL)
+    
+    return(BEF_post)
+    
+  })
 
-df_unc <- bind_rows(RYe_reps, .id = "ID")
+# bind into a data.frame
+BEF_dat <- as_tibble(bind_rows(RYE_rep, .id = "RYE"))
 
-# check the data
-summary(df_unc)
+# remove the LS and LC effects
+BEF_plot <- 
+  BEF_dat %>%
+  filter( !(Beff %in% c("LC", "LS")) )
 
-# summarise the df_unc data
-df_unc_sum <- 
-  df_unc %>%
+# make a Beff column a factor
+BEF_plot$Beff <- factor(BEF_plot$Beff)
+ 
+# calculate the summary dataset
+BEF_sum <- 
+  BEF_plot %>%
   group_by(Beff) %>%
   summarise(Value_m = mean(Value),
-            PI_low = PI(Value, prob = 0.90)[1],
-            PI_high = PI(Value, prob = 0.90)[2])
+            Value_sd = sd(Value),
+            n = n(),
+            HPDI_low = HPDI(Value, 0.95)[1],
+            HPDI_high = HPDI(Value, 0.95)[2], .groups = "drop")
 
-# calculate the percentage of total complementarity due to local complementarity
-LC <- filter(df_unc_sum, Beff == "LC")[["Value_m"]]
-TS <- filter(df_unc_sum, Beff == "TS")[["Value_m"]]
-LS <- filter(df_unc_sum, Beff == "LS")[["Value_m"]]
+# replace the TC and NO effects with zeros
+BEF_plot <- 
+  BEF_plot %>%
+  mutate(Value = ifelse(Beff %in% c("TC", "NO"), NA, Value))
 
-(LC/(LS - TS + LC))*100
+# plot the different biodiversity in different clusters
+
+# get a nice colour palette
+col_pal <- wesanderson::wes_palette("Darjeeling1", n = 9, type = "continuous")
+
+# set-up the parameter lists
+BEF_pars <- list(p1 =  c("TS", "TC", "NBE"),
+                 p2 = c("IT", "NO"),
+                 p3 = c("ST", "TI", "SI",  "AS"))
+
+# set-up the colour lists
+BEF_col <- list(p1 = col_pal[3:1],
+                p2 = col_pal[5:4],
+                p3 = col_pal[9:6])
 
 # set-up some segments for plot comparisons
 segments <- data.frame(xstart = 0,
-                       xend = 0.3,
+                       xend = 0.15,
                        effect = 30)
 
-# compare total to local selection and complementarity
-eff_in <- c("LC", "TC", "LS", "TS")
-p1 <- 
-  ggplot(data = df_unc_sum %>%
-         filter(Beff %in% eff_in)) +
-  geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
-  geom_col(mapping = aes(x = Beff, y = Value_m, colour = Beff, fill = Beff),
-             width = 0.3) +
-  geom_errorbar(mapping = aes(x = Beff, 
-                              ymin = PI_low,
-                              ymax = PI_high),
-                width = 0, colour = "black") +
-  scale_colour_manual(values = v_col_BEF(eff_in = eff_in) ) +
-  scale_fill_manual(values = v_col_BEF(eff_in = eff_in)) +
-  geom_segment(data = segments,
-               mapping = aes(x = xstart, xend = xend,
-                             y = effect, yend = effect),
-               size = 1.25, colour = "red") +
-  ylab("Effect (%, cover)") +
-  xlab(NULL) +
-  theme_meta() +
-  theme(legend.position = "none")
-plot(p1)
+# plot the ith plot
+plot_list <- vector("list", length = length(BEF_pars))
+for(i in 1:length(BEF_pars)) {
   
-# compare net biodiversity effects, total complementarity and total selection
-eff_in <- c("NBE", "TC", "NO", "IT")
-p2 <- 
-  ggplot(data = df_unc_sum %>%
-         filter(Beff %in% eff_in) %>%
-         mutate(Beff = factor(Beff, levels = eff_in))
-       ) +
-  geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
-  geom_col(mapping = aes(x = Beff, y = Value_m, colour = Beff, fill = Beff),
-           width = 0.3) +
-  geom_errorbar(mapping = aes(x = Beff, 
-                              ymin = PI_low,
-                              ymax = PI_high),
-                width = 0, colour = "black") +
-  scale_colour_manual(values = v_col_BEF(eff_in = eff_in)) +
-  scale_fill_manual(values = v_col_BEF(eff_in = eff_in)) +
-  geom_segment(data = segments,
-               mapping = aes(x = xstart, xend = xend,
-                             y = effect, yend = effect),
-               size = 1.25, colour = "red") +
-  ylab("") +
-  xlab(NULL) +
-  theme_meta() +
-  theme(legend.position = "none",
-        axis.title.y = element_text(size = 1))
-plot(p2)
+  x <- 
+    BEF_plot%>% 
+    filter(Beff %in% BEF_pars[[i]])
+  
+  x$Beff <- factor(x$Beff, levels = BEF_pars[[i]])
+  
+  x_sum <-
+    BEF_sum %>%
+    filter(Beff %in% BEF_pars[[i]])
+  
+  x_sum$Beff <- factor(x_sum$Beff, levels = BEF_pars[[i]])
+  
+  p <- 
+    ggplot() +
+    geom_hline(yintercept = 0, linetype = "dashed") +
+    geom_point(data = x, 
+               mapping = aes(x = Beff, y = Value, colour = Beff), 
+               position = position_jitterdodge(jitter.width = 0.4,
+                                               dodge.width = 0),
+               alpha = 0.25, shape = 1, size = 1.2, stroke = 0.30) +
+    geom_errorbar(data = x_sum,
+                  mapping = aes(x = Beff, ymin = HPDI_low, ymax = HPDI_high), width = 0.05, 
+                  linewidth = 0.3, alpha = 1, colour = "black") +
+    geom_point(data = x_sum,
+               mapping = aes(x = Beff, y = Value_m, fill = Beff), shape = 23, size = 2.2,
+               colour = "black", stroke = 0.5) +
+    scale_colour_manual(values = BEF_col[[i]]) +
+    scale_fill_manual(values = BEF_col[[i]]) +
+    theme_meta() +
+    xlab(NULL) +
+    ylab(NULL) +
+    theme(legend.position = "none") +
+    coord_flip()
+  
+  plot_list[[i]] <- p
+  
+}
 
-# examine the distribution of the insurance effects
-eff_in <- c("AS", "TI", "SI", "ST")
-p3 <- 
-  ggplot(data = df_unc_sum %>%
-         filter(Beff %in% eff_in) %>%
-         mutate(Beff = factor(Beff, levels = eff_in))
-       ) +
-  geom_hline(yintercept = 0, linetype = "dashed", colour = "black") +
-  geom_col(mapping = aes(x = Beff, y = Value_m, colour = Beff, fill = Beff),
-           width = 0.3) +
-  geom_errorbar(mapping = aes(x = Beff, 
-                              ymin = PI_low,
-                              ymax = PI_high),
-                width = 0, colour = "black") +
-  scale_colour_manual(values = v_col_BEF(eff_in = eff_in)) +
-  scale_fill_manual(values = v_col_BEF(eff_in = eff_in)) +
-  geom_segment(data = segments,
-               mapping = aes(x = xstart, xend = xend,
-                             y = effect, yend = effect),
-               size = 1.25, colour = "red") +
-  ylab("") +
-  xlab(NULL) +
-  theme_meta() +
-  theme(legend.position = "none",
-        axis.title.y = element_text(size = 1))
-plot(p3)
+# check the plots
+plot_list[[1]]
+plot_list[[2]]
+plot_list[[3]]
 
-# arrange this plot
-p123 <- 
-  ggarrange(p1, p2, p3, ncol = 3, nrow = 1,
-            widths = c(1.1, 1.05, 1),
-            labels = c("a", "b", "c"),
-            hjust = -0.2,
-            vjust = 1,
-            font.label = list(size = 11, face = "plain"))
-plot(p123)
 
-ggsave(filename = here("figures/fig4.png"), p123,
-       unit = "cm", width = 20, height = 7.5)
+# export the plots
+ggsave(filename = "figures/fig_3i.png", plot_list[[1]],
+       dpi = 500, units = "cm", width = 10, height = 6)
+ggsave(filename = "figures/fig_3ii.png", plot_list[[2]],
+       dpi = 500, units = "cm", width = 10, height = 4)
+ggsave(filename = "figures/fig_3iii.png", plot_list[[3]],
+       dpi = 500, units = "cm", width = 10, height = 8)
 
-# why does local complementarity not vary with the RYe
+
+# calculate the percentage of total complementarity due to local complementarity
+# LC <- filter(BEF_sum, Beff == "LC")[["Value_m"]]
+# TS <- filter(BEF_sum, Beff == "TS")[["Value_m"]]
+# LS <- filter(BEF_sum, Beff == "LS")[["Value_m"]]
+
+# (LC/(LS - TS + LC))*100
+
+# why does local complementarity not vary with the RYe?
 # formula uses average change in relative yield and average relative yield is the same
-apply(dr, 2, mean)
+# apply(dr, 2, mean)
 
 # can we explain these effects?
 
