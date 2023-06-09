@@ -146,6 +146,9 @@ raw_cov <- function(x, y) {
 
 Isbell_2018_part <- function(data, RYe_equal = FALSE, RYe) {
   
+  # load the dplyr package for the pipe
+  library(dplyr)
+  
   # test if the input data is a data.frame
   test_1 <- function(x) {
     
@@ -285,7 +288,7 @@ Isbell_2018_part <- function(data, RYe_equal = FALSE, RYe) {
   
   # sort the data.frame
   df <- 
-    data |>
+    data %>%
     dplyr::arrange(sample, time, place, species)
   
   # define expected relative yields
@@ -302,9 +305,9 @@ Isbell_2018_part <- function(data, RYe_equal = FALSE, RYe) {
   
   # calculate observed proportion of each species in mixture (po,ijk, Isbell et al. 2018)
   df <- 
-    df |>
-    dplyr::group_by(sample) |>
-    dplyr::mutate(Poi = if_else(is.na(Y/sum(Y)), 0, Y/sum(Y))  ) |>
+    df %>%
+    dplyr::group_by(sample) %>%
+    dplyr::mutate(Poi = if_else(is.na(Y/sum(Y)), 0, Y/sum(Y))  ) %>%
     dplyr::ungroup()
   
   # calculate change in observed proportion relative to the expectation (d.po,ijk, Isbell et al. 2018)
@@ -370,14 +373,14 @@ Isbell_2018_part <- function(data, RYe_equal = FALSE, RYe) {
   
   # 10. Local complementarity and local selection
   LC_LS <- 
-    df |>
-    dplyr::group_by(sample) |>
+    df %>%
+    dplyr::group_by(sample) %>%
     dplyr::summarise(dRY_m = mean(dRY),
                      M_m = mean(M),
                      cov_m = raw_cov(dRY, M),
-                     n = n()) |>
+                     n = n()) %>%
     dplyr::mutate(LC = n*dRY_m*M_m,
-                  LS = n*cov_m) |>
+                  LS = n*cov_m) %>%
     dplyr::summarise(LC = sum(LC),
                      LS = sum(LS))
   
