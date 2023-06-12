@@ -35,15 +35,14 @@ theme_meta <- function(base_size = 12, base_family = "") {
 # this requires the viridis library
 require(viridis)
 
-v_col_BEF <- function(eff_in = c("LC", "LS", "TC", "TS", "NBE", "NO", "IT", "AS", "TI", "SI", "ST")) {
+v_col_BEF <- function(eff_in = c("NBE", "TC", "TS", "NO", "IT", "AS", "SI", "TI", "ST")) {
   
   # set-up the colour scale
-  v.col <- c(c("black", "brown"), 
-             viridis(option = "C", n = 4, alpha = 1, begin = 0, end = 0.4),
-             viridis(option = "C", n = 5, alpha = 1, begin = 0.5, end = 1))
+  v.col <- c("#F4B183", "#C55A11", "#70AD47", "#548235", "#FFF2CC",
+             "#957100", "#BF9000", "#FFD966", "#FFE699")
   
   # name the different colours based on the biodiversity effect
-  names(v.col) <- c("NBE", "NO", "LC", "LS", "TC", "TS", "IT", "AS", "TI", "SI", "ST")
+  names(v.col) <- c("NBE", "TC", "TS", "NO", "IT", "AS", "SI", "TI", "ST")
   
   # get the correct order
   v.col.sel <- v.col[ names(v.col) %in% eff_in ]

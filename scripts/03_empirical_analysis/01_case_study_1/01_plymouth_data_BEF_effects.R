@@ -232,9 +232,9 @@ BEF_pars <- list(p1 =  c("TS", "TC", "NBE"),
                  p3 = c("ST", "TI", "SI",  "AS"))
 
 # set-up the colour lists
-BEF_col <- list(p1 = col_pal[3:1],
-                p2 = col_pal[5:4],
-                p3 = col_pal[9:6])
+BEF_col <- list(p1 = v_col_BEF(BEF_pars$p1),
+                p2 = v_col_BEF(BEF_pars$p2),
+                p3 = v_col_BEF(BEF_pars$p3))
 
 # set-up some segments for plot comparisons
 segments <- data.frame(xstart = 0,

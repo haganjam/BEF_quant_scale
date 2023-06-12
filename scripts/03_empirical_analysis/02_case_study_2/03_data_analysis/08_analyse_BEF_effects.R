@@ -121,9 +121,6 @@ table2 <- arrange(BEF_grand, Beff)
 # output the table as a .csv file
 write_csv(x = table2, file = "figures/table_2.csv")
 
-# get a nice colour palette
-col_pal <- wesanderson::wes_palette("Darjeeling1", n = 9, type = "continuous")
-
 # get 100 samples for each biodiversity effect
 id <- dplyr::distinct(BEF_dat[,c("mono_rep", "RYE")])
 
@@ -148,9 +145,9 @@ BEF_pars <- list(p1 =  c("TS", "TC", "NBE"),
                  p3 = c("ST", "TI", "SI",  "AS"))
 
 # set-up the colour lists
-BEF_col <- list(p1 = col_pal[3:1],
-                p2 = col_pal[5:4],
-                p3 = col_pal[9:6])
+BEF_col <- list(p1 = v_col_BEF(BEF_pars$p1),
+                p2 = v_col_BEF(BEF_pars$p2),
+                p3 = v_col_BEF(BEF_pars$p3))
 
 # set-up some segments for plot comparisons
 segments <- data.frame(xstart = 0,
@@ -214,6 +211,8 @@ for(i in 1:length(BEF_pars)) {
   plot_list[[i]] <- p
   
 }
+
+# cluster order (top to bottom): J, I, H, G, E, D, C, B, A 
 
 # check the plots
 plot_list[[1]]
@@ -298,22 +297,24 @@ lm_mean <- lm(Value_m ~ field_dispersion, data = BEF_SI)
 # plot the relationship between SI and environmental dispersion
 p1 <- 
   ggplot() +
-  geom_point(data = BEF_plot %>% filter(Beff == "SI"),
-             mapping = aes(x = field_dispersion, y = Value),
-             position = position_jitter(width = 0.075), shape = 1,
-             stroke = 0.1, alpha = 0.3) +
+  ggbeeswarm::geom_quasirandom(data = BEF_plot %>% filter(Beff == "SI"),
+             mapping = aes(x = field_dispersion, y = Value), shape = 1,
+             stroke = 0.1, alpha = 0.6, colour = "darkgrey",
+             width = 0.05) +
   geom_point(data = BEF_SI,
-                mapping = aes(x = field_dispersion, y = Value_m)) +
+                mapping = aes(x = field_dispersion, y = Value_m),
+             colour = "#333333") +
   geom_errorbar(data = BEF_SI,
                 mapping = aes(x = field_dispersion, ymin = HPDI_low, ymax = HPDI_high),
-                width = 0, linewidth = 0.3) +
+                width = 0, linewidth = 0.3, colour = "#333333") +
   geom_abline(data = lm_df_plot,
               mapping = aes(intercept = intercept, slope = slope, group = SI_rep),
-              linewidth = 0.1, alpha = 0.1, colour = col_pal[1]) +
+              linewidth = 0.1, alpha = 0.1, colour = "red") +
   geom_hline(yintercept = 0, linetype = "dashed", linewidth = 0.5) +
   ylab("Spatial insurance (g)") +
   xlab("Multivariate dispersion") +
   theme_meta()
+plot(p1)
 
 slope_sum <- 
   lm_df %>%
@@ -325,14 +326,14 @@ p2 <-
   ggplot() +
   geom_line(data = lm_df,
             mapping = aes(x = slope), stat="density", 
-            colour = col_pal[1], linewidth = 0.8,
+            colour = "red", linewidth = 0.8,
             alpha = 0.7) +
   geom_vline(xintercept = 0, linetype = "dashed") +
   geom_point(data = slope_sum,
-             mapping = aes(x = slope_m, y = 2.1), size = 2, colour = col_pal[1]) +
+             mapping = aes(x = slope_m, y = 2.1), size = 2, colour = "red") +
   geom_errorbarh(data = slope_sum,
                  mapping = aes(y = 2.1,xmin = HPDI_low, xmax = HPDI_high),
-                 height = 0, colour = col_pal[1], linewidth = 0.75) +
+                 height = 0, colour = "red", linewidth = 0.75) +
   scale_y_continuous(limits = c(0, 2.3), expand = c(0, 0)) +
   ylab("Density") +
   xlab("Slope estimate") +
