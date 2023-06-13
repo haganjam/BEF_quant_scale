@@ -32,13 +32,10 @@ theme_meta <- function(base_size = 12, base_family = "") {
 
 # colour palette function
 
-# this requires the viridis library
-require(viridis)
-
 v_col_BEF <- function(eff_in = c("NBE", "TC", "TS", "NO", "IT", "AS", "SI", "TI", "ST")) {
   
   # set-up the colour scale
-  v.col <- c("#F4B183", "#C55A11", "#70AD47", "#548235", "#FFF2CC",
+  v.col <- c("#2E75B6", "#5B9BD5", "#548235", "#70AD47", "#C55A11",
              "#957100", "#BF9000", "#FFD966", "#FFE699")
   
   # name the different colours based on the biodiversity effect
