@@ -14,6 +14,7 @@ library(tidyr)
 library(readr)
 library(ggplot2)
 library(ggpubr)
+library(cowplot)
 library(vegan)
 library(metafor)
 
@@ -149,10 +150,9 @@ BEF_col <- list(p1 = v_col_BEF(BEF_pars$p1),
                 p2 = v_col_BEF(BEF_pars$p2),
                 p3 = v_col_BEF(BEF_pars$p3))
 
-# set-up some segments for plot comparisons
-segments <- data.frame(xstart = 0,
-                       xend = 0.15,
-                       effect = 30)
+BEF_fullnames <- list(p1 = c("Total selection", "Total complementarity", "Net biodiversity effect"),
+                      p2 = c("Total insurance", "Non-random overyielding"),
+                      p3 = c("Spatio-temporal insurance", "Temporal insurance", "Spatial insurance", "Average selection"))
 
 # plot the ith plot
 plot_list <- vector("list", length = length(BEF_pars))
@@ -163,18 +163,24 @@ for(i in 1:length(BEF_pars)) {
     filter(Beff %in% BEF_pars[[i]])
   
   x$Beff <- factor(x$Beff, levels = BEF_pars[[i]])
+  levels(x$Beff) <- BEF_fullnames[[i]]
   
   x_sum <-
     BEF_sum %>%
     filter(Beff %in% BEF_pars[[i]])
   
   x_sum$Beff <- factor(x_sum$Beff, levels = BEF_pars[[i]])
+  levels(x_sum$Beff) <- BEF_fullnames[[i]]
   
   x_grand <- 
     BEF_grand %>%
     filter(Beff %in% BEF_pars[[i]])
   
   x_grand$Beff <- factor(x_grand$Beff, levels = BEF_pars[[i]])
+  levels(x_grand$Beff) <- BEF_fullnames[[i]]
+  
+  # make sure the colours have the correct names
+  names(BEF_col[[i]]) <- BEF_fullnames[[i]]
   
   p <-
     ggplot() +
@@ -205,7 +211,10 @@ for(i in 1:length(BEF_pars)) {
     theme_meta() +
     xlab(NULL) +
     ylab(NULL) +
-    theme(legend.position = "none") +
+    scale_x_discrete(labels = function(x) stringr::str_wrap(x, 
+                                                            width = 17)) +
+    theme(legend.position = "none", 
+          axis.text.y = element_text(size = 9)) +
     coord_flip()
   
   plot_list[[i]] <- p
@@ -214,18 +223,17 @@ for(i in 1:length(BEF_pars)) {
 
 # cluster order (top to bottom): J, I, H, G, E, D, C, B, A 
 
-# check the plots
-plot_list[[1]]
-plot_list[[2]]
-plot_list[[3]]
+# arrange the plots
+p123 <- 
+  plot_grid(plot_list[[1]], plot_list[[2]], plot_list[[3]], 
+            nrow = 3, ncol = 1, align = "v",
+            labels = c("a", "b", "c"), label_size = 11,
+            label_fontface = "plain"
+            )
+plot(p123)
 
-# export the plots
-ggsave(filename = "figures/fig_4i.png", plot_list[[1]],
-       dpi = 500, units = "cm", width = 10, height = 6)
-ggsave(filename = "figures/fig_4ii.png", plot_list[[2]],
-       dpi = 500, units = "cm", width = 10, height = 4)
-ggsave(filename = "figures/fig_4iii.png", plot_list[[3]],
-       dpi = 500, units = "cm", width = 10, height = 8)
+ggsave(filename = "figures/fig_4.png", p123,
+       dpi = 600, units = "cm", width = 13, height = 18)
 
 # check some numbers of the manuscript
 BEF_pool %>%
@@ -344,7 +352,7 @@ p12 <- ggarrange(p1, p2, labels = c("a", "b"),
                  nrow = 1, ncol = 2, widths = c(1,0.7))
 plot(p12)
 
-ggsave(filename = "figures/fig_5.png", p12,
+ggsave(filename = "figures/fig_5.png", p12, dpi = 600,
        unit = "cm", width = 15, height = 8)
 
 ### END

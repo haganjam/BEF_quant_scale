@@ -13,9 +13,8 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(ggbeeswarm)
-library(here)
-library(viridis)
 library(ggpubr)
+library(cowplot)
 
 # set script to call partition functions from
 source("scripts/01_partition_functions/01_isbell_2018_partition.R")
@@ -223,9 +222,6 @@ BEF_plot <-
 
 # plot the different biodiversity in different clusters
 
-# get a nice colour palette
-col_pal <- wesanderson::wes_palette("Darjeeling1", n = 9, type = "continuous")
-
 # set-up the parameter lists
 BEF_pars <- list(p1 =  c("TS", "TC", "NBE"),
                  p2 = c("IT", "NO"),
@@ -236,10 +232,10 @@ BEF_col <- list(p1 = v_col_BEF(BEF_pars$p1),
                 p2 = v_col_BEF(BEF_pars$p2),
                 p3 = v_col_BEF(BEF_pars$p3))
 
-# set-up some segments for plot comparisons
-segments <- data.frame(xstart = 0,
-                       xend = 0.15,
-                       effect = 30)
+# get the full names
+BEF_fullnames <- list(p1 = c("Total selection", "Total complementarity", "Net biodiversity effect"),
+                      p2 = c("Total insurance", "Non-random overyielding"),
+                      p3 = c("Spatio-temporal insurance", "Temporal insurance", "Spatial insurance", "Average selection"))
 
 # plot the ith plot
 plot_list <- vector("list", length = length(BEF_pars))
@@ -250,12 +246,17 @@ for(i in 1:length(BEF_pars)) {
     filter(Beff %in% BEF_pars[[i]])
   
   x$Beff <- factor(x$Beff, levels = BEF_pars[[i]])
+  levels(x$Beff) <- BEF_fullnames[[i]]
   
   x_sum <-
     BEF_sum %>%
     filter(Beff %in% BEF_pars[[i]])
   
   x_sum$Beff <- factor(x_sum$Beff, levels = BEF_pars[[i]])
+  levels(x_sum$Beff) <- BEF_fullnames[[i]]
+  
+  # make sure the colours have the correct names
+  names(BEF_col[[i]]) <- BEF_fullnames[[i]]
   
   p <- 
     ggplot() +
@@ -276,6 +277,8 @@ for(i in 1:length(BEF_pars)) {
     theme_meta() +
     xlab(NULL) +
     ylab(NULL) +
+    scale_x_discrete(labels = function(x) stringr::str_wrap(x, 
+                                                            width = 17)) +
     theme(legend.position = "none") +
     coord_flip()
   
@@ -288,14 +291,17 @@ plot_list[[1]]
 plot_list[[2]]
 plot_list[[3]]
 
+# arrange the plots
+p123 <- 
+  plot_grid(plot_list[[1]], plot_list[[2]], plot_list[[3]], 
+            nrow = 3, ncol = 1, align = "v",
+            labels = c("a", "b", "c"), label_size = 11,
+            label_fontface = "plain"
+  )
+plot(p123)
 
-# export the plots
-ggsave(filename = "figures/fig_3i.png", plot_list[[1]],
-       dpi = 500, units = "cm", width = 10, height = 4.5)
-ggsave(filename = "figures/fig_3ii.png", plot_list[[2]],
-       dpi = 500, units = "cm", width = 10, height = 3)
-ggsave(filename = "figures/fig_3iii.png", plot_list[[3]],
-       dpi = 500, units = "cm", width = 10, height = 6)
+ggsave(filename = "figures/fig_3.png", p123,
+       dpi = 600, units = "cm", width = 13, height = 15)
 
 
 # calculate the percentage of total complementarity due to local complementarity

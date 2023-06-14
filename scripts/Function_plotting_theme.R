@@ -35,8 +35,8 @@ theme_meta <- function(base_size = 12, base_family = "") {
 v_col_BEF <- function(eff_in = c("NBE", "TC", "TS", "NO", "IT", "AS", "SI", "TI", "ST")) {
   
   # set-up the colour scale
-  v.col <- c("#2E75B6", "#5B9BD5", "#548235", "#70AD47", "#C55A11",
-             "#957100", "#BF9000", "#FFD966", "#FFE699")
+  v.col <- c("#2E75B6", "#8FAADC", "#548235", "#7EBA56", "#C55A11",
+             "#957100", "#BF9000", "#E6AF00", "#FFDB69")
   
   # name the different colours based on the biodiversity effect
   names(v.col) <- c("NBE", "TC", "TS", "NO", "IT", "AS", "SI", "TI", "ST")
