@@ -296,12 +296,13 @@ p123 <-
   plot_grid(plot_list[[1]], plot_list[[2]], plot_list[[3]], 
             nrow = 3, ncol = 1, align = "v",
             labels = c("a", "b", "c"), label_size = 11,
-            label_fontface = "plain"
+            label_fontface = "plain",
+            rel_heights = c(1.5, 1, 2)
   )
 plot(p123)
 
-ggsave(filename = "figures/fig_3.png", p123,
-       dpi = 600, units = "cm", width = 13, height = 15)
+ggsave(filename = "figures/fig_2.svg", p123,
+       units = "cm", width = 13, height = 15)
 
 
 # calculate the percentage of total complementarity due to local complementarity

@@ -228,12 +228,12 @@ p123 <-
   plot_grid(plot_list[[1]], plot_list[[2]], plot_list[[3]], 
             nrow = 3, ncol = 1, align = "v",
             labels = c("a", "b", "c"), label_size = 11,
-            label_fontface = "plain"
-            )
+            label_fontface = "plain",
+            rel_heights = c(1.5, 1, 2)) 
 plot(p123)
 
-ggsave(filename = "figures/fig_4.png", p123,
-       dpi = 600, units = "cm", width = 13, height = 18)
+ggsave(filename = "figures/fig_3.svg", 
+       p123, units = "cm", width = 13, height = 18)
 
 # check some numbers of the manuscript
 BEF_pool %>%
@@ -352,7 +352,7 @@ p12 <- ggarrange(p1, p2, labels = c("a", "b"),
                  nrow = 1, ncol = 2, widths = c(1,0.7))
 plot(p12)
 
-ggsave(filename = "figures/fig_5.png", p12, dpi = 600,
+ggsave(filename = "figures/fig_4.svg", p12,
        unit = "cm", width = 15, height = 8)
 
 ### END
