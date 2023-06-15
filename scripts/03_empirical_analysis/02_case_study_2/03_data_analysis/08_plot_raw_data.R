@@ -9,103 +9,87 @@
 
 # load the required libraries
 library(dplyr)
-library(here)
+library(readr)
 library(ggpubr)
+library(cowplot)
 library(ggplot2)
 
 # load relevant scripts
-source(here("scripts/Function_plotting_theme.R"))
-
-# load the analysis data
-data_M <- readRDS(here("results/benthic_BEF_data.rds"))
-
-# change the relevant names
-data_M <- 
-  data_M %>%
-  rename(M_mu = M1) %>%
-  mutate(M_sd = ifelse(!is.na(M_mu), 0, NA))
+source("scripts/Function_plotting_theme.R")
+source("scripts/03_empirical_analysis/helper_functions.R")
 
 # load the monoculture prediction data
-sp_mono <- readRDS(file = here("results/benthic_mono_pred.rds"))
+dat <- readRDS(file = "scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/05_complete_data.rds")
+length(dat)
 
-# check if any monoculture predictions are zero
-lapply(sp_mono, function(x) {any((x < 0) == TRUE)} )
-lapply(sp_mono, function(x) nrow(x)) %>% unlist() %>% sum() + 287 # good, it should be 615
+# get the mixture data
+dat_Y <- 
+  dat[[1]] %>%
+  group_by(cluster_id, sample, place, time) %>%
+  summarise(biomass_mu = sum(Y), .groups = "drop")
 
-# summarise into a mean and standard deviation
-sp_mu <- 
-  lapply(sp_mono, function(data) {
-  apply(data, 1, mean)
-} )
+# add a species richness variable and convert species to a character
+dat_Y <-
+  dat_Y %>%
+  mutate(SR = 5,
+         biomass_low = biomass_mu,
+         biomass_high = biomass_mu,
+         species = "Mixture (5 sp.)") %>%
+  select(cluster_id, sample, place, time, SR, species, biomass_mu, biomass_low, biomass_high)
 
-sp_sd <- 
-  lapply(sp_mono, function(data) {
-    apply(data, 1, sd)
-  } )
+# bind into a data.frame
+dat_df <- bind_rows(dat, .id = "rep")
 
-# add monoculture predictions from one sample into the data.frame
-for(j in 1:length(sp_mono)) {
-  
-  # get missing rows
-  x <- which( (is.na(data_M[["M"]])) & (data_M[["species"]] == j) )
-  
-  data_M[x, ][["M_mu"]] <- sp_mu[[j]]
-  data_M[x, ][["M_sd"]] <- sp_sd[[j]]
-  
-}
+# summarise into mean and standard deviations
+dat_M <- 
+  dat_df %>%
+  group_by(cluster_id, sample, place, time, species) %>%
+  summarise(biomass_mu = mean(M),
+            biomass_low = HPDI(M, 0.95)[1],
+            biomass_high = HPDI(M, 0.95)[2], .groups = "drop")
+print(dat_M)
 
-
-# plotting the raw data mixtures and monocultures
-data_M$species <- factor(data_M$species)
-levels(data_M$species) <- names(sp_mono)
-
-data_M1 <- 
-  data_M %>%
+# add a species richness variable and convert species to a character
+dat_M <-
+  dat_M %>%
   mutate(SR = 1,
          species = as.character(species)) %>%
-  rename(biomass_mu = M_mu,
-         biomass_sd = M_sd) %>%
-  select(cluster_id, sample, place, time, SR, species, biomass_mu, biomass_sd)
+  select(cluster_id, sample, place, time, SR, species, biomass_mu, biomass_low, biomass_high)
 
-data_M2 <- 
-  data_M %>%
-  group_by(cluster_id, sample, place, time) %>%
-  summarise(biomass_mu = sum(Y), .groups = "drop") %>%
-  mutate(SR = 4,
-         species = "Mixture (5 sp.)", 
-         biomass_sd = 0) %>%
-  select(cluster_id, sample, place, time, SR, species, biomass_mu, biomass_sd)
+# bind the monoculture and mixture data
+dat_sum <- 
+  bind_rows(dat_M , dat_Y) %>%
+  arrange(cluster_id, sample, place, time, SR, species, biomass_mu, biomass_low, biomass_high)
+print(dat_sum)
 
-data_comb <- 
-  bind_rows(data_M1 , data_M2) %>%
-  arrange(cluster_id, sample, place, time, SR, species, biomass_mu, biomass_sd)
-
-data_comb$species <- factor(data_comb$species, 
-                            levels = c("Barn", "Bryo", "Bumpi", "Hydro", "Seasq", "Mixture (5 sp.)"))
-levels(data_comb$species) <- c("Barn", "Bryo", "Asci", "Hydro", "Ciona", "Mixture (5 sp.)")
+# rename the factor levels
+dat_sum$species <- factor(dat_sum$species, 
+                          levels = c("1", "2", "3", "4", "5", "Mixture (5 sp.)"))
+levels(dat_sum$species) <- c("Barn", "Bryo", "Asci", "Hydro", "Ciona", "Mixture (5 sp.)")
 
 # remove cluster F from the analysis
-data_comb <- 
-  data_comb %>%
+dat_sum <- 
+  dat_sum %>%
   filter(cluster_id != "F")
 
 # calculate the average monoculture functioning value
-data_comb %>%
+dat_sum %>%
   group_by(SR) %>%
   summarise(M = mean(biomass_mu))
 
 # illustrate the net biodiversity effect
 df1 <- 
-  data_comb %>%
-  filter(cluster_id == "A", place == 1, time == 1)
-df1.sum <- 
-  df1 %>%
+  dat_sum %>%
+  filter(cluster_id == "B", place == 7, time == 1)
+df1 %>%
   group_by(SR) %>%
   summarise(biomass_mu = mean(biomass_mu))
 
+# get a colour palette
+col_pal <- wesanderson::wes_palette(name = "Darjeeling1", n = 6, type = "continuous")
 
 # make a legend
-legend <- data_comb[1:6, ]
+legend <- dat_sum[1:6, ]
 
 legend <- 
   get_legend( 
@@ -113,7 +97,7 @@ legend <-
            mapping = aes(x = SR, y = biomass_mu, colour = species, shape = species)) +
       geom_point(size = 2) +
       scale_colour_manual(name = "OTU/mixture",
-                          values = viridis(n = 6, begin = 0.1, end = 0.9, option = "C")) +   
+                          values = col_pal) +   
       scale_shape_manual(name = "OTU/mixture",
                          values = c(16, 16, 16, 16, 16, 8)) +
       theme_bw() +
@@ -123,17 +107,16 @@ plot(legend)
 
 
 # plot the raw data of the different clusters
-
-data_comb %>%
+dat_sum %>%
   group_by(cluster_id) %>%
   summarise(n = length(unique(place)) )
 
 # get a vector of the unique cluster ids
-c_id <- unique(data_comb$cluster_id)
+c_id <- unique(dat_sum$cluster_id)
 
 for(i in 1:length(c_id)) {
   
-  df_sub <- data_comb %>% filter(cluster_id == c_id[i])
+  df_sub <- dat_sum %>% filter(cluster_id == c_id[i])
   
   # check the number of places
   N_place <- length(unique(df_sub$place)) 
@@ -156,12 +139,12 @@ for(i in 1:length(c_id)) {
     geom_line(position = position_dodge(width = 0.5), alpha = 0.5) +
     geom_point(position = position_dodge(width = 0.5), size = 2) +
     geom_errorbar(mapping = aes(x = time, 
-                                ymin = (biomass_mu - biomass_sd),
-                                ymax = (biomass_mu + biomass_sd),
+                                ymin = (biomass_low),
+                                ymax = (biomass_high),
                                 colour = species),
                   width = 0, position = position_dodge(width = 0.5)) +
     scale_colour_manual(name = "Species/mixture",
-                        values = viridis(n = 6, begin = 0.1, end = 0.9, option = "C")) +   
+                        values = col_pal) +   
     scale_shape_manual(name = "Species/mixture",
                        values = c(16, 16, 16, 16, 16, 8)) +
     ylab("Biomass (g)") +
@@ -182,22 +165,44 @@ for(i in 1:length(c_id)) {
   # save this plot
   if (N_place == 5) {
     
-    ggsave(filename = here(paste0("figures/", "figA1_S8", letters[i], ".png")), p1,
+    ggsave(filename = paste0("figures/", "figA1_S8", letters[i], ".svg"), p1,
            unit = "cm", width = 21, height = 16)
     
   } else if (N_place == 4) {
     
-    ggsave(filename = here(paste0("figures/", "figA1_S8", letters[i], ".png")), p1,
+    ggsave(filename = paste0("figures/", "figA1_S8", letters[i], ".svg"), p1,
            unit = "cm", width = 14, height = 16)
     
   } else if (N_place == 3) {
     
-    ggsave(filename = here(paste0("figures/", "figA1_S8", letters[i], ".png")), p1,
+    ggsave(filename = paste0("figures/", "figA1_S8", letters[i], ".svg"), p1,
            unit = "cm", width = 21, height = 8)
     
   }
   
 }
+
+# calculate mixture relative abundance
+df_sub <- 
+  dat[[1]] %>%
+  filter(cluster_id == "A")
+
+df_sub <- 
+  df_sub %>%
+  group_by(cluster_id, sample, place, time) %>%
+  mutate(sum_Y = sum(Y)) %>%
+  mutate(RA = Y/sum(Y)) %>%
+  ungroup() %>%
+  select(-Y, -sum_Y) %>%
+  mutate(species = as.character(species))
+
+df_sub %>%
+  group_by(place, species) %>%
+  summarise(M = mean(M),
+            RA = mean(RA)) %>%
+  ggplot(data = .,
+         mapping = aes(x = M, y = RA, colour = species)) +
+  geom_line()
 
 # plot the covariance between monoculture functioning and relative abundance
 cov_RA_M <- 

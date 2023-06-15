@@ -367,6 +367,9 @@ levels(ply_part_sum$species) <- list("B.bifurcata" = "bifurcaria_bifurcata",
                                      "Mixture (4 sp.)" = "mixture"
                                      )
 
+# colour palette
+col_pal <- wesanderson::wes_palette(name = "Darjeeling1", n = 5)
+
 # make a legend
 legend2 <- ply_part_sum[1:5, ]
 legend2 <- 
@@ -376,7 +379,7 @@ legend2 <-
       geom_point(size = 2) +
       scale_colour_manual(name = "Species/mixture",
                           labels = c("B.bifurcata", "F. serratus", "L. digitata", "S. muticum", "Mixture (4 sp.)"),
-                          values = viridis(n = 5, begin = 0.1, end = 0.9, option = "C")) +   
+                          values = col_pal) +   
       scale_shape_manual(name = "Species/mixture",
                          labels = c("B.bifurcata", "F. serratus", "L. digitata", "S. muticum", "Mixture (4 sp.)"),
                          values = c(16, 16, 16, 16, 8)) +
@@ -399,7 +402,7 @@ p1 <-
             mapping = aes(x = time, y = Cover, colour = species)) +
   scale_colour_manual(name = "Species/mixture",
                       labels = c("B.bifurcata", "F. serratus", "L. digitata", "S. muticum", "Mixture (4 sp.)"),
-                      values = viridis(n = 5, begin = 0.1, end = 0.9, option = "C")) +   
+                      values = col_pal) +   
   scale_shape_manual(name = "Species/mixture",
                      labels = c("B.bifurcata", "F. serratus", "L. digitata", "S. muticum", "Mixture (4 sp.)"),
                      values = c(16, 16, 16, 16, 8)) +
@@ -421,7 +424,7 @@ p2 <-
             mapping = aes(x = time, y = Cover, colour = species)) +
   scale_colour_manual(name = "Species/mixture",
                       labels = c("B.bifurcata", "F. serratus", "L. digitata", "S. muticum", "Mixture (4 sp.)"),
-                      values = viridis(n = 5, begin = 0.1, end = 0.9, option = "C")) +   
+                      values = col_pal) +   
   scale_shape_manual(name = "Species/mixture",
                      labels = c("B.bifurcata", "F. serratus", "L. digitata", "S. muticum", "Mixture (4 sp.)"),
                      values = c(16, 16, 16, 16, 8)) +
@@ -449,7 +452,7 @@ p3 <-
   geom_point(size = 2) +
   ggtitle("Across places") +
   geom_smooth(method = "lm", se = FALSE, size = 0.5) +
-  scale_colour_viridis_d(begin = 0.1, end = 0.74, option = "C") +
+  scale_colour_manual(values = col_pal) +
   ylab("Relative abundance") +
   xlab("Monoculture cover (%)") +
   theme_meta() +
@@ -470,7 +473,7 @@ p4 <-
   geom_point(size = 2) +
   ggtitle("Across times") +
   geom_smooth(method = "lm", se = FALSE, size = 0.5) +
-  scale_colour_viridis_d(begin = 0.1, end = 0.74, option = "C") +
+  scale_colour_manual(values = col_pal) +
   ylab("") +
   xlab("Monoculture cover (%)") +
   theme_meta()  +
@@ -488,7 +491,7 @@ p1234 <-
 # add the legend
 p1234 <- ggarrange(p1234, legend2, widths = c(6, 1))
 
-ggsave(filename = here("figures/fig5.png"), p1234,
+ggsave(filename = "figures/fig_5.svg", p1234,
        unit = "cm", width = 21, height = 14)
 
 ### END
