@@ -13,14 +13,13 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(ggpubr)
-library(here)
 library(vegan)
 
 # load plotting theme
 source(here("scripts/Function_plotting_theme.R"))
 
 # load the cleaned environmental data
-env_dat <- read_csv(here("data/case_study_2/data_clean/site_env_data.csv"))
+env_dat <- read_csv("data/case_study_2/data_clean/site_env_data.csv")
 
 # change the depth treatment to a heterogeneity variable
 env_dat$heterogeneity <-  ifelse(env_dat$depth_treatment == "alternating", "Heterogeneous", "Homogeneous")
@@ -108,8 +107,9 @@ p1 <-
   geom_label(data = pca_df_sum, 
              mapping = aes(x = PC1, y = PC2, label = cluster_id),
              position = position_dodge2(width = 0.5),
-             label.size = NA, alpha = 0, size = 3, colour = "white") +  
-  scale_colour_viridis_d(option = "C", begin = 0, end = 1) +
+             label.size = NA, alpha = 0, size = 3, colour = "white",
+             fontface = "bold") +  
+  scale_colour_manual(values = wesanderson::wes_palette(name = "Cavalcanti1", n = 9, type = "continuous")) +
   guides(colour = "none") +
   theme_meta() +
   xlab("PC1 (38%)") +
@@ -139,7 +139,6 @@ env_dispersion <-
 
 # plot the relationship
 plot(env_dispersion$GIS_dispersion, env_dispersion$field_dispersion)
-abline(a = 0, b = 1)
 
 # examine the spearman correlation which tests for monotonic relationships
 cor(env_dispersion$GIS_dispersion, env_dispersion$field_dispersion, method = "spearman")
@@ -154,18 +153,20 @@ env_dispersion_s <-
 p2 <- 
   ggplot() +
   geom_jitter(data = env_dispersion,
-              mapping = aes(x = heterogeneity, y = field_dispersion), 
-              width = 0.05, shape = 16, size = 2, alpha = 0.2) +
+              mapping = aes(x = heterogeneity, y = field_dispersion, shape = heterogeneity), 
+              width = 0.05, size = 2, alpha = 0.2) +
   geom_point(data = env_dispersion_s,
-             mapping = aes(x = heterogeneity, y = d_m ),
-             colour = "red", size = 3) +
+             mapping = aes(x = heterogeneity, y = d_m, shape = heterogeneity),
+             colour = "black", size = 3) +
   geom_errorbar(data = env_dispersion_s,
              mapping = aes(x = heterogeneity, ymin = d_m-d_sd, ymax = d_m+d_sd ),
              width = 0,
-             colour = "red", size = 0.5) +
+             colour = "black", size = 0.5) +
+  guides(shape = "none") +
   xlab("") +
   ylab("Multivariate dispersion") +
-  theme_meta()
+  theme_meta() +
+  theme(legend.position = "none")
 plot(p2)
 
 # do a t.test()
@@ -178,7 +179,7 @@ p12 <-
           font.label = list(face = "plain", size = 11), common.legend = TRUE)
 plot(p12)
 
-ggsave(filename = here("figures/figA2_S2.png"), p12,
+ggsave(filename = here("figures/SI2_fig_4.svg"), p12,
        unit = "cm", width = 20, height = 10)
 
 # output the multivariate dispersion into an .rds file

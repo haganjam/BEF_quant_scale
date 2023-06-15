@@ -14,14 +14,13 @@ library(readr)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
-library(here)
 library(ggpubr)
 
 # load the plotting theme
-source(here("scripts/Function_plotting_theme.R"))
+source("scripts/Function_plotting_theme.R")
 
 # load the cleaned dataset
-cov_dat <- read_csv(here("data/case_study_2/data_clean/mixture_coverage_data_clean.csv"))
+cov_dat <- read_csv("data/case_study_2/data_clean/mixture_coverage_data_clean.csv")
 
 # check how many unique buoys there are
 length(unique(cov_dat$buoy_id))
@@ -71,6 +70,9 @@ print(SP.x)
 
 # plot a proper correlation plot
 
+# get a colour palette
+col_pal <- wesanderson::wes_palette(name = "Darjeeling1", n = 6, type = "continuous")
+
 # rename the OTUs
 covT12$OTU <- factor(covT12$Species)
 levels(covT12$OTU) <- c("Barn", "Bryo", "Asci", "Hydro", "Ciona")
@@ -80,7 +82,7 @@ p1 <-
        mapping = aes(x = T1_cover, y = T2_cover, colour = OTU)) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
   geom_point(size = 2, alpha =0.7) +
-  scale_colour_viridis_d(option = "C") +
+  scale_colour_manual(values = col_pal[1:5]) +
   xlab("Cover (%)") +
   ylab("Cover (%)") +
   annotate(geom = "text", x = 10, y = 90, label = paste0("rho = ", round(SP.x$estimate, 2))) +
@@ -117,13 +119,14 @@ p2 <-
   theme(legend.position = "top",
         legend.key = element_rect(fill = NA),
         plot.title = element_text(size = 35))
+plot(p2)
 
 p12 <- 
   ggarrange(p1, p2, ncol = 2, nrow = 1,
             labels =c("a", "b"), font.label = list(face = "plain", size = 11))
 plot(p12)
 
-ggsave(filename = here("figures/figA2_S5.png"), p12,
+ggsave(filename = "figures/SI2_fig_8.svg", p12,
        unit = "cm", width = 20, height = 10)
 
 # correlation within each buoy
