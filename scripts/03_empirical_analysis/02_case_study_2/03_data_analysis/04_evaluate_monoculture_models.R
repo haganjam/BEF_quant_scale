@@ -341,7 +341,7 @@ ploo <- bind_rows(ploo, .id = "model")
 names(ploo) <- c("model", "ploo", "ploo_se")
 
 # bind these two data.frames
-table_s1 <- full_join(looic, ploo, by = "model")
+ED_table_1 <- full_join(looic, ploo, by = "model")
 
 # calcualate the percentage of points with k > 0.5
 kvals <- 
@@ -353,10 +353,10 @@ kvals <-
 })
 
 # add the percentage high k-values to table_s1
-table_s1$kvals <- unlist(kvals)
+ED_table_1$kvals <- unlist(kvals)
 
 # output the table as a .csv file
-write_csv(x = table_s1, file = "figures/tableA2_S1.csv")
+write_csv(x = ED_table_1, file = "figures/ED_table_1.csv")
 
 # which model is the best fit?
 # ln1
@@ -413,6 +413,9 @@ levels(C) <- paste0("Cluster ", LETTERS[1:10])
 OTU <- factor(df_obs$S)
 levels(OTU) <- c("Barn", "Bryo", "Asci", "Hydro", "Ciona")
 
+# get a colour palette
+col_pal <- wesanderson::wes_palette(name = "Darjeeling1", n = 6, type = "continuous")
+
 # make a data.frame for plotting
 df_plot <- data.frame(M_obs = df_obs$M,
                       Obs_pred = ifelse(is.na(df_obs$M), "Predicted", "Observed"),
@@ -432,9 +435,15 @@ df_plot <- data.frame(M_obs = df_obs$M,
 summary(df_plot)
 
 # plot fit-to-sample
+df_p1 <- 
+  df_plot %>% 
+  filter(!is.na(M_obs)) %>%
+  filter(C != "Cluster F")
+df_p1$OTU
+
 p1 <- 
-  ggplot(data = df_plot %>% filter(!is.na(M_obs))) +
-  geom_abline(intercept = 0, slope = 1, linetype = "dashed", colour = "red") +
+  ggplot(data = df_p1) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", colour = "black", alpha = 0.5) +
   geom_point(mapping = aes(x = M_obs, y = M_pred_mu, colour = OTU),
              shape = 16, alpha = 0.75) + 
   geom_errorbar(mapping = aes(x = M_obs, ymin = M_pred_PIlow, ymax = M_pred_PIhigh, 
@@ -445,14 +454,15 @@ p1 <-
   facet_wrap(~C, scales = "free", nrow = 4, ncol = 3) +
   scale_y_continuous(limits = c(0, 31)) +
   scale_x_continuous(limits = c(0, 10)) +
-  scale_colour_manual(values = viridis(n = 5, begin = 0.1, end = 0.9, option = "C")) +
+  scale_colour_manual(values = col_pal[1:5]) +
   guides(colour = guide_legend(override.aes = list(shape = 16, size = 4, alpha = 1))) +
   theme_meta() +
   theme(legend.position = "top",
-        legend.key = element_rect(fill = NA))
+        legend.key = element_rect(fill = NA),
+        strip.background = element_blank())
 plot(p1)
 
-ggsave(filename = "figures/figA2_S2.png", p1, dpi = 500,
+ggsave(filename = "figures/SI2_fig_2.svg", p1,
        units = "cm", width = 20, height = 24)
 
 # check the overlap between the predicted values and the observed values
@@ -465,6 +475,7 @@ for(i in 2:nrow(samples)) {
 }
 
 # add identifier columns
+df_samples$C <- df_plot$C
 df_samples$Obs_pred <- df_plot$Obs_pred
 df_samples$OTU <- df_plot$OTU
 
@@ -480,10 +491,20 @@ df_samples <-
                names_to = "sample",
                values_to = "M_pred")
 
+# remove cluster F
+df_samples <- 
+  df_samples %>%
+  filter(C != "Cluster F")
+  
 # plot the overlap between the observed and the predicted data
+df_p2 <- 
+  df_plot %>%
+  filter(C != "Cluster F")  %>% 
+  filter(Obs_pred == "Observed")
+
 p2 <- 
   ggplot() +
-  geom_density(data = df_plot %>% filter(Obs_pred == "Observed"),
+  geom_density(data = df_p2,
                mapping = aes(x = M_obs), fill = "red", colour = "white", alpha = 1) +
   geom_density(data = df_samples,
                mapping = aes(x = M_pred, group = sample), alpha = 0.05,
@@ -491,10 +512,11 @@ p2 <-
   ylab("Density") +
   xlab("Monoculture dry biomass (g)") +
   facet_wrap(~ OTU, scales = "free", nrow = 3, ncol = 2) +
-  theme_meta()
+  theme_meta() +
+  theme(strip.background = element_blank())
 plot(p2)
 
-ggsave(filename = "figures/figA2_S3.png", p2, dpi = 500,
+ggsave(filename = "figures/SI2_fig_3.svg", p2,
        units = "cm", width = 12, height = 16)
 
 # calculate how many zeros are predicted on the observed data

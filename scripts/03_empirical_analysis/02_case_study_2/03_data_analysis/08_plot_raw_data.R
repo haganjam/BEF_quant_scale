@@ -182,7 +182,7 @@ p1 <-
 p1 <- ggarrange(p1, legend, ncol = 2, nrow = 1,
                 widths = c(8, 1))
 
-ggsave(filename = "figures/fig_ED1.svg", p1,
+ggsave(filename = "figures/ED_fig_1.svg", p1,
        unit = "cm", width = 35, height = 45)
 
 
@@ -241,7 +241,7 @@ p1 <-
         strip.background = element_rect(fill="white"))
 plot(p1)
 
-ggsave(filename = "figures/fig_ED2.svg", p1,
+ggsave(filename = "figures/ED_fig_2.svg", p1,
        unit = "cm", width = 18, height = 20)
 
 # calculate the mean for each time across places
@@ -283,7 +283,7 @@ p2 <-
         strip.background = element_rect(fill="white"))
 plot(p2)
 
-ggsave(filename = "figures/fig_ED3.svg", p2,
+ggsave(filename = "figures/ED_fig_3.svg", p2,
        unit = "cm", width = 18, height = 20)
 
 ### END

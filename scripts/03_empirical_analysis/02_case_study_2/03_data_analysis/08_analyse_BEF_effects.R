@@ -117,10 +117,10 @@ BEF_grand$Beff <- factor(BEF_grand$Beff,
                          levels = c("NBE", "TC", "TS", "NO", "IT", "AS", "SI", "TI", "ST"))
 
 # rearrange the effects into the correct order
-table2 <- arrange(BEF_grand, Beff)
+table1 <- arrange(BEF_grand, Beff)
 
 # output the table as a .csv file
-write_csv(x = table2, file = "figures/table_2.csv")
+write_csv(x = table1, file = "figures/MAIN_table_1.csv")
 
 # get 100 samples for each biodiversity effect
 id <- dplyr::distinct(BEF_dat[,c("mono_rep", "RYE")])
@@ -232,7 +232,7 @@ p123 <-
             rel_heights = c(1.5, 1, 2)) 
 plot(p123)
 
-ggsave(filename = "figures/fig_4.svg", 
+ggsave(filename = "figures/MAIN_fig_4.svg", 
        p123, units = "cm", width = 13, height = 18)
 
 # check some numbers of the manuscript
@@ -352,7 +352,7 @@ p12 <- ggarrange(p1, p2, labels = c("a", "b"),
                  nrow = 1, ncol = 2, widths = c(1,0.7))
 plot(p12)
 
-ggsave(filename = "figures/fig_5.svg", p12,
+ggsave(filename = "figures/MAIN_fig_5.svg", p12,
        unit = "cm", width = 15, height = 8)
 
 ### END
