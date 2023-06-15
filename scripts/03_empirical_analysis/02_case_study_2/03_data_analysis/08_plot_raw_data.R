@@ -95,13 +95,15 @@ legend <-
   get_legend( 
     ggplot(data = legend,
            mapping = aes(x = SR, y = biomass_mu, colour = species, shape = species)) +
-      geom_point(size = 2) +
+      geom_point(size = 3) +
       scale_colour_manual(name = "OTU/mixture",
                           values = col_pal) +   
       scale_shape_manual(name = "OTU/mixture",
                          values = c(16, 16, 16, 16, 16, 8)) +
       theme_bw() +
-      theme(legend.position = "bottom")
+      theme(legend.position = "right") +
+      theme(legend.text = element_text(size = 11),
+            legend.title = element_text(size = 12))
   )
 plot(legend)
 
@@ -114,6 +116,10 @@ dat_sum %>%
 # get a vector of the unique cluster ids
 c_id <- unique(dat_sum$cluster_id)
 
+# ylabs
+ylabs <- list("", "", "", "", "Dry biomass (g)", "", "", "", "")
+
+plot_list <- vector("list", length = length(c_id))
 for(i in 1:length(c_id)) {
   
   df_sub <- dat_sum %>% filter(cluster_id == c_id[i])
@@ -123,11 +129,11 @@ for(i in 1:length(c_id)) {
   
   # choose number of rows and columns based on the number of places
   if (N_place == 5) {
-    NROW <- 2
-    NCOL <- 3
+    NROW <- 1
+    NCOL <- 5
   } else if(N_place == 4) {
-    NROW <- 2
-    NCOL <- 2
+    NROW <- 1
+    NCOL <- 4
   } else if(N_place == 3) {
     NROW = 1
     NCOL = 3
@@ -136,92 +142,148 @@ for(i in 1:length(c_id)) {
   p1 <- 
     ggplot(data = df_sub,
            mapping = aes(x = time, y = biomass_mu, colour = species, shape = species)) +
-    geom_line(position = position_dodge(width = 0.5), alpha = 0.5) +
+    geom_line(position = position_dodge(width = 0.5), alpha = 0.5,
+              show.legend = FALSE) +
     geom_point(position = position_dodge(width = 0.5), size = 2) +
     geom_errorbar(mapping = aes(x = time, 
                                 ymin = (biomass_low),
                                 ymax = (biomass_high),
                                 colour = species),
-                  width = 0, position = position_dodge(width = 0.5)) +
-    scale_colour_manual(name = "Species/mixture",
+                  width = 0, position = position_dodge(width = 0.5),
+                  show.legend = FALSE) +
+    scale_colour_manual(name = "OTU/mixture",
                         values = col_pal) +   
-    scale_shape_manual(name = "Species/mixture",
+    scale_shape_manual(name = "OTU/mixture",
                        values = c(16, 16, 16, 16, 16, 8)) +
-    ylab("Biomass (g)") +
-    xlab("2-weeks") +
+    ylab(ylabs[[i]]) +
+    xlab(if(i == 9){"2-weeks"}else{NULL}) +
     ggtitle(paste0("Cluster - ", c_id[i])) +
     scale_x_continuous(breaks = c(1, 2, 3)) +
     facet_wrap(~place, nrow = NROW, ncol = NCOL) +
     theme_meta() +
     theme(legend.position = "none",
-          plot.title = element_text(size = 11, hjust = 0.5))
+          plot.title = element_text(size = 11, hjust = 0.5),
+          strip.background = element_blank(),
+          strip.text.x = element_blank(),
+          plot.margin = unit(c(0,0,0,0), "cm"))
   
-  # add a legend
-  p1 <- ggarrange(p1, legend, heights = c(6, 1),
-                  nrow = 2, ncol = 1,
-                  labels = c(letters[i], ""),
-                  font.label = list(size = 11, face = "plain"))
-  
-  # save this plot
-  if (N_place == 5) {
-    
-    ggsave(filename = paste0("figures/", "figA1_S8", letters[i], ".svg"), p1,
-           unit = "cm", width = 21, height = 16)
-    
-  } else if (N_place == 4) {
-    
-    ggsave(filename = paste0("figures/", "figA1_S8", letters[i], ".svg"), p1,
-           unit = "cm", width = 14, height = 16)
-    
-  } else if (N_place == 3) {
-    
-    ggsave(filename = paste0("figures/", "figA1_S8", letters[i], ".svg"), p1,
-           unit = "cm", width = 21, height = 8)
-    
-  }
+  plot_list[[i]] <- p1
   
 }
 
-# calculate mixture relative abundance
-df_sub <- 
-  dat[[1]] %>%
-  filter(cluster_id == "A")
+p1 <- 
+  cowplot::plot_grid(plot_list[[1]], plot_list[[2]],plot_list[[3]],
+                     plot_list[[4]],plot_list[[5]],plot_list[[6]],
+                     plot_list[[7]],plot_list[[8]],plot_list[[9]],
+                     nrow = 9, ncol = 1, 
+                     align = "hv",
+                     axis = "l")
 
-df_sub <- 
-  df_sub %>%
-  group_by(cluster_id, sample, place, time) %>%
+p1 <- ggarrange(p1, legend, ncol = 2, nrow = 1,
+                widths = c(8, 1))
+
+ggsave(filename = "figures/fig_ED1.svg", p1,
+       unit = "cm", width = 35, height = 45)
+
+
+# calculate mixture relative abundance
+dat_cov <- 
+  dat_df %>%
+  filter(cluster_id != "F") %>% 
+  group_by(rep, cluster_id, sample, place, time) %>%
   mutate(sum_Y = sum(Y)) %>%
   mutate(RA = Y/sum(Y)) %>%
   ungroup() %>%
   select(-Y, -sum_Y) %>%
   mutate(species = as.character(species))
 
-df_sub %>%
-  group_by(place, species) %>%
-  summarise(M = mean(M),
-            RA = mean(RA)) %>%
-  ggplot(data = .,
-         mapping = aes(x = M, y = RA, colour = species)) +
-  geom_line()
+# replace the species characters with species names
+dat_cov$species <- factor(dat_cov $species, 
+                          levels = c("1", "2", "3", "4", "5"))
+levels(dat_cov$species) <- c("Barn", "Bryo", "Asci", "Hydro", "Ciona")
 
-# plot the covariance between monoculture functioning and relative abundance
-cov_RA_M <- 
-  data_M %>%
-  filter(cluster_id != "F") %>%
-  mutate(species = as.character(species)) %>%
-  rename(biomass_mu = M_mu,
-         biomass_sd = M_sd) %>%
-  select(cluster_id, sample, place, time, species, Y, biomass_mu, biomass_sd)
+# calculate the mean for each place across times
+cov_place <- 
+  dat_cov %>%
+  group_by(cluster_id, place, species) %>%
+  summarise(M_mu = mean(M),
+            M_sd = sd(M),
+            RA_mu = mean(RA),
+            RA_sd = sd(RA)) %>%
+  ungroup()
 
-# calculate relative abundance in mixture
-cov_RA_M <- 
-  cov_RA_M %>%
-  group_by(cluster_id, place, time, sample) %>%
-  mutate(Y_total = sum(Y)) %>%
-  ungroup() %>%
-  mutate(RA = Y/Y_total) %>%
-  select(cluster_id, sample, place, time, species, RA, biomass_mu, biomass_sd)
-head(cov_RA_M)
-summary(cov_RA_M)
+# change cluster_id levels
+cov_place$cluster_id <- factor(cov_place$cluster_id)
+levels(cov_place$cluster_id) <- paste0("Cluster ", c("A", "B", "C", "D", "E", "G", "H", "I", "J"))
+
+p1 <- 
+  ggplot(data = cov_place) +
+  geom_point(mapping = aes(x = M_mu, y = RA_mu, colour = species)) +
+  geom_errorbar(mapping = aes(x = M_mu, 
+                              ymin = RA_mu - RA_sd, ymax = RA_mu + RA_sd,
+                              colour = species), 
+                width = 0, linewidth = 0.2, alpha = 0.5,
+                show.legend = FALSE) +
+  geom_errorbarh(mapping = aes(y = RA_mu, 
+                               xmin = M_mu - M_sd, xmax = M_mu + M_sd,
+                               colour = species), 
+                 height = 0, linewidth = 0.2, alpha = 0.5,
+                 show.legend = FALSE) +
+  scale_colour_manual(values = col_pal[1:5]) +
+  facet_wrap(~cluster_id, scales = "free") +
+  guides(colour = guide_legend(override.aes = list(size = 3.5))) +
+  labs(colour = "OTU") +
+  xlab("Monoculture dry biomass (g)") +
+  ylab("Mixture relative abundance") +
+  theme_meta() +
+  theme(legend.position = "top",
+        legend.key = element_rect(fill = NA),
+        strip.background = element_rect(fill="white"))
+plot(p1)
+
+ggsave(filename = "figures/fig_ED2.svg", p1,
+       unit = "cm", width = 18, height = 20)
+
+# calculate the mean for each time across places
+cov_time <- 
+  dat_cov %>%
+  group_by(cluster_id, time, species) %>%
+  summarise(M_mu = mean(M),
+            M_sd = sd(M),
+            RA_mu = mean(RA),
+            RA_sd = sd(RA)) %>%
+  ungroup()
+
+# change cluster_id levels
+cov_time $cluster_id <- factor(cov_time$cluster_id)
+levels(cov_time $cluster_id) <- paste0("Cluster ", c("A", "B", "C", "D", "E", "G", "H", "I", "J"))
+
+p2 <- 
+  ggplot(data = cov_time) +
+  geom_point(mapping = aes(x = M_mu, y = RA_mu, colour = species)) +
+  geom_errorbar(mapping = aes(x = M_mu, 
+                              ymin = RA_mu - RA_sd, ymax = RA_mu + RA_sd,
+                              colour = species), 
+                width = 0, linewidth = 0.2, alpha = 0.5,
+                show.legend = FALSE) +
+  geom_errorbarh(mapping = aes(y = RA_mu, 
+                               xmin = M_mu - M_sd, xmax = M_mu + M_sd,
+                               colour = species), 
+                 height = 0, linewidth = 0.2, alpha = 0.5,
+                 show.legend = FALSE) +
+  scale_colour_manual(values = col_pal[1:5]) +
+  facet_wrap(~cluster_id, scales = "free") +
+  guides(colour = guide_legend(override.aes = list(size = 3.5))) +
+  labs(colour = "OTU") +
+  xlab("Monoculture dry biomass (g)") +
+  ylab("Mixture relative abundance") +
+  theme_meta() +
+  theme(legend.position = "top",
+        legend.key = element_rect(fill = NA),
+        strip.background = element_rect(fill="white"))
+plot(p2)
+
+ggsave(filename = "figures/fig_ED3.svg", p2,
+       unit = "cm", width = 18, height = 20)
 
 ### END

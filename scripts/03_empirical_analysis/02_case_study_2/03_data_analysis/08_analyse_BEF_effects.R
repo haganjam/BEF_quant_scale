@@ -232,7 +232,7 @@ p123 <-
             rel_heights = c(1.5, 1, 2)) 
 plot(p123)
 
-ggsave(filename = "figures/fig_3.svg", 
+ggsave(filename = "figures/fig_4.svg", 
        p123, units = "cm", width = 13, height = 18)
 
 # check some numbers of the manuscript
@@ -352,7 +352,7 @@ p12 <- ggarrange(p1, p2, labels = c("a", "b"),
                  nrow = 1, ncol = 2, widths = c(1,0.7))
 plot(p12)
 
-ggsave(filename = "figures/fig_4.svg", p12,
+ggsave(filename = "figures/fig_5.svg", p12,
        unit = "cm", width = 15, height = 8)
 
 ### END
