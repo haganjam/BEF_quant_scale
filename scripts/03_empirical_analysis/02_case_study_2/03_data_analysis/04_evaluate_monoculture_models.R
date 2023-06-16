@@ -341,7 +341,7 @@ ploo <- bind_rows(ploo, .id = "model")
 names(ploo) <- c("model", "ploo", "ploo_se")
 
 # bind these two data.frames
-ED_table_1 <- full_join(looic, ploo, by = "model")
+ED_table_2 <- full_join(looic, ploo, by = "model")
 
 # calcualate the percentage of points with k > 0.5
 kvals <- 
@@ -353,10 +353,10 @@ kvals <-
 })
 
 # add the percentage high k-values to table_s1
-ED_table_1$kvals <- unlist(kvals)
+ED_table_2$kvals <- unlist(kvals)
 
 # output the table as a .csv file
-write_csv(x = ED_table_1, file = "figures/ED_table_1.csv")
+write_csv(x = ED_table_2, file = "figures/ED_table_2.csv")
 
 # which model is the best fit?
 # ln1

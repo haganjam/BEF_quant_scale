@@ -261,6 +261,9 @@ for(i in 1:length(BEF_pars)) {
   p <- 
     ggplot() +
     geom_hline(yintercept = 0, linetype = "dashed") +
+    geom_hline(yintercept = 30, 
+               linetype = "dashed", colour = "red", 
+               alpha = 0.5, linewidth = 0.25) +
     geom_point(data = x, 
                mapping = aes(x = Beff, y = Value, colour = Beff), 
                position = position_jitterdodge(jitter.width = 0.4,

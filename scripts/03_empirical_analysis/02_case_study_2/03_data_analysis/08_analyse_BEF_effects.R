@@ -117,10 +117,10 @@ BEF_grand$Beff <- factor(BEF_grand$Beff,
                          levels = c("NBE", "TC", "TS", "NO", "IT", "AS", "SI", "TI", "ST"))
 
 # rearrange the effects into the correct order
-table1 <- arrange(BEF_grand, Beff)
+ED_table_1 <- arrange(BEF_grand, Beff)
 
 # output the table as a .csv file
-write_csv(x = table1, file = "figures/MAIN_table_1.csv")
+write_csv(x = ED_table_1, file = "figures/ED_table_1.csv")
 
 # get 100 samples for each biodiversity effect
 id <- dplyr::distinct(BEF_dat[,c("mono_rep", "RYE")])
@@ -154,6 +154,12 @@ BEF_fullnames <- list(p1 = c("Total selection", "Total complementarity", "Net bi
                       p2 = c("Total insurance", "Non-random overyielding"),
                       p3 = c("Spatio-temporal insurance", "Temporal insurance", "Spatial insurance", "Average selection"))
 
+# set-up significance annotations
+BEF_sig <- 
+  list(p1 = tibble(Beff = c("TS", "TC", "NBE"), Value = c(80, 80, 80), sig = "*"),
+       p2 = tibble(Beff = c("IT", "NO"), Value = c(85, 85), sig = "*"),
+       p3 = tibble(Beff = c("ST", "TI", "SI",  "AS"), Value = c(95, 95, 95, 95), sig = c("", "", "*", "*")))
+
 # plot the ith plot
 plot_list <- vector("list", length = length(BEF_pars))
 for(i in 1:length(BEF_pars)) {
@@ -178,6 +184,11 @@ for(i in 1:length(BEF_pars)) {
   
   x_grand$Beff <- factor(x_grand$Beff, levels = BEF_pars[[i]])
   levels(x_grand$Beff) <- BEF_fullnames[[i]]
+  
+  x_sig <- BEF_sig[[i]]
+  
+  x_sig$Beff <- factor(x_sig$Beff, levels = BEF_pars[[i]])
+  levels(x_sig$Beff) <- BEF_fullnames[[i]]
   
   # make sure the colours have the correct names
   names(BEF_col[[i]]) <- BEF_fullnames[[i]]
@@ -206,6 +217,9 @@ for(i in 1:length(BEF_pars)) {
                mapping = aes(x = Beff, y = grand_mean, fill = Beff),
                position = position_dodge(width = 0.9), shape = 23, size = 2.2,
                colour = "black", stroke = 0.5) +
+    geom_text(data = x_sig,
+              mapping = aes(x = Beff, y = Value, label = sig),
+              size = 6) +
     scale_colour_manual(values = BEF_col[[i]]) +
     scale_fill_manual(values = BEF_col[[i]]) +
     theme_meta() +
@@ -230,7 +244,7 @@ p123 <-
             labels = c("a", "b", "c"), label_size = 11,
             label_fontface = "plain",
             rel_heights = c(1.5, 1, 2)) 
-plot(p123)
+# plot(p123)
 
 ggsave(filename = "figures/MAIN_fig_4.svg", 
        p123, units = "cm", width = 13, height = 18)
