@@ -16,7 +16,7 @@ library(ggpubr)
 library(vegan)
 
 # load plotting theme
-source(here("scripts/Function_plotting_theme.R"))
+source("scripts/Function_plotting_theme.R")
 
 # load the cleaned environmental data
 env_dat <- read_csv("data/case_study_2/data_clean/site_env_data.csv")
@@ -179,10 +179,10 @@ p12 <-
           font.label = list(face = "plain", size = 11), common.legend = TRUE)
 plot(p12)
 
-ggsave(filename = here("figures/SI2_fig_4.svg"), p12,
+ggsave(filename = "figures/ED_fig_4.svg", p12,
        unit = "cm", width = 20, height = 10)
 
 # output the multivariate dispersion into an .rds file
-saveRDS(object = env_dispersion, file = here("results/benthic_env_dispersion.rds"))
+saveRDS(object = env_dispersion, file = "results/benthic_env_dispersion.rds")
 
 ### END
