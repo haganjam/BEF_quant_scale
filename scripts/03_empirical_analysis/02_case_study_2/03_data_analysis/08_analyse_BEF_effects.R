@@ -89,12 +89,12 @@ for(i in 1:length(meta_list)) {
     BEF_sum %>%
     filter(Beff == beff_vec[i])
   
-  # calculate the effect size
+  # calculate the effect size: raw mean
   y <- escalc(mi = x$Value_m, sdi = x$Value_sd, ni = x$n, measure = "MN")
   
   # calculate the grand mean
-  z <- rma(yi, vi, method = "ML", data = y, slab = x$cluster_id,
-           test = "t")
+  z <- rma(yi, vi, method = "REML", data = y, slab = x$cluster_id,
+           test = "knha")
   beta <- z$beta[,1]
   names(beta) <- NULL
   row.names(beta) <- NULL
@@ -102,6 +102,7 @@ for(i in 1:length(meta_list)) {
   # pull these into a data.frame
   df <- tibble(Beff = beff_vec[i],
                grand_mean = beta,
+               tau = sqrt(z$tau2),
                CI95_low = z$ci.lb,
                CI95_high = z$ci.ub,
                SE = z$se,
