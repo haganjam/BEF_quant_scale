@@ -197,6 +197,25 @@ RYE_rep <-
 # bind into a data.frame
 BEF_dat <- as_tibble(bind_rows(RYE_rep, .id = "RYE"))
 
+# check the summary statistics for the results section
+BEF_dat %>%
+  group_by(Beff) %>%
+  summarise(Value_m = mean(Value),
+            Value_sd = sd(Value),
+            n = n(),
+            HPDI_low = HPDI(Value, 0.95)[1],
+            HPDI_high = HPDI(Value, 0.95)[2], .groups = "drop")
+
+BEF_dat %>%
+  filter(Beff %in% c("LC", "LS", "TC", "TS")) %>%
+  pivot_wider(names_from = "Beff",
+              values_from = "Value") %>%
+  mutate(LC_prop = LC/(LS-TS+LC)) %>%
+  summarise(LC_prop_m = mean(LC_prop),
+            n = n(),
+            HPDI_low = HPDI(LC_prop, 0.95)[1],
+            HPDI_high = HPDI(LC_prop, 0.95)[2])
+  
 # remove the LS and LC effects
 BEF_plot <- 
   BEF_dat %>%

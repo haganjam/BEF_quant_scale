@@ -76,6 +76,10 @@ BEF_sum <-
             HPDI_low = HPDI(Value, 0.95)[1],
             HPDI_high = HPDI(Value, 0.95)[2], .groups = "drop")
   
+# check summary statistics for the manuscript
+BEF_sum %>%
+  filter(Beff == "NBE")
+
 # calculate the pooled effect size across clusters
 beff_vec <- unique(BEF_sum$Beff)
 meta_list <- vector("list", length = length(beff_vec))
@@ -117,10 +121,11 @@ BEF_grand$Beff <- factor(BEF_grand$Beff,
                          levels = c("NBE", "TC", "TS", "NO", "IT", "AS", "SI", "TI", "ST"))
 
 # rearrange the effects into the correct order
-ED_table_1 <- arrange(BEF_grand, Beff)
+ED_table_2 <- arrange(BEF_grand, Beff)
+print(ED_table_2)
 
 # output the table as a .csv file
-write_csv(x = ED_table_1, file = "figures/ED_table_1.csv")
+write_csv(x = ED_table_2, file = "figures/ED_table_2.csv")
 
 # get 100 samples for each biodiversity effect
 id <- dplyr::distinct(BEF_dat[,c("mono_rep", "RYE")])
@@ -249,27 +254,6 @@ p123 <-
 ggsave(filename = "figures/MAIN_fig_4.svg", 
        p123, units = "cm", width = 13, height = 18)
 
-# check some numbers of the manuscript
-BEF_pool %>%
-  filter(Beff %in% c("NBE", "IT") ) %>%
-  select(cluster_id, Beff, Value_m) %>%
-  pivot_wider(id_cols = c("cluster_id"),
-              names_from = "Beff",
-              values_from = "Value_m") %>%
-  mutate(IT_perc = (IT/NBE)*100 ) %>%
-  summarise(IT_perc_M = mean(IT_perc),
-            IT_perc_SD = sd(IT_perc))
-
-# compare total to local selection and complementarity
-x <- BEF_trim %>%
-  filter(cluster_id != "F") %>%
-  group_by(Beff) %>%
-  summarise(Value_m = round(mean(Value), 2),
-            PI_low = rethinking::PI(Value, 0.90)[1],
-            PI_high = rethinking::PI(Value, 0.90)[2], .groups = "drop")
-
-(x[x$Beff == "LC",]$Value_m)/((x[x$Beff == "LS",]$Value_m) - (x[x$Beff == "TS",]$Value_m) + (x[x$Beff == "LC",]$Value_m) )
-
 
 # do insurance effects depend on environmental heterogeneity?
 
@@ -343,6 +327,7 @@ slope_sum <-
   summarise(slope_m = mean(slope),
             HPDI_low = HPDI(slope, 0.95)[1],
             HPDI_high = HPDI(slope, 0.95)[2])
+print(slope_sum)
   
 p2 <- 
   ggplot() +
@@ -367,6 +352,106 @@ p12 <- ggarrange(p1, p2, labels = c("a", "b"),
 plot(p12)
 
 ggsave(filename = "figures/MAIN_fig_5.svg", p12,
+       unit = "cm", width = 15, height = 8)
+
+
+# remove the outlier and rerun the analysis
+
+# get a list of the mean and PI
+BEF_SI_out <- 
+  full_join(env_disp, 
+            filter(BEF_sum, Beff == "SI"), by = "cluster_id")
+
+# remove cluster H
+BEF_SI_out <- 
+  BEF_SI_out %>%
+  filter(cluster_id != "H")
+
+# convert the different estimates into a list
+SI_list_out <- 
+  BEF_dat %>%
+  filter(Beff == "SI") %>%
+  filter(cluster_id != "H") %>%
+  mutate(Value_id = paste(mono_rep, RYE, sep = "_")) %>%
+  split(., .$Value_id)
+
+# run a regression looped over all the different estimates
+lm_list_out <- vector("list", length = length(SI_list_out))
+for(i in 1:length(SI_list_out)) {
+  
+  lm_x <- lm(Value ~ field_dispersion, data =  SI_list_out[[i]])
+  lm_est <- coef(lm_x)
+  names(lm_est) <- NULL
+  df <- tibble(intercept = lm_est[1],
+               slope = lm_est[2])
+  
+  lm_list_out[[i]] <- df
+  
+}
+
+# bind into a data.frame
+lm_df_out <- bind_rows(lm_list_out, .id = "SI_rep")
+
+# check the distribution
+hist(lm_df_out$slope)
+mean(lm_df_out$slope)
+
+# sample a few of these slopes
+set.seed(4908325)
+lm_df_plot_out <- lm_df_out[sample(1:nrow(lm_df_out), 200), ]
+
+# plot the relationship between SI and environmental dispersion
+p3 <- 
+  ggplot() +
+  ggbeeswarm::geom_quasirandom(data = BEF_plot %>% filter(Beff == "SI", cluster_id != "H"),
+                               mapping = aes(x = field_dispersion, y = Value), shape = 1,
+                               stroke = 0.1, alpha = 0.6, colour = "darkgrey",
+                               width = 0.05) +
+  geom_point(data = BEF_SI_out,
+             mapping = aes(x = field_dispersion, y = Value_m),
+             colour = "#333333") +
+  geom_errorbar(data = BEF_SI_out,
+                mapping = aes(x = field_dispersion, ymin = HPDI_low, ymax = HPDI_high),
+                width = 0, linewidth = 0.3, colour = "#333333") +
+  geom_abline(data = lm_df_plot_out,
+              mapping = aes(intercept = intercept, slope = slope, group = SI_rep),
+              linewidth = 0.1, alpha = 0.1, colour = "red") +
+  geom_hline(yintercept = 0, linetype = "dashed", linewidth = 0.5) +
+  ylab("Spatial insurance (g)") +
+  xlab("Multivariate dispersion") +
+  theme_meta()
+plot(p3)
+
+slope_sum_out <- 
+  lm_df_out %>%
+  summarise(slope_m = mean(slope),
+            HPDI_low = HPDI(slope, 0.95)[1],
+            HPDI_high = HPDI(slope, 0.95)[2])
+print(slope_sum_out)
+
+p4 <- 
+  ggplot() +
+  geom_line(data = lm_df_out,
+            mapping = aes(x = slope), stat="density", 
+            colour = "red", linewidth = 0.8,
+            alpha = 0.7) +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  geom_point(data = slope_sum_out,
+             mapping = aes(x = slope_m, y = 2.1), size = 2, colour = "red") +
+  geom_errorbarh(data = slope_sum_out,
+                 mapping = aes(y = 2.1,xmin = HPDI_low, xmax = HPDI_high),
+                 height = 0, colour = "red", linewidth = 0.75) +
+  scale_y_continuous(limits = c(0, 2.3), expand = c(0, 0)) +
+  ylab("Density") +
+  xlab("Slope estimate") +
+  theme_meta()
+
+p34 <- ggarrange(p3, p4, labels = c("a", "b"),
+                 font.label = list(size = 11, face = "plain"),
+                 nrow = 1, ncol = 2, widths = c(1,0.7))
+plot(p34)
+
+ggsave(filename = "figures/ED_fig_4.svg", p34,
        unit = "cm", width = 15, height = 8)
 
 ### END

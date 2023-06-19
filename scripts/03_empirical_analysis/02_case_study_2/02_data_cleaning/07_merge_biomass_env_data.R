@@ -211,7 +211,7 @@ p123 <-
           labels = c("a", "", ""),
           font.label = list(face = "plain", size = 11))
 
-ggsave(filename = "figures/ED_fig_5.svg", p123,
+ggsave(filename = "figures/ED_fig_6.svg", p123,
        unit = "cm", width = 20, height = 10)
 
 # write out the pca_env_data
