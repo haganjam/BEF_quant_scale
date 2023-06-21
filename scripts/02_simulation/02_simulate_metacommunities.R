@@ -59,10 +59,10 @@ t12 <- expand.grid(t1, t2)
 
 # pull these evenly spaced patches into a data.frame
 landscape_x <- data.frame(x = t12[[1]], y = t12[[2]])
-plot(landscape.x)
+plot(landscape_x)
 
 # generate a random dispersal matrix using the landscape.x landscape
-dispersal_x <- dispersal_matrix(landscape = landscape.x, torus = TRUE, kernel_exp = 0.1, plot = FALSE)
+dispersal_x <- dispersal_matrix(landscape = landscape_x, torus = TRUE, kernel_exp = 0.1, plot = FALSE)
 
 # generate species environmental optima
 optima <- seq(0.15, 0.85, length.out = species)
@@ -73,13 +73,18 @@ print(env_niche_breadth)
 # select time-points to calculate biodiversity effects for
 t_sel <- c(100, 200, 300, 400, 500)
 
+# set the min and maximum starting abundances
+min_SA <- 5
+max_SA <- 150
+
 # run the model for each of the replicates
 MC_sims <- 
   
   lapply(1:N_REP, function(x) {
     
     # get the starting abundances
-    start_abun <- round(runif(n = species, 0, 30), 0)
+    start_abun <- sim_start_abun(species = species, patches = patches,
+                                 min_SA = min_SA, max_SA = max_SA)
     
     # pull species attributes into a data.frame
     sp_att <- 
@@ -158,6 +163,25 @@ MC_sims <-
                           t_sel  = t_sel
       )
     
+    # convert starting abundances to a matrix reorder
+    SA_mat <- matrix(start_abun, nrow = species, ncol = patches)
+    SA_mat <- SA_mat[, as.integer(unique(MC_x_BEF$place))]
+    
+    # convert to proportions
+    SA_mat <- apply(SA_mat, 2, function(x) round(x/sum(x), 2) )
+    
+    # convert the rows to a list
+    RYE <- vector("list", length = ncol(SA_mat))
+    for(i in 1:ncol(SA_mat)) {
+      RYE[[i]] <- SA_mat[,i]
+    }
+    
+    # replicate the rows across the time-points
+    RYE_list <- RYE
+    for(i in 2:length(t_sel)) {
+      RYE_list <- c(RYE_list, RYE)
+    }
+    
     # get the environmental data
     MC_x_env <- 
       MC_x$mixture %>%
@@ -166,22 +190,7 @@ MC_sims <-
       distinct()
     
     # calculate the observed biodiversity effects
-    
-    # get the known initial relative abundance values
-    RYe_in <- 
-      
-      if(length(start_abun) == 1) { 
-        
-        rep(1/start_abun, species) 
-        
-      }  else { 
-        
-        start_abun/sum(start_abun) 
-        
-      }
-    
-    # use the Isbell_2018_sampler function to calculate the actual biodiversity effects
-    BEF_obs <- Isbell_2018_sampler(data = MC_x_BEF, RYe_post = FALSE, RYe = RYe_in )
+    BEF_obs <- Isbell_2018_part(data = MC_x_BEF, RYe_equal = FALSE, RYe = RYE_list )
     
     BEF_obs <- 
       
@@ -217,10 +226,29 @@ MC_sims <-
   })
 
 # save the MC_sims object
-saveRDS(object = MC_sims, here("results/MC_sims.rds"))
+saveRDS(object = MC_sims, "results/MC_sims.rds")
 
-# generate and save a set of 100 potential starting relative abundances from the Dirichlet distribution
-start_RA <- sapply(1:100, function(x) gtools::rdirichlet(n = 1, rep(3,  species) ) )
-saveRDS(object = start_RA, here("results/MC_sims_start_RA.rds"))
+# get an example dataset to work with for the dimensions
+df_ex <- MC_sims[[1]]$MC_dat
+
+# get the a vector of cluster names
+samples <- length(unique(df_ex$sample))
+
+# set the number of unique RYe values
+Ns <- 100
+
+start_RA <- vector("list", length = Ns)
+for(i in 1:Ns) {
+
+  # for each sample, get a simplex from the Dirichlet distribution
+  rye_mat <- round(gtools::rdirichlet(n = samples, rep(3, species)), 2)
+  
+  # write into a list
+  start_RA[[i]] <- rye_mat
+  
+}
+
+# save the Dirichlet distribution
+saveRDS(object = start_RA, "results/MC_sims_start_RA.rds")
 
 ### END

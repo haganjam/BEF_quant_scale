@@ -20,7 +20,7 @@ output_df <- readRDS("results/MC_sims_post.rds")
 # get the subset of values that are affected by the RYEs
 output_rye <- 
   output_df %>%
-  filter(Beff %in% c("AS", "IT", "LS", "NBE", "TS"))
+  filter( !(Beff %in% c( "LS", "LC", "TC", "NO" )) )
 
 # get a table of the range of the different BEF effects
 output_rye %>%
@@ -30,7 +30,7 @@ output_rye %>%
 
 # does the observed value lie in the 90% percentile interval
 output_rye %>%
-  mutate(within = ifelse(BEF_obs <= PI90_high & BEF_obs >= PI90_low, 1, 0)) %>%
+  mutate(within = ifelse(BEF_obs <= PI95_high & BEF_obs >= PI95_low, 1, 0)) %>%
   group_by(Beff) %>%
   summarise(prop_within = sum(within)/100)
 
@@ -39,7 +39,8 @@ output_rye %>%
   mutate(PPE = (abs(BEF_obs - mean_BEF)/BEF_obs)*100 ) %>%
   group_by(Beff) %>%
   summarise(median_PPE = median(PPE),
-            PI90_low = quantile(PPE, 0.05),
-            PI90_high = quantile(PPE, 0.95))
+            mean_PPE = mean(PPE),
+            PI95_low = quantile(PPE, 0.05),
+            PI95_high = quantile(PPE, 0.95))
 
 ### END

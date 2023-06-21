@@ -50,40 +50,39 @@ output_list <- vector("list", length = length(MC_sims))
 
 # loop over each each simulated dataset and over each sample from the Dirichlet
 for(i in 1:length(MC_sims)) {
-  
-  RYe_reps <- 
+
+  # iterate over all possible initial RYE values
+  RYE_rep <- 
     
-    apply(
+    lapply(start_RA, function(RA) {
       
-      X = start_RA, 
+      RYE <- vector("list", length = nrow(RA))
+      for(j in 1:nrow(RA)) { RYE[[j]] <- RA[j,] }
       
-      MARGIN = 2, 
+      # calculate the BEF effects
+      BEF_post <- Isbell_2018_part(data = MC_sims[[i]]$MC_dat, RYe = RYE)
+      names(BEF_post[["L.Beff"]])[names(BEF_post[["L.Beff"]]) == "L.Beff"] <- "Beff"
       
-      FUN = function(RA) {
-        
-        # calculate te biodiversity effects for each of the potential starting abundances
-        BEF_post <- Isbell_2018_sampler(data = MC_sims[[i]][["MC_dat"]], RYe = RA, RYe_post = FALSE)
-        names(BEF_post[["L.Beff"]])[names(BEF_post[["L.Beff"]]) == "L.Beff"] <- "Beff"
-        
-        # combine the general biodiversity effects and local effects into one data.frame
-        BEF_post <- rbind(BEF_post[["Beff"]], BEF_post[["L.Beff"]])
-        
-        # convert to a data.frame
-        BEF_post <- as.data.frame(BEF_post, row.names = NULL)
-        
-        return(BEF_post)
-        
-      } )
+      # combine the general biodiversity effects and local effects into one data.frame
+      BEF_post <- rbind(BEF_post[["Beff"]], BEF_post[["L.Beff"]])
+      
+      # convert to a data.frame
+      BEF_post <- as.data.frame(BEF_post, row.names = NULL)
+      
+      return(BEF_post)
+      
+    })
   
-  # pull output into a data.frame
-  output <- dplyr::bind_rows(RYe_reps, .id = "rep")
+  
+  # bind into a data.fram
+  RYE_rep <- dplyr::bind_rows(RYE_rep, .id = "RYE")
   
   # summarise these data
   output <- 
-    output %>%
+    RYE_rep %>%
     group_by(Beff) %>%
-    summarise(PI90_low = quantile(Value, 0.05),
-              PI90_high = quantile(Value, 0.95),
+    summarise(PI95_low = quantile(Value, 0.025),
+              PI95_high = quantile(Value, 0.975),
               mean_BEF = mean(Value, na.rm = TRUE), .groups = "drop")
   
   # add the observed values
