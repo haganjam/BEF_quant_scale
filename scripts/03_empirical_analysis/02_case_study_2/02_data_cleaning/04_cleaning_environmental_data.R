@@ -9,17 +9,15 @@
 #' 
 
 # load required libraries
-library(readxl)
 library(dplyr)
 library(tidyr)
 library(readr)
 library(ggplot2)
-library(here)
 library(stringr)
 library(lubridate)
 
 # load cleaning functions
-source(here("scripts/03_empirical_analysis/02_case_study_2/02_data_cleaning/cleaning_functions.R"))
+source("scripts/03_empirical_analysis/02_case_study_2/02_data_cleaning/cleaning_functions.R")
 
 # check if the correct directories exist
 check.dirs() 
