@@ -22,12 +22,12 @@ source("scripts/01_partition_functions/01_isbell_2018_partition.R")
 set.seed(54258748)
 
 # number of replicate simulations
-N_REP <- 100
+N_REP <- 500
 
 # set-up basic model inputs
 species <- 3
 patches <- 6
-timesteps <- 500
+timesteps <- 300
 
 # set the minimum and maximum dispersal rate
 dispersal_min <- 0.01
@@ -37,7 +37,7 @@ dispersal_max <- 0.1
 extirp_prob <- 0.00001
 
 # select time-points to calculate biodiversity effects for
-t_sel <- c(250, 500)
+t_sel <- c(100, 200, 300)
 
 # species niche attributes
 sp_att <- data.frame(species = 1:species,

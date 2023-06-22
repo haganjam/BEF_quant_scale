@@ -60,7 +60,7 @@ for(i in 1:length(mc_sims)) {
       for(j in 1:nrow(RA)) { RYE[[j]] <- RA[j,] }
       
       # calculate the BEF effects
-      BEF_post <- isbell_2018_part(data = mc_sims[[i]]$mc_da, RYe = RYE)
+      BEF_post <- isbell_2018_part(data = mc_sims[[i]]$mc_dat, RYe = RYE)
       names(BEF_post[["L.Beff"]])[names(BEF_post[["L.Beff"]]) == "L.Beff"] <- "Beff"
       
       # combine the general biodiversity effects and local effects into one data.frame

@@ -13,11 +13,10 @@
 library(ggplot2)
 library(dplyr)
 library(tidyr)
-library(here)
 
 # load the metacommunity simulation and data-processing functions
-source(here("scripts/02_simulation/01_mcomsimr_simulate_MC2_function.R"))
-source(here("scripts/Function_plotting_theme.R"))
+source("scripts/02_simulation/01_mcomsimr_simulate_MC2_function.R")
+source("scripts/Function_plotting_theme.R")
 
 # set a seed
 set.seed(134985)

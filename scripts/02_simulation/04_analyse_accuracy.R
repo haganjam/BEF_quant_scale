@@ -29,18 +29,25 @@ output_rye %>%
             max_BEF = max(BEF_obs))
 
 # does the observed value lie in the 90% percentile interval
+output_rye <- 
+  output_rye %>%
+  mutate(within = ifelse(BEF_obs <= PI95_high & BEF_obs >= PI95_low, 1, 0))
+
+# check proportion within the interval
 output_rye %>%
-  mutate(within = ifelse(BEF_obs <= PI95_high & BEF_obs >= PI95_low, 1, 0)) %>%
   group_by(Beff) %>%
-  summarise(prop_within = sum(within)/100)
+  summarise(prop_within = sum(within)/n())
 
 # calculate the percentage prediction error
+output_rye <- 
+  output_rye %>%
+  mutate(abs_dev = abs(BEF_obs - mean_BEF) )
+  
 output_rye %>%
-  mutate(PPE = (abs(BEF_obs - mean_BEF)/BEF_obs)*100 ) %>%
   group_by(Beff) %>%
-  summarise(median_PPE = median(PPE),
-            mean_PPE = mean(PPE),
-            PI95_low = quantile(PPE, 0.05),
-            PI95_high = quantile(PPE, 0.95))
+  summarise(median_abs_dev = median(abs_dev),
+            mean_abs_dev = mean(abs_dev),
+            PI95_low = quantile(abs_dev, 0.05),
+            PI95_high = quantile(abs_dev, 0.95))
 
 ### END
