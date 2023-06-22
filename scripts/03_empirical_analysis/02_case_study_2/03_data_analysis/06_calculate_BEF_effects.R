@@ -65,7 +65,7 @@ BEF_list <- foreach(
           for(j in 1:nrow(RA)) { RYE[[j]] <- RA[j,] }
           
           # calculate the BEF effects
-          BEF_post <- Isbell_2018_part(data = x[, names(x) != "cluster_id"], RYe = RYE)
+          BEF_post <- isbell_2018_part(data = x[, names(x) != "cluster_id"], RYe = RYE)
           names(BEF_post[["L.Beff"]])[names(BEF_post[["L.Beff"]]) == "L.Beff"] <- "Beff"
           
           # combine the general biodiversity effects and local effects into one data.frame

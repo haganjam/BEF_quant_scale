@@ -144,7 +144,7 @@ raw_cov <- function(x, y) {
 #' @symbol Poi - observed proportion of each species in mixture (i.e. RYoi/sum(RYoi))
 #' 
 
-Isbell_2018_part <- function(data, RYe_equal = FALSE, RYe) {
+isbell_2018_part <- function(data, RYe_equal = FALSE, RYe) {
   
   # load the dplyr package for the pipe
   library(dplyr)

@@ -19,7 +19,7 @@
 simulate_MC2 <- function(patches, species, dispersal = 0.01, timesteps = 1200,
                          start_abun,
                          extirp_prob = 0,
-                         landscape, disp_mat, env.df, env_traits.df, int_mat, meas_error = 5){
+                         landscape, disp_mat, env.df, env_traits.df, int_mat){
   
   # load the dplyr library
   library(dplyr)
@@ -45,9 +45,10 @@ simulate_MC2 <- function(patches, species, dispersal = 0.01, timesteps = 1200,
     # here we implement the difference equation
     N_hat <- N*r/(1+N%*%int_mat)
     
-    # add noise from a poisson distribution to the data
+    # remove code adding noise via the Poisson distribution to the data
     N_hat[N_hat < 0] <- 0
-    N_hat <- matrix(rpois(n = species*patches, lambda = N_hat), ncol = species, nrow = patches)
+    N_hat <- round(N_hat, 0)
+    # N_hat <- matrix(rpois(n = species*patches, lambda = N_hat), ncol = species, nrow = patches)
     
     E <- matrix(rbinom(n = patches * species, size = N_hat, prob = rep(dispersal, each = patches)), nrow = patches, ncol = species)
     dispSP <- colSums(E)
@@ -73,10 +74,10 @@ simulate_MC2 <- function(patches, species, dispersal = 0.01, timesteps = 1200,
   
   # reorganise the dynamics.df
   dynamics.df <- 
-    dynamics.df %>%
-    filter(time >= 0) %>%
-    select(time, patch, env, species, N) %>%
-    arrange(time, patch, species)
+    dynamics.df |>
+    dplyr::filter(time >= 0) |>
+    dplyr::select(time, patch, env, species, N) |>
+    dplyr::arrange(time, patch, species)
   
   return(dynamics.df)
   
@@ -110,8 +111,7 @@ sim_metacomm_BEF <- function(species = 5, patches = 10,
                              disp_mat, 
                              env.df, 
                              env_traits.df, 
-                             int_mat,
-                             meas_error = 5
+                             int_mat
                              ) {
   
   # simulate the mixture of species
@@ -125,8 +125,7 @@ sim_metacomm_BEF <- function(species = 5, patches = 10,
                       disp_mat = disp_mat, 
                       env.df = env.df, 
                       env_traits.df = env_traits.df, 
-                      int_mat = int_mat,
-                      meas_error = meas_error
+                      int_mat = int_mat
   )
   
   # add a mixture column
@@ -152,8 +151,7 @@ sim_metacomm_BEF <- function(species = 5, patches = 10,
                       disp_mat = disp_mat, 
                       env.df = env.df, 
                       env_traits.df = env_traits.df[j,], 
-                      int_mat = int_mat[j,j],
-                      meas_error = meas_error)
+                      int_mat = int_mat[j,j])
     
     # rename the species column
     x$species <- j
@@ -171,13 +169,11 @@ sim_metacomm_BEF <- function(species = 5, patches = 10,
   }
   
   # bind the monocultures into a data.frame
-  mono <- bind_rows(mono)
+  mono <- dplyr::bind_rows(mono)
   
   # reorder the columns
   mono <- mono[, c("mono_mix", "sample", "time", "patch", "env", "species", "N")]
-  mono <- 
-    mono %>%
-    arrange(mono_mix, time, patch, species)
+  mono <- dplyr::arrange(mono, mono_mix, time, patch, species)
   
   # return the list with the mixture and monoculture data
   return(list("mixture" = mix, "monoculture" = mono))
@@ -299,7 +295,7 @@ env_generate <- function(landscape, env.df, env1Scale = 2, timesteps = 1000, plo
 }
 
 
-#' @title Isbell_2018_cleaner()
+#' @title isbell_2018_cleaner()
 #'
 #' @description Function to process mixture and monoculture data 
 #' from the simulations and calculate Isbell et al.'s (2018, Ecology Letters) 
@@ -309,9 +305,7 @@ env_generate <- function(landscape, env.df, env1Scale = 2, timesteps = 1000, plo
 #' @param mono monoculture data from the sim_metacomm_BEF function
 #' @param from_last how many time points from the last one to include
 
-Isbell_2018_cleaner <- function(mix, mono, t_sel) {
-  
-  library(dplyr)
+isbell_2018_cleaner <- function(mix, mono, t_sel) {
   
   # if no time-points are provided, then use the five in the simulation
   if(any(is.na(t_sel)) | missing(t_sel)) {
@@ -321,27 +315,26 @@ Isbell_2018_cleaner <- function(mix, mono, t_sel) {
   
   # process the mixture data
   mix <- 
-    mix %>%
-    filter( time %in% t_sel ) %>%
-    select(-mono_mix, -env) %>%
-    rename(place = patch, Y = N) %>%
-    mutate(sample = as.integer(as.factor(sample)))
+    mix |>
+    dplyr::filter( time %in% t_sel ) |>
+    dplyr::select(-mono_mix, -env) |>
+    dplyr::rename(place = patch, Y = N) |>
+    dplyr::mutate(sample = as.integer(as.factor(sample)))
   
   # process the monoculture data
   mono <- 
-    mono %>%
-    filter( time %in% t_sel ) %>%
-    select(-mono_mix, -env, -sample) %>%
-    rename(place = patch, M = N)
+    mono |>
+    dplyr::filter( time %in% t_sel ) |>
+    dplyr::select(-mono_mix, -env, -sample) |>
+    dplyr::rename(place = patch, M = N)
   
   # join the mixture and monoculture data to match the partition format
-  mix.mono <- 
-    full_join(mono, mix, by = c("time", "place", "species")) %>%
-    select(sample, time, place, species, M, Y) %>%
-    arrange(sample, time, place, species)
-  head(mix.mono)
+  mix_mono <- 
+    dplyr::full_join(mono, mix, by = c("time", "place", "species")) |>
+    dplyr::select(sample, time, place, species, M, Y) |>
+    dplyr::arrange(sample, time, place, species)
   
-  return(mix.mono)
+  return(mix_mono)
   
 }
 
@@ -355,30 +348,29 @@ Isbell_2018_cleaner <- function(mix, mono, t_sel) {
 #' @param min_SA minimum starting abundance
 #' @param max_SA maximum starting abundance
 
-sim_start_abun <- function(species, patches, min_SA, max_SA) {
+sim_start_abun <- function(species, patches, min_SA, max_SA, tot_N) {
   
   SA <- vector("list", length = patches)
   for(j in 1:patches) {
     
-    # get three breaks between 0 and 150
+    # get breaks between 0 and 150
     x <- sort(round(runif(n = (species-1), min_SA, max_SA), 0))
     
     # if, by change, there are two identical values, we generate a new vector
-    while (any(table(x) > 1)){
+    while (any(table(x) > 1) | any(diff(x) < 10 )){
       x <- sort(round(runif(n = (species-1), min_SA, max_SA), 0))
     }
     
     # add start and end points
-    y <- c(0, x, max_SA)
+    y <- c(0, x, tot_N)
     
     # loop over the different numbers
     z <- vector(length = length(y)-1)
     for(i in 2:(length(y))) {
       z[i-1] <- y[i] - y[i-1]
-      print(z)
     }
     
-    if(sum(z) != max_SA) {
+    if(sum(z) != tot_N) {
       stop("error, starting abundances must sum to N_tot")
     }
     
