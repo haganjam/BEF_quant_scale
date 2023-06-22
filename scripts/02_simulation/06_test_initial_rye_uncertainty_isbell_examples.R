@@ -128,4 +128,7 @@ output_rye %>%
             PI95_low = quantile(abs_dev, 0.05),
             PI95_high = quantile(abs_dev, 0.95))
 
+output_rye %>%
+  filter(Beff == "NBE")
+
 ### END
