@@ -15,7 +15,7 @@ library(dplyr)
 library(ggplot2)
 
 # load the data
-output_df <- readRDS("results/MC_sims_post.rds")
+output_df <- readRDS("results/mc_sim_test.rds")
 
 # get the subset of values that are affected by the RYEs
 output_rye <- 

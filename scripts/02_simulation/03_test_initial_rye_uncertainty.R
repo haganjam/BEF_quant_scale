@@ -3,8 +3,8 @@
 #' 
 #' @description: Calculates biodiversity effects when initial relative abundance data is missing
 #' 
-#' @details: This script uses a distribution starting relative abundances from 
-#' the Dirichlet distribution to generate posterior distributions of biodiversity effects.
+#' @details: This script uses a distribution of starting relative abundances from 
+#' the Dirichlet distribution to generate distributions of biodiversity effects.
 #' The code takes around 20 minutes to run on a regular desktop computer. 
 #' 
 #' @authors: James G. Hagan (james_hagan(at)outlook.com)
@@ -18,23 +18,23 @@ library(ggplot2)
 source("scripts/01_partition_functions/01_isbell_2018_partition.R")
 
 # read in the data
-MC_sims <- readRDS(file = "results/MC_sims.rds")
-start_RA <- readRDS(file = "results/MC_sims_start_RA.rds")
+mc_sims <- readRDS(file = "results/mc_sim_list.rds")
+start_RA <- readRDS(file = "results/mc_sim_list_start_RA.rds")
 
 # check an example dataset
-n <- 6
+n <- sample(1:length(mc_sims), 1)
 
 # plot the mixtures
-MC_sims[[n]]$MC_dat %>%
+mc_sims[[n]]$mc_dat %>%
   ggplot(data = .,
          mapping = aes(x = time, y = Y, colour = as.character(species))) +
   geom_line() +
-  facet_wrap(~place) +
+  facet_wrap(~place, scales = "free") +
   theme_test() +
   theme(legend.position = "none")
 
 # plot the monocultures
-MC_sims[[n]]$MC_dat %>%
+mc_sims[[n]]$mc_dat %>%
   ggplot(data = .,
          mapping = aes(x = time, y = M, colour = as.character(species))) +
   geom_line() +
@@ -46,10 +46,10 @@ MC_sims[[n]]$MC_dat %>%
 # calculate the biodiversity incorporating uncertainty in RYe
 
 # generate output list
-output_list <- vector("list", length = length(MC_sims))
+output_list <- vector("list", length = length(mc_sims))
 
 # loop over each each simulated dataset and over each sample from the Dirichlet
-for(i in 1:length(MC_sims)) {
+for(i in 1:length(mc_sims)) {
 
   # iterate over all possible initial RYE values
   RYE_rep <- 
@@ -60,7 +60,7 @@ for(i in 1:length(MC_sims)) {
       for(j in 1:nrow(RA)) { RYE[[j]] <- RA[j,] }
       
       # calculate the BEF effects
-      BEF_post <- Isbell_2018_part(data = MC_sims[[i]]$MC_dat, RYe = RYE)
+      BEF_post <- isbell_2018_part(data = mc_sims[[i]]$mc_da, RYe = RYE)
       names(BEF_post[["L.Beff"]])[names(BEF_post[["L.Beff"]]) == "L.Beff"] <- "Beff"
       
       # combine the general biodiversity effects and local effects into one data.frame
@@ -79,17 +79,18 @@ for(i in 1:length(MC_sims)) {
   
   # summarise these data
   output <- 
-    RYE_rep %>%
-    group_by(Beff) %>%
-    summarise(PI95_low = quantile(Value, 0.025),
-              PI95_high = quantile(Value, 0.975),
-              mean_BEF = mean(Value, na.rm = TRUE), .groups = "drop")
+    RYE_rep |>
+    dplyr::group_by(Beff) |>
+    dplyr::summarise(PI95_low = quantile(Value, 0.025),
+                     PI95_high = quantile(Value, 0.975),
+                     mean_BEF = mean(Value, na.rm = TRUE), .groups = "drop"
+                     )
   
   # add the observed values
-  names(MC_sims[[i]][["BEF_obs"]]) <- c("Beff", "BEF_obs")
+  names(mc_sims[[i]][["BEF_obs"]]) <- c("Beff", "BEF_obs")
   
   # join these datasets
-  output <- full_join(output, MC_sims[[i]][["BEF_obs"]], by = "Beff")
+  output <- dplyr::full_join(output, mc_sims[[i]][["BEF_obs"]], by = "Beff")
   
   # write output to the list
   output_list[[i]] <- output
@@ -100,6 +101,6 @@ for(i in 1:length(MC_sims)) {
 output_df <- bind_rows(output_list, .id = "sim_rep")
 
 # save this as an RDS file
-saveRDS(object = output_df, file = "results/MC_sims_post.rds")
+saveRDS(object = output_df, file = "results/mc_sim_test.rds")
 
 ### END
