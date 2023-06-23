@@ -67,6 +67,8 @@ cor_obs <-
   output_rye %>%
   group_by(Beff) %>%
   summarise(cor_x = cor(BEF_obs, mean_BEF))
+print(cor_obs)
+
 
 plot_rye <- 
   output_rye |> 
