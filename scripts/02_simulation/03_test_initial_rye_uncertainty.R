@@ -21,6 +21,9 @@ source("scripts/01_partition_functions/01_isbell_2018_partition.R")
 mc_sims <- readRDS(file = "results/mc_sim_list.rds")
 start_RA <- readRDS(file = "results/mc_sim_list_start_RA.rds")
 
+# check the length of the mc_sims
+length(mc_sims)
+
 # check an example dataset
 n <- sample(1:length(mc_sims), 1)
 
