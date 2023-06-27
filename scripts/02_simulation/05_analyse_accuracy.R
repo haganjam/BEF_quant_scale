@@ -26,6 +26,11 @@ output_rye <-
   output_df %>%
   filter( !(Beff %in% c( "LS", "LC", "TC", "NO" )) )
 
+# subset out the first 500 spatial insurance effects
+output_rye <- 
+  output_rye %>%
+  filter(sim_rep %in% 1:500)
+
 # get a table of the range of the different BEF effects
 output_rye %>%
   group_by(Beff) %>%
@@ -42,6 +47,7 @@ prop_df <-
   output_rye %>%
   group_by(Beff) %>%
   summarise(prop_within = sum(within)/n())
+print(prop_df)
 
 # calculate the percentage prediction error
 output_rye <- 
@@ -54,6 +60,7 @@ abs_dev_df <-
   summarise(mean_abs_dev = mean(abs_dev),
             PI95_low = quantile(abs_dev, 0.05),
             PI95_high = quantile(abs_dev, 0.95))
+print(abs_dev_df)
 
 # bind the prop and absolute deviation dfs
 RYE_df <- full_join(prop_df, abs_dev_df, by = "Beff")
@@ -69,7 +76,7 @@ cor_obs <-
   summarise(cor_x = cor(BEF_obs, mean_BEF))
 print(cor_obs)
 
-
+# plot out the relationship
 plot_rye <- 
   output_rye |> 
   dplyr::mutate(within = factor(within)) |>
