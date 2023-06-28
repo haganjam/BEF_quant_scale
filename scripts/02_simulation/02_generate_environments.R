@@ -79,7 +79,7 @@ ggplot(data = env_SI[[1]],
 # environmental variation for the temporal insurance effect
 
 # maximimising temporal insurance effects
-var <- 0.3
+var <- 1
 init <- 10
 mu <- 0
 
@@ -91,15 +91,13 @@ for(j in 1:N_REP) {
   for(i in 1:patches) {
     
     x <- random_walk(timesteps, init, mu, var)
-    env[[i]] <- x
+    y <- range_stand(x = x, min = 0, max = 1)
+    env[[i]] <- y 
     
   }
   
   # unlist the environmental variable
   env <- round(unlist(env), 3)
-  
-  # range standardise between 0 and 1
-  env <- range_stand(x = env, min = 0, max = 1)
   
   # wrap into a data.frame
   df <- 
@@ -122,8 +120,8 @@ ggplot(data = env_TI[[1]],
 # environmental variation with spatial and temporal insurance
 
 # both temporal and spatial variation
-init <- runif(n = patches, 5, 25)
-var <- 0.3
+init <- runif(n = patches, 10, 100)
+var <- 2.5
 mu <- 0
 
 # replicate N_REP times

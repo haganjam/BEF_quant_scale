@@ -29,12 +29,13 @@ output_rye <-
 # subset out the first 500 spatial insurance effects
 output_rye <- 
   output_rye %>%
-  filter(sim_rep %in% 1:500)
+  filter(sim_rep %in% 501:1000)
 
 # get a table of the range of the different BEF effects
 output_rye %>%
   group_by(Beff) %>%
-  summarise(min_BEF = min(BEF_obs),
+  summarise(mean_BEF = mean(BEF_obs),
+            min_BEF = min(BEF_obs),
             max_BEF = max(BEF_obs))
 
 # does the observed value lie in the 90% percentile interval
@@ -49,18 +50,21 @@ prop_df <-
   summarise(prop_within = sum(within)/n())
 print(prop_df)
 
-# calculate the percentage prediction error
+# calculate the absolute prediction error (APE)
+# calculate the percentage prediction error (PPE)
 output_rye <- 
   output_rye %>%
-  mutate(abs_dev = abs(BEF_obs - mean_BEF) )
+  mutate(APE = abs(BEF_obs - mean_BEF),
+         PPE = (abs(BEF_obs-mean_BEF)/BEF_obs)*100)
   
-abs_dev_df <- 
+# get the absolute prediction error
+# get the percentage prediction error
+error_df <- 
   output_rye %>%
   group_by(Beff) %>%
-  summarise(mean_abs_dev = mean(abs_dev),
-            PI95_low = quantile(abs_dev, 0.05),
-            PI95_high = quantile(abs_dev, 0.95))
-print(abs_dev_df)
+  summarise(APE_m = median(APE, na.rm = TRUE),
+            PPE_med = median(PPE, na.rm = TRUE))
+print(error_df)
 
 # bind the prop and absolute deviation dfs
 RYE_df <- full_join(prop_df, abs_dev_df, by = "Beff")
@@ -107,5 +111,9 @@ plot(p1)
 
 ggsave(filename = "figures/SI2_fig_S5.svg", p1,
        unit = "cm", width = 21, height = 21)
+
+
+
+
 
 ### END
