@@ -68,7 +68,6 @@ t_sel <- c(100, 200, 300)
 # species niche attributes
 sp_att <- data.frame(species = 1:species,
                      optima = seq(0.3, 0.7, length.out = species),
-                     env_niche_breadth = c(0.3, 0.3, 0.3),
                      max_r = 5
 )
 
@@ -100,6 +99,9 @@ env_sim_list <-
     # get the starting abundances
     start_abun <- sim_start_abun(species = species, patches = patches,
                                  min_SA = 20, max_SA = 130, tot_N = 150)
+    
+    # get the niche breadths
+    sp_att[["env_niche_breadth"]] <- runif(n = species, 0.15, 0.3)
     
     # generate the competition matrices
     comp_mat <- 
@@ -134,6 +136,8 @@ env_sim_list <-
                               "t_steps" = paste(t_sel, collapse = "_"),
                               "dispersal" = dispersal
     )
+    
+    # randomly draw the niche breadths
     
     # simulate the metacommunity
     mc_sim <- 
