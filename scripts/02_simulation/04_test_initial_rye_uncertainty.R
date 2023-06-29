@@ -37,6 +37,7 @@ mc_sims[[n]]$mc_dat %>%
   theme(legend.position = "none")
 
 # plot the monocultures
+summary(mc_sims[[n]]$mc_dat)
 mc_sims[[n]]$mc_dat %>%
   ggplot(data = .,
          mapping = aes(x = time, y = M, colour = as.character(species))) +
