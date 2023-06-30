@@ -30,7 +30,7 @@ env_list <- list(env_SI, env_TI, env_com)
 set.seed(54258748)
 
 # number of replicate simulations
-N_REP <- 10
+N_REP <- 500
 
 assertthat::assert_that(
   N_REP == length(env_SI) && N_REP == length(env_SI) && N_REP == length(env_com)

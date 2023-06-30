@@ -203,11 +203,16 @@ bind_rows(env_com, .id = "rep") %>%
 # comparing the variances confirms the simulations
 
 # make a plot for the supplementary
-ggpubr::ggarrange(p1, p2, p3, 
-                  labels = c("a", "b", "c"),
-                  font.label = list(size = 11, face = "plain"), 
-                  common.legend = TRUE,
-                  nrow = 1)
+p123 <- 
+  ggpubr::ggarrange(p1, p2, p3, 
+                    labels = c("a", "b", "c"),
+                    font.label = list(size = 11, face = "plain"), 
+                    common.legend = TRUE,
+                    nrow = 1
+                    )
+
+ggsave("figures/SI2_fig_S3.svg", p123, units = "cm",
+       width = 20, height = 8)
 
 # export these data for use in the simulations
 saveRDS(env_SI, "scripts/02_simulation/02_generated_environment_SI.rds")

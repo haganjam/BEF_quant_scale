@@ -27,7 +27,7 @@ output_rye <-
   filter( !(Beff %in% c( "LS", "LC", "TC", "NO" )) )
 
 # add a variable describing the different levels of variation
-output_rye$env_var <- rep(c("Spatial env. variation", "Temporal env. variation", "Combination"), each = 10*7)
+output_rye$env_var <- rep(c("Spatial env. variation", "Temporal env. variation", "Combination"), each = 500*7)
 
 # get a table of the range of the different BEF effects
 output_rye %>%
@@ -61,16 +61,17 @@ output_rye <-
 error_df <- 
   output_rye %>%
   group_by(Beff) %>%
-  summarise(APE_m = median(APE, na.rm = TRUE),
-            PPE_med = median(PPE, na.rm = TRUE))
+  summarise(APE_med = median(APE, na.rm = TRUE),
+            APE_PI_low = quantile(APE, 0.025),
+            APE_PI_high = quantile(APE, 0.975))
 print(error_df)
 
 # bind the prop and absolute deviation dfs
-RYE_df <- full_join(prop_df, abs_dev_df, by = "Beff")
-names(RYE_df) <- c("BEF effect", "Prop. within", "Mean absolute deviation", "PI95 low", "PI95 high")
+RYE_df <- full_join(prop_df, error_df, by = "Beff")
+names(RYE_df) <- c("BEF effect", "Prop. within", "Med. abs. prediction error", "PI_low", "PI_high")
 
 # export the table
-write_csv(x = RYE_df, file = "figures/SI2_table1.csv")
+write_csv(x = RYE_df, file = "figures/SI2_table_S2.csv")
 
 # check the correlations
 cor_obs <- 
@@ -87,16 +88,21 @@ plot_rye <-
 levels(plot_rye$`Within PI95%`) <- c("Yes", "No")
 
 # visualisation of the accuracy of the method
-p1<- 
-  ggplot(data = plot_rye) +
+plot_rye_x <- plot_rye %>% filter(sim_rep %in% sample(1:500, 10))
+p1 <- 
+  ggplot() +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
-  geom_errorbar(mapping = aes(x = BEF_obs, 
+  geom_errorbar(data = plot_rye_x,
+                mapping = aes(x = BEF_obs, 
                               ymin = PI95_low, ymax = PI95_high,
                               colour = `Within PI95%`),
                 width = 0, alpha = 0.2, show.legend = FALSE) +
-  geom_point(mapping = aes(x = BEF_obs, y = mean_BEF, colour = `Within PI95%`), shape = 1,
+  geom_point(data = plot_rye_x, 
+             mapping = aes(x = BEF_obs, y = mean_BEF, colour = `Within PI95%`), shape = 1,
              alpha = 0.7) +
   facet_wrap(~Beff, scales = "free") +
+  geom_text(data = cor_obs %>% mutate(cor_x = paste0("r = ", round(cor_x, 2) )),
+            mapping = aes(x = -Inf, y = Inf, hjust = -0.25, vjust = 1.5, label = cor_x )) +
   scale_colour_manual(values = wesanderson::wes_palette(name = "Darjeeling1", n = 2)) +
   ylab("Estimated biodiversity effect (with 95% PI)") +
   xlab("True, simulated biodiversity effect") +
