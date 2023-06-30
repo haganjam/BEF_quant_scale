@@ -20,7 +20,7 @@ source("scripts/01_partition_functions/01_isbell_2018_partition.R")
 
 # load the simulated environments
 env_SI <- readRDS("scripts/02_simulation/02_generated_environment_SI.rds")
-env_TI <- readRDS("scripts/02_simulation/02_generated_environment_SI.rds")
+env_TI <- readRDS("scripts/02_simulation/02_generated_environment_TI.rds")
 env_com <- readRDS("scripts/02_simulation/02_generated_environment_com.rds")
 
 # pull the simulated environments into a list
@@ -30,7 +30,7 @@ env_list <- list(env_SI, env_TI, env_com)
 set.seed(54258748)
 
 # number of replicate simulations
-N_REP <- 500
+N_REP <- 10
 
 assertthat::assert_that(
   N_REP == length(env_SI) && N_REP == length(env_SI) && N_REP == length(env_com)

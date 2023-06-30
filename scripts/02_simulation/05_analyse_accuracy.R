@@ -26,17 +26,16 @@ output_rye <-
   output_df %>%
   filter( !(Beff %in% c( "LS", "LC", "TC", "NO" )) )
 
-# subset out the first 500 spatial insurance effects
-output_rye <- 
-  output_rye %>%
-  filter(sim_rep %in% 501:1000)
+# add a variable describing the different levels of variation
+output_rye$env_var <- rep(c("Spatial env. variation", "Temporal env. variation", "Combination"), each = 10*7)
 
 # get a table of the range of the different BEF effects
 output_rye %>%
-  group_by(Beff) %>%
+  group_by(env_var, Beff) %>%
   summarise(mean_BEF = mean(BEF_obs),
             min_BEF = min(BEF_obs),
-            max_BEF = max(BEF_obs))
+            max_BEF = max(BEF_obs)) %>%
+  filter(Beff %in% c("NBE", "SI", "TI"))
 
 # does the observed value lie in the 90% percentile interval
 output_rye <- 
@@ -111,9 +110,5 @@ plot(p1)
 
 ggsave(filename = "figures/SI2_fig_S5.svg", p1,
        unit = "cm", width = 21, height = 21)
-
-
-
-
 
 ### END
