@@ -16,6 +16,7 @@ library(ggplot2)
 
 # load the relevant functions
 source("scripts/01_partition_functions/01_isbell_2018_partition.R")
+source("scripts/Function_plotting_theme.R")
 
 # read in the data
 mc_sims <- readRDS(file = "results/mc_sim_list.rds")
@@ -28,23 +29,50 @@ length(mc_sims)
 n <- sample(1:length(mc_sims), 1)
 
 # plot the mixtures
-mc_sims[[n]]$mc_dat %>%
+p1 <- 
+  mc_sims[[n]]$mc_dat %>%
+  mutate(Species = as.character(species)) %>%
+  mutate(Patch = paste0("Patch ", place)) %>%
   ggplot(data = .,
-         mapping = aes(x = time, y = Y, colour = as.character(species))) +
+         mapping = aes(x = time, y = Y, colour = Species)) +
   geom_line() +
-  facet_wrap(~place, scales = "free") +
-  theme_test() +
-  theme(legend.position = "none")
+  scale_colour_manual(values = wesanderson::wes_palette("Darjeeling1", n = 3)) +
+  facet_wrap(~Patch, scales = "free") +
+  ylab("Mixture population size (N)") +
+  xlab("Time point") +
+  theme_meta() +
+  theme(legend.position = "top",
+        legend.title = element_text(size = 11),
+        legend.text = element_text(size = 10),
+        strip.background = element_blank(),
+        strip.text = element_text(size = 11),
+        legend.key = element_rect(fill = NA))
+plot(p1)
+
+ggsave(filename = "figures/SI2_fig_S4.svg", p1,
+       unit = "cm", width = 20, height = 15)
 
 # plot the monocultures
-summary(mc_sims[[n]]$mc_dat)
-mc_sims[[n]]$mc_dat %>%
+p2 <- 
+  mc_sims[[n]]$mc_dat %>%
+  mutate(Species = as.character(species)) %>%
+  mutate(Patch = paste0("Patch ", place)) %>%
   ggplot(data = .,
-         mapping = aes(x = time, y = M, colour = as.character(species))) +
+         mapping = aes(x = time, y = M, colour = Species)) +
   geom_line() +
-  facet_wrap(~place) +
-  theme_test() +
-  theme(legend.position = "none")
+  scale_colour_manual(values = wesanderson::wes_palette("Darjeeling1", n = 3)) +
+  facet_wrap(~Patch, scales = "free") +
+  ylab("Monoculture population size (N)") +
+  xlab("Time point") +
+  theme_meta() +
+  theme(legend.position = "right",
+        strip.background = element_blank(),
+        strip.text = element_text(size = 11),
+        legend.key = element_rect(fill = NA))
+plot(p2)
+
+ggsave(filename = "figures/SI2_fig_S5.svg", p2,
+       unit = "cm", width = 20, height = 15)
 
 
 # calculate the biodiversity incorporating uncertainty in RYe
