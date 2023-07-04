@@ -29,13 +29,34 @@ output_rye <-
 # add a variable describing the different levels of variation
 output_rye$env_var <- rep(c("Spatial env. variation", "Temporal env. variation", "Combination"), each = 500*7)
 
+# table S2
+
 # get a table of the range of the different BEF effects
-output_rye %>%
+tab_s2 <- 
+  output_rye %>%
   group_by(env_var, Beff) %>%
   summarise(mean_BEF = mean(BEF_obs),
             min_BEF = min(BEF_obs),
-            max_BEF = max(BEF_obs)) %>%
-  filter(Beff %in% c("NBE", "SI", "TI"))
+            max_BEF = max(BEF_obs), .groups = "drop")
+
+# convert env_var to a factor
+tab_s2$env_var <- factor(tab_s2$env_var, 
+                         levels = c("Spatial env. variation", 
+                                    "Temporal env. variation", 
+                                    "Combination"))
+
+# convert the Beff variable to a factor
+tab_s2$Beff <- factor(tab_s2$Beff, c("NBE", "TS", "IT", "AS", "SI", "TI", "ST"))
+
+# reorder the table according to the factor levels
+tab_s2 <- arrange(tab_s2, env_var, Beff)
+
+# rename the variable
+names(tab_s2) <- c("Abiotic environment", "Effect", "Mean", "Min", "Max")
+
+# export as a .csv file
+write_csv(tab_s2, file = "figures/SI2_table_S2.csv")
+
 
 # does the observed value lie in the 90% percentile interval
 output_rye <- 
@@ -57,7 +78,6 @@ output_rye <-
          PPE = (abs(BEF_obs-mean_BEF)/BEF_obs)*100)
   
 # get the absolute prediction error
-# get the percentage prediction error
 error_df <- 
   output_rye %>%
   group_by(Beff) %>%
@@ -68,16 +88,31 @@ print(error_df)
 
 # bind the prop and absolute deviation dfs
 RYE_df <- full_join(prop_df, error_df, by = "Beff")
-names(RYE_df) <- c("BEF effect", "Prop. within", "Med. abs. prediction error", "PI_low", "PI_high")
+names(RYE_df) <- c("BEF effect", "Prop. within", "Med. abs. prediction error", "PI low", "PI high")
 
 # export the table
-write_csv(x = RYE_df, file = "figures/SI2_table_S2.csv")
+write_csv(x = RYE_df, file = "figures/SI2_table_S3.csv")
+
+# how often do we get the correct relative magnitude of the effects
+sp <- 
+  output_rye %>%
+  group_by(sim_rep) %>%
+  summarise(spearman = cor(BEF_obs, mean_BEF, method = "spearman")) %>%
+  pull(spearman)
+
+# check the distribution
+quantile(sp, 0.975)
+quantile(sp, 0.025)
+hist(sp)
+range(sp)
+sum(near(sp, 1))
+median(sp)
 
 # check the correlations
 cor_obs <- 
   output_rye %>%
   group_by(Beff) %>%
-  summarise(cor_x = cor(BEF_obs, mean_BEF))
+  summarise(cor_x = signif( cor(BEF_obs, mean_BEF), 2) )
 print(cor_obs)
 
 # plot out the relationship
@@ -87,17 +122,29 @@ plot_rye <-
   dplyr::rename(`Within PI95%` = within)
 levels(plot_rye$`Within PI95%`) <- c("Yes", "No")
 
+# sort out the Beff effect column for both datasets
+plot_rye$Beff <- factor(plot_rye$Beff, c("NBE", "TS", "IT", "AS", "SI", "TI", "ST"))
+levels(plot_rye$Beff) <- c("Net biodiversity effect (NBE)", "Total selection (TS)",
+                           "Total insurance (IT)", "Average selection (AS)",
+                           "Spatial insurance (SI)", "Temporal insurance (TI)",
+                           "Spatio-temporal insurance (ST)")
+
+cor_obs$Beff <- factor(cor_obs$Beff, c("NBE", "TS", "IT", "AS", "SI", "TI", "ST"))
+levels(cor_obs$Beff) <- c("Net biodiversity effect (NBE)", "Total selection (TS)",
+                           "Total insurance (IT)", "Average selection (AS)",
+                           "Spatial insurance (SI)", "Temporal insurance (TI)",
+                           "Spatio-temporal insurance (ST)")
+
 # visualisation of the accuracy of the method
-plot_rye_x <- plot_rye %>% filter(sim_rep %in% sample(1:500, 10))
 p1 <- 
   ggplot() +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed") +
-  geom_errorbar(data = plot_rye_x,
+  geom_errorbar(data = plot_rye,
                 mapping = aes(x = BEF_obs, 
                               ymin = PI95_low, ymax = PI95_high,
                               colour = `Within PI95%`),
                 width = 0, alpha = 0.2, show.legend = FALSE) +
-  geom_point(data = plot_rye_x, 
+  geom_point(data = plot_rye, 
              mapping = aes(x = BEF_obs, y = mean_BEF, colour = `Within PI95%`), shape = 1,
              alpha = 0.7) +
   facet_wrap(~Beff, scales = "free") +
@@ -111,10 +158,11 @@ p1 <-
   theme_meta() +
   theme(legend.position = "top",
         legend.key = element_rect(fill = NA),
-        strip.background = element_rect(fill="white"))
+        strip.background = element_rect(fill="white"),
+        strip.text = element_text(size = 10))
 plot(p1)
 
-ggsave(filename = "figures/SI2_fig_S5.svg", p1,
+ggsave(filename = "figures/SI2_fig_S6.svg", p1,
        unit = "cm", width = 21, height = 21)
 
 ### END
