@@ -100,10 +100,11 @@ legend <-
                           values = col_pal) +   
       scale_shape_manual(name = "OTU/mixture",
                          values = c(16, 16, 16, 16, 16, 8)) +
+      guides(colour = guide_legend(nrow = 1)) +
       theme_bw() +
-      theme(legend.position = "right") +
+      theme(legend.position = "top") +
       theme(legend.text = element_text(size = 11),
-            legend.title = element_text(size = 12))
+            legend.title = element_blank())
   )
 plot(legend)
 
@@ -113,39 +114,29 @@ dat_sum %>%
   group_by(cluster_id) %>%
   summarise(n = length(unique(place)) )
 
-# get a vector of the unique cluster ids
-c_id <- unique(dat_sum$cluster_id)
+# make a cluster_id by place variable
+dat_sum$clus_place_id <- paste(dat_sum$cluster_id, dat_sum$place, sep = "_")
 
-# ylabs
-ylabs <- list("", "", "", "", "Dry biomass (g)", "", "", "", "")
+# get a vector of place-cluster combinations
+cp_id <- unique(dat_sum$clus_place_id)
 
-plot_list <- vector("list", length = length(c_id))
-for(i in 1:length(c_id)) {
-  
-  df_sub <- dat_sum %>% filter(cluster_id == c_id[i])
-  
-  # check the number of places
-  N_place <- length(unique(df_sub$place)) 
-  
-  # choose number of rows and columns based on the number of places
-  if (N_place == 5) {
-    NROW <- 1
-    NCOL <- 5
-  } else if(N_place == 4) {
-    NROW <- 1
-    NCOL <- 4
-  } else if(N_place == 3) {
-    NROW = 1
-    NCOL = 3
-  }
+plot_list <- vector("list", length = length(cp_id))
+for(i in 1:length(cp_id)) {
+
+  df_sub <- dat_sum %>% filter(clus_place_id == cp_id[i])
+  df_lab <- tibble(text = gsub("_", ", ", cp_id[i]) )
   
   p1 <- 
-    ggplot(data = df_sub,
-           mapping = aes(x = time, y = biomass_mu, colour = species, shape = species)) +
-    geom_line(position = position_dodge(width = 0.5), alpha = 0.5,
+    ggplot() +
+    geom_line(data = df_sub,
+              mapping = aes(x = time, y = biomass_mu, colour = species),
+              position = position_dodge(width = 0.5), alpha = 0.5,
               show.legend = FALSE) +
-    geom_point(position = position_dodge(width = 0.5), size = 2) +
-    geom_errorbar(mapping = aes(x = time, 
+    geom_point(data = df_sub,
+               mapping = aes(x = time, y = biomass_mu, colour = species, shape = species),
+               position = position_dodge(width = 0.5), size = 2) +
+    geom_errorbar(data = df_sub, 
+                  mapping = aes(x = time, 
                                 ymin = (biomass_low),
                                 ymax = (biomass_high),
                                 colour = species),
@@ -155,35 +146,38 @@ for(i in 1:length(c_id)) {
                         values = col_pal) +   
     scale_shape_manual(name = "OTU/mixture",
                        values = c(16, 16, 16, 16, 16, 8)) +
-    ylab(ylabs[[i]]) +
-    xlab(if(i == 9){"2-weeks"}else{NULL}) +
-    ggtitle(paste0("Cluster - ", c_id[i])) +
+    geom_text(data = df_lab,
+              mapping = aes(x = -Inf, y = Inf, 
+                            hjust = -0.5, vjust = 2, label = text ),
+              colour = "black") +
+    ggtitle(NULL) +
+    xlab(" ") +
+    ylab(NULL) +
     scale_x_continuous(breaks = c(1, 2, 3)) +
-    facet_wrap(~place, nrow = NROW, ncol = NCOL) +
     theme_meta() +
     theme(legend.position = "none",
-          plot.title = element_text(size = 11, hjust = 0.5),
-          strip.background = element_blank(),
-          strip.text.x = element_blank(),
+          axis.text.x = element_blank(),
+          axis.title.x = element_text(size = 0.5),
           plot.margin = unit(c(0,0,0,0), "cm"))
   
   plot_list[[i]] <- p1
   
 }
 
+plot_list[[1]]
+
 p1 <- 
-  cowplot::plot_grid(plot_list[[1]], plot_list[[2]],plot_list[[3]],
-                     plot_list[[4]],plot_list[[5]],plot_list[[6]],
-                     plot_list[[7]],plot_list[[8]],plot_list[[9]],
-                     nrow = 9, ncol = 1, 
-                     align = "hv",
-                     axis = "l")
+  cowplot::plot_grid(plotlist = plot_list,
+                     ncol = 5,
+                     nrow = 9,
+                     axis = "l",
+                     align = "hv")
 
-p1 <- ggarrange(p1, legend, ncol = 2, nrow = 1,
-                widths = c(8, 1))
+p1 <- ggarrange(legend,p1, ncol = 1, nrow = 2,
+                heights = c(1, 12))
 
-ggsave(filename = "figures/ED_fig_1.svg", p1,
-       unit = "cm", width = 35, height = 45)
+ggsave(filename = "figures/ED_fig_2.svg", p1,
+       unit = "cm", width = 22, height = 30)
 
 
 # calculate mixture relative abundance
@@ -241,7 +235,7 @@ p1 <-
         strip.background = element_rect(fill="white"))
 plot(p1)
 
-ggsave(filename = "figures/ED_fig_2.svg", p1,
+ggsave(filename = "figures/ED_fig_3.svg", p1,
        unit = "cm", width = 18, height = 20)
 
 # calculate the mean for each time across places
@@ -283,7 +277,7 @@ p2 <-
         strip.background = element_rect(fill="white"))
 plot(p2)
 
-ggsave(filename = "figures/ED_fig_3.svg", p2,
+ggsave(filename = "figures/ED_fig_4.svg", p2,
        unit = "cm", width = 18, height = 20)
 
 ### END

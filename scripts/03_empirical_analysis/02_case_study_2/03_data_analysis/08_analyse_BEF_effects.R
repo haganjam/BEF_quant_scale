@@ -452,7 +452,7 @@ p34 <- ggarrange(p3, p4, labels = c("a", "b"),
                  nrow = 1, ncol = 2, widths = c(1,0.7))
 plot(p34)
 
-ggsave(filename = "figures/ED_fig_4.svg", p34,
+ggsave(filename = "figures/ED_fig_5.svg", p34,
        unit = "cm", width = 15, height = 8)
 
 ### END

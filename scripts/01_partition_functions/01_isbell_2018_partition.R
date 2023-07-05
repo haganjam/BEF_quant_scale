@@ -114,7 +114,7 @@ raw_cov <- function(x, y) {
 }
 
 #'
-#' @title Isbell_2018_part()
+#' @title isbell_2018_part()
 #' 
 #' @description Function to calculate Isbell et al.'s (2018, Ecology Letters) 
 #' biodiversity effect partition using species mixture and monoculture data

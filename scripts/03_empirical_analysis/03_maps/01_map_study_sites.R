@@ -31,8 +31,8 @@ ggplot() +
 # get the coordinates of Challaborough and Kingsand
 cs1_pts <- 
   tibble(site = c("CB", "KS"),
-         dec_lon = c(-3.9, -4.1833),
-         dec_lat = c(50.2833, 50.333))
+         dec_lon = c(-3.9, -4.195),
+         dec_lat = c(50.2833, 50.333333))
 
 # convert the coordinates to an sf object
 cs1_pts <- st_as_sf(x = cs1_pts, coords = c("dec_lon", "dec_lat"), crs = st_crs(br_coast))
@@ -46,17 +46,17 @@ p1 <-
   geom_sf(data = ply_coast) +
   geom_sf(data = cs1_pts, mapping = aes(fill = cluster_id),
           size = 2.5, fill = col_pal[5], shape = 21, colour = "black", stroke = 0.5) +
-  annotation_scale(location = "tr", width_hint = 0.2) +
+  annotation_scale(location = "tr", width_hint = 0.2, height = unit(0.175, "cm")) +
   coord_sf(xlim = c(-4.3, -3.8), ylim = c(50.20, 50.43), expand = FALSE) +
   annotation_north_arrow(location = "tr", which_north = "true", 
-                         height = unit(1, "cm"),
-                         width = unit(1, "cm"),
+                         height = unit(0.75, "cm"),
+                         width = unit(0.75, "cm"),
                          pad_x = unit(0.05, "in"), pad_y = unit(0.3, "in"),
                          style = north_arrow_fancy_orienteering(text_size = 9, line_width = 0.1) ) +
   theme_void()
 plot(p1)
 
-ggsave("figures/MAIN_fig_map1.svg", p1, units = "cm",
+ggsave("figures/MAIN_fig_2a.svg", p1, units = "cm",
        width = 6.5, height = 4)
 
 
@@ -126,7 +126,7 @@ p2 <-
                                    size = 7))
 plot(p2)
 
-ggsave("figures/MAIN_fig_map2.svg", p2, units = "cm",
+ggsave("figures/MAIN_fig_2b.svg", p2, units = "cm",
        width = 7, height = 8.5)
 
 ### END
