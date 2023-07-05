@@ -319,7 +319,7 @@ p1 <-
               linewidth = 0.1, alpha = 0.1, colour = "red") +
   geom_hline(yintercept = 0, linetype = "dashed", linewidth = 0.5) +
   ylab("Spatial insurance (g)") +
-  xlab("Multivariate dispersion") +
+  xlab("Spatial environmental heterogeneity") +
   theme_meta()
 plot(p1)
 
@@ -419,7 +419,7 @@ p3 <-
               linewidth = 0.1, alpha = 0.1, colour = "red") +
   geom_hline(yintercept = 0, linetype = "dashed", linewidth = 0.5) +
   ylab("Spatial insurance (g)") +
-  xlab("Multivariate dispersion") +
+  xlab("Spatial environmental heterogeneity") +
   theme_meta()
 plot(p3)
 
