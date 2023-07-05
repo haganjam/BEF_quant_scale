@@ -145,12 +145,15 @@ unique(pca_env$cluster_id)
 pca_x_sum <- summary(pca_x)
 print(pca_x_sum)
 
+# get a colour palette
+col_pal <- wesanderson::wes_palette(name = "Darjeeling1", n = 9, type = "continuous")
+
 # plot the PCA
 p1 <- 
   ggplot(data = pca_env %>% filter(cluster_id != "F")) +
   geom_point(mapping = aes(x = PC1, y = PC2, colour = cluster_id),
              size = 3, alpha = 0.2) +
-  scale_colour_manual(values = wesanderson::wes_palette(name = "Cavalcanti1", n = 9, type = "continuous")) +
+  scale_colour_manual(values = col_pal) +
   theme_meta() +
   guides(colour = guide_legend(override.aes = list(alpha = 0.8) )) +
   labs(colour = "Cluster") +
@@ -211,7 +214,7 @@ p123 <-
           labels = c("a", "", ""),
           font.label = list(face = "plain", size = 11))
 
-ggsave(filename = "figures/ED_fig_6.svg", p123,
+ggsave(filename = "figures/ED_fig_7.svg", p123,
        unit = "cm", width = 20, height = 10)
 
 # write out the pca_env_data

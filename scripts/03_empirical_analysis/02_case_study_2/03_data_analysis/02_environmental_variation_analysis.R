@@ -62,19 +62,19 @@ env_dat_m %>%
   theme_meta()
 
 # run a PCA on these data
-pca.x <- 
+pca_x <- 
   prcomp(reformulate(termlabels = names(env_dat_m[,-c(1:4)])),
          data = as_tibble(apply(env_dat_m[,-c(1:4)], 2, scale)), 
          scale = FALSE, center = FALSE)
 
 # check the summary statistics
-summary(pca.x)
+summary(pca_x)
 
 # check the biplot
-biplot(pca.x)
+biplot(pca_x)
 
 # plot the first two axes
-pca_df <- as_tibble(pca.x$x[,c(1, 2)])
+pca_df <- as_tibble(pca_x$x[,c(1, 2)])
 
 # add the cluster_id information
 pca_df$cluster_id <- env_dat_m$cluster_id
@@ -94,6 +94,9 @@ pca_df_sum <-
   summarise(PC1 = mean(PC1),
             PC2 = mean(PC2))
 
+# get a colour palette
+col_pal <- wesanderson::wes_palette(name = "Darjeeling1", n = 9, type = "continuous")
+
 # plot the PC plot
 p1 <- 
   ggplot() +
@@ -109,7 +112,7 @@ p1 <-
              position = position_dodge2(width = 0.5),
              label.size = NA, alpha = 0, size = 3, colour = "white",
              fontface = "bold") +  
-  scale_colour_manual(values = wesanderson::wes_palette(name = "Cavalcanti1", n = 9, type = "continuous")) +
+  scale_colour_manual(values = col_pal) +
   guides(colour = "none") +
   theme_meta() +
   xlab("PC1 (38%)") +
@@ -179,7 +182,7 @@ p12 <-
           font.label = list(face = "plain", size = 11), common.legend = TRUE)
 plot(p12)
 
-ggsave(filename = "figures/ED_fig_5.svg", p12,
+ggsave(filename = "figures/ED_fig_6.svg", p12,
        unit = "cm", width = 20, height = 10)
 
 # output the multivariate dispersion into an .rds file

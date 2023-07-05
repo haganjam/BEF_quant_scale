@@ -37,9 +37,6 @@ cs1_pts <-
 # convert the coordinates to an sf object
 cs1_pts <- st_as_sf(x = cs1_pts, coords = c("dec_lon", "dec_lat"), crs = st_crs(br_coast))
 
-# get a colour palette
-col_pal <- wesanderson::wes_palette(name = "Darjeeling1", n = 9, type = "continuous")
-
 # plot the map
 p1 <- 
   ggplot() +
@@ -100,6 +97,9 @@ cs2_pts <-
 
 # Convert data frame to sf object
 cs2_pts <- st_as_sf(x = cs2_pts, coords = c("dec_lon", "dec_lat"), crs = st_crs(swe_coast))
+
+# get a colour palette
+col_pal <- wesanderson::wes_palette(name = "Darjeeling1", n = 9, type = "continuous")
 
 p2 <- 
   ggplot() +
