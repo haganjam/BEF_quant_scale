@@ -181,7 +181,7 @@ RYE_rep <-
     for(j in 1:nrow(RA)) { RYE[[j]] <- RA[j,] }
     
     # calculate the BEF effects
-    BEF_post <- Isbell_2018_part(data = ply_part, RYe = RYE)
+    BEF_post <- isbell_2018_part(data = ply_part, RYe = RYE)
     names(BEF_post[["L.Beff"]])[names(BEF_post[["L.Beff"]]) == "L.Beff"] <- "Beff"
     
     # combine the general biodiversity effects and local effects into one data.frame
@@ -206,16 +206,6 @@ BEF_dat %>%
             HPDI_low = HPDI(Value, 0.95)[1],
             HPDI_high = HPDI(Value, 0.95)[2], .groups = "drop")
 
-BEF_dat %>%
-  filter(Beff %in% c("LC", "LS", "TC", "TS")) %>%
-  pivot_wider(names_from = "Beff",
-              values_from = "Value") %>%
-  mutate(LC_prop = LC/(LS-TS+LC)) %>%
-  summarise(LC_prop_m = mean(LC_prop),
-            n = n(),
-            HPDI_low = HPDI(LC_prop, 0.95)[1],
-            HPDI_high = HPDI(LC_prop, 0.95)[2])
-  
 # remove the LS and LC effects
 BEF_plot <- 
   BEF_dat %>%
@@ -323,42 +313,8 @@ p123 <-
   )
 plot(p123)
 
-ggsave(filename = "figures/MAIN_fig_2.svg", p123,
+ggsave(filename = "figures/MAIN_fig_3.svg", p123,
        units = "cm", width = 13, height = 15)
-
-
-# calculate the percentage of total complementarity due to local complementarity
-# LC <- filter(BEF_sum, Beff == "LC")[["Value_m"]]
-# TS <- filter(BEF_sum, Beff == "TS")[["Value_m"]]
-# LS <- filter(BEF_sum, Beff == "LS")[["Value_m"]]
-
-# (LC/(LS - TS + LC))*100
-
-# why does local complementarity not vary with the RYe?
-# formula uses average change in relative yield and average relative yield is the same
-# apply(dr, 2, mean)
-
-# can we explain these effects?
-
-# LC and TC are high whereas LS and TS are low 
-# this implies that local complementarity is important
-
-# calculate proportion of species overyielding
-OY <- 
-  apply(dr, 2, function(x) {
-   ply_part$Y - ply_part$M*x
-} )
-
-OY <- sapply(OY, function(x) x)
-
-# make a histogram of these numbers
-OY_df <- tibble(species = rep(ply_part$species, 100), OY = OY)
-OY_df <- arrange(OY_df, species)
-summary(OY_df)
-
-# only 1% of species across times and places and integrated over random
-# expected relative yields underyielded
-sum(OY_df$OY < 0)/nrow(OY_df)
 
 
 # plotting the raw data mixtures and monocultures
@@ -513,7 +469,7 @@ p1234 <-
 # add the legend
 p1234 <- ggarrange(p1234, legend2, widths = c(6, 1))
 
-ggsave(filename = "figures/MAIN_fig_3.svg", p1234,
+ggsave(filename = "figures/ED_fig_1.svg", p1234,
        unit = "cm", width = 21, height = 14)
 
 ### END
