@@ -7,7 +7,6 @@ library(dplyr)
 library(readr)
 library(ggplot2)
 library(ggspatial)
-library(cowplot)
 
 # load plotting theme
 source("scripts/Function_plotting_theme.R")
@@ -38,15 +37,6 @@ cs1_pts <-
 # convert the coordinates to an sf object
 cs1_pts <- st_as_sf(x = cs1_pts, coords = c("dec_lon", "dec_lat"), crs = st_crs(br_coast))
 
-# get the coordinates of Plymouth
-ply_pts <- 
-  tibble(site = c("Plymouth"),
-         dec_lon = c(-4.143),
-         dec_lat = c(50.373))
-
-# convert the coordinates to an sf object
-ply_pts <- st_as_sf(x = ply_pts, coords = c("dec_lon", "dec_lat"), crs = st_crs(br_coast))
-
 # get a colour palette
 col_pal <- wesanderson::wes_palette(name = "Darjeeling1", n = 9, type = "continuous")
 
@@ -56,12 +46,8 @@ p1 <-
   geom_sf(data = ply_coast) +
   geom_sf(data = cs1_pts, mapping = aes(fill = cluster_id),
           size = 2.5, fill = col_pal[5], shape = 21, colour = "black", stroke = 0.5) +
-  geom_sf_text(data = cs1_pts, mapping = aes(label = site),
-               size = 2.5, nudge_y = -0.015) +
-  geom_sf_text(data = ply_pts, mapping = aes(label = site),
-               size = 3, nudge_y = 0.02) +
   annotation_scale(location = "tr", width_hint = 0.2) +
-  coord_sf(xlim = c(-4.3, -3.8), ylim = c(50.26, 50.43), expand = FALSE) +
+  coord_sf(xlim = c(-4.3, -3.8), ylim = c(50.20, 50.43), expand = FALSE) +
   annotation_north_arrow(location = "tr", which_north = "true", 
                          height = unit(1, "cm"),
                          width = unit(1, "cm"),
@@ -119,27 +105,28 @@ p2 <-
   ggplot() +
   geom_sf(data = tja_coast) +
   geom_sf(data = cs2_pts, mapping = aes(fill = cluster_id),
-          size = 2.5, shape = 21, colour = "black", stroke = 0.5) +
+          size = 2.75, shape = 21, colour = "black", stroke = 0.5) +
   scale_fill_manual(values = col_pal) +
   annotation_scale(location = "bl", width_hint = 0.2) +
-  coord_sf(xlim = c(11.08, 11.20), ylim = c(58.845, 58.91), expand = FALSE) +
+  coord_sf(xlim = c(11.09, 11.20), ylim = c(58.845, 58.91), expand = FALSE) +
   annotation_north_arrow(location = "bl", which_north = "true", 
                          height = unit(1, "cm"),
                          width = unit(1, "cm"),
                          pad_x = unit(0.05, "in"), pad_y = unit(0.3, "in"),
                          style = north_arrow_fancy_orienteering(text_size = 9, line_width = 0.1) ) +
   guides(fill = guide_legend(override.aes = list(size = 2),
-                             nrow = 1)) +
+                             nrow = 1,
+                             label.position = "bottom",
+                             label.vjust=7.5)) +
   theme_void() +
   theme(legend.position = "bottom",
         legend.title = element_blank(),
-        legend.spacing.x = unit(0.01, 'cm'),
-        legend.spacing.y = unit(0.01, 'cm'),
+        legend.spacing.x = unit(0.001, 'cm'),
         legend.text = element_text(margin = margin(t = 0, r = 0, b = 0, l = 0),
                                    size = 7))
 plot(p2)
 
 ggsave("figures/MAIN_fig_map2.svg", p2, units = "cm",
-       width = 7, height = 8)
+       width = 7, height = 8.5)
 
 ### END
