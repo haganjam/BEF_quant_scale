@@ -462,7 +462,7 @@ p1 <-
         strip.background = element_blank())
 plot(p1)
 
-ggsave(filename = "figures/SI2_fig_2.svg", p1,
+ggsave(filename = "figures/SI3_fig_S12.svg", p1,
        units = "cm", width = 20, height = 24)
 
 # check the overlap between the predicted values and the observed values
@@ -516,7 +516,7 @@ p2 <-
   theme(strip.background = element_blank())
 plot(p2)
 
-ggsave(filename = "figures/SI2_fig_3.svg", p2,
+ggsave(filename = "figures/SI3_fig_S13.svg", p2,
        units = "cm", width = 12, height = 16)
 
 # calculate how many zeros are predicted on the observed data
