@@ -318,6 +318,7 @@ p1 <-
               mapping = aes(intercept = intercept, slope = slope, group = SI_rep),
               linewidth = 0.1, alpha = 0.1, colour = "red") +
   geom_hline(yintercept = 0, linetype = "dashed", linewidth = 0.5) +
+  scale_x_continuous(breaks = seq(0.2, 3.2, 0.6)) +
   ylab("Spatial insurance (g)") +
   xlab("Spatial environmental heterogeneity") +
   theme_meta()
@@ -418,6 +419,7 @@ p3 <-
               mapping = aes(intercept = intercept, slope = slope, group = SI_rep),
               linewidth = 0.1, alpha = 0.1, colour = "red") +
   geom_hline(yintercept = 0, linetype = "dashed", linewidth = 0.5) +
+  scale_x_continuous(breaks = seq(0.2, 3.2, 0.6)) +
   ylab("Spatial insurance (g)") +
   xlab("Spatial environmental heterogeneity") +
   theme_meta()
