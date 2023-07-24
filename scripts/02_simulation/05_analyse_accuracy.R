@@ -88,7 +88,16 @@ print(error_df)
 
 # bind the prop and absolute deviation dfs
 RYE_df <- full_join(prop_df, error_df, by = "Beff")
-names(RYE_df) <- c("BEF effect", "Prop. within", "Med. abs. prediction error", "PI low", "PI high")
+
+# add the mean of each biodiversity effect
+RYE_df$pooled_mean <- 
+  output_rye %>%
+  group_by(Beff) %>%
+  summarise(mean_BEF = mean(BEF_obs), .groups = "drop") %>%
+  pull(mean_BEF)
+
+# rename the columns
+names(RYE_df) <- c("BEF effect", "Prop. within", "Med. abs. prediction error", "PI low", "PI high", "Pooled mean effect")
 
 # export the table
 write_csv(x = RYE_df, file = "figures/SI2_table_S3.csv")
