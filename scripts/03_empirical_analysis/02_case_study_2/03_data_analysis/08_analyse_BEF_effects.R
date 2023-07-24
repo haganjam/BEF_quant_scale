@@ -293,6 +293,7 @@ lm_df <- bind_rows(lm_list, .id = "SI_rep")
 # check the distribution
 hist(lm_df$slope)
 mean(lm_df$slope)
+HPDI(lm_df$slope, prob = 0.95)
 
 # sample a few of these slopes
 set.seed(4908325)

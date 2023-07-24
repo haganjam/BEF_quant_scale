@@ -23,6 +23,12 @@ set.seed(5497)
 # load the analysis data
 df_obs <- read_csv("data/case_study_2/data_clean/biomass_env_analysis_data.csv")
 
+# count the number of observed data points
+df_obs %>% 
+  filter(!is.na(M)) %>%
+  group_by(OTU) %>%
+  summarise(n = n())
+
 # load the model predictions
 m1_pred <- readRDS("scripts/03_empirical_analysis/02_case_study_2/03_data_analysis/04_m1_predictions.rds")
 
