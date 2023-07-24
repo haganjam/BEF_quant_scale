@@ -129,7 +129,7 @@ plot_rye <-
   output_rye |> 
   dplyr::mutate(within = factor(within)) |>
   dplyr::rename(`Within PI95%` = within)
-levels(plot_rye$`Within PI95%`) <- c("Yes", "No")
+levels(plot_rye$`Within PI95%`) <- c("No", "Yes")
 
 # sort out the Beff effect column for both datasets
 plot_rye$Beff <- factor(plot_rye$Beff, c("NBE", "TS", "IT", "AS", "SI", "TI", "ST"))
