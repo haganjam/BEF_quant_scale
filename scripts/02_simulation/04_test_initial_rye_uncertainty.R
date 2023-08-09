@@ -26,7 +26,8 @@ start_RA <- readRDS(file = "results/mc_sim_list_start_RA.rds")
 length(mc_sims)
 
 # check an example dataset
-n <- sample(1:length(mc_sims), 1)
+# n <- sample(1:length(mc_sims), 1)
+n <- 1437
 
 # plot the mixtures
 p1 <- 
@@ -41,7 +42,7 @@ p1 <-
   ylab("Mixture population size (N)") +
   xlab("Time point") +
   theme_meta() +
-  theme(legend.position = "top",
+  theme(legend.position = "right",
         legend.title = element_text(size = 11),
         legend.text = element_text(size = 10),
         strip.background = element_blank(),
