@@ -1,0 +1,13 @@
+Metadata from: Gamfeldt, L., and H. Hillebrand. 2011. Effects of Total Resources, Resource Ratios, and Species Richness on Algal Productivity and Evenness at Both Metacommunity and Local Scales. Plos One 6.
+
+Data are at the local-scale for the end of the experiment on biovolume for each of five algal species and N and P.
+
+I haven’t looked at these data (attached, for local scale only) since we published the paper. The meta-data are:
+
+Id: id number for each local community
+Tot_P: start concentration of P, mmol L-1 
+Tot_N: start concentration of N, mmol L-1
+N_P: N : P ratio. We had three ratios for each level of P
+Species: Composition treatment. Ankistrodesmus sp. (Chlorophyta), Chlamydomonas terricola (Chlorophyta), Cylindrosper- mum sp. (Cyanobacteria), Fragilaria sapucina (Bacillariophyta), and Gymnodinium sp. (Dinophyta), All five species together. Substitutive design, starting biovolume of 231*103 mm3 mL-1. 
+Biovol: Biovolume in each replicate. 
+P: End concentration of P
