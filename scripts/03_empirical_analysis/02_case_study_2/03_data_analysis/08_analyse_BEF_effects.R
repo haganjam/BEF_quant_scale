@@ -250,11 +250,33 @@ p123 <-
             labels = c("a", "b", "c"), label_size = 11,
             label_fontface = "plain",
             rel_heights = c(1.5, 1, 2)) 
-# plot(p123)
+plot(p123)
 
 ggsave(filename = "figures/MAIN_fig_4.svg", 
        p123, units = "cm", width = 13, height = 18)
 
+# add a plot for the defence
+plot_list_def <- lapply(plot_list, function(x) {
+  y <- 
+    x + 
+    theme(
+      panel.background = element_rect(fill='transparent'), #transparent panel bg
+      plot.background = element_rect(fill='transparent', color=NA), #transparent plot bg
+      panel.grid.major = element_blank(), #remove major gridlines
+      panel.grid.minor = element_blank(), #remove minor gridlines
+      legend.background = element_rect(fill='transparent'), #transparent legend bg
+      legend.box.background = element_rect(fill='transparent') #transparent legend panel
+    )
+  return(y)
+})
+
+p123_def <- 
+  plot_grid(plotlist=plot_list_def, 
+            nrow = 3, ncol = 1, align = "v",
+            rel_heights = c(1.5, 1, 2))
+
+ggsave(filename = "figures/def_fig_1.pdf", p123_def,
+       unit = "cm", width = 12, height = 14, bg = "transparent")
 
 # do insurance effects depend on environmental heterogeneity?
 
