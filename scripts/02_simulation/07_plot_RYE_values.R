@@ -74,7 +74,7 @@ p1 <-
 plot(p1)
 
 # export as a .svg file
-ggsave(filename = "figures/SI2_fig_S2.svg", p1,
+ggsave(filename = "figures/SI2_fig_S2.pdf", p1,
        unit = "cm", width = 20, height = 14)
 
 # check the range of RYEs for alpha = 3
@@ -82,5 +82,31 @@ dd_df %>%
   group_by(alpha) %>%
   summarise(min = min(RYe),
             max = max(RYe))
+
+# plot a single one of these with alpha = 3
+p2 <- 
+  ggplot(data = dd_df |> dplyr::filter(alpha_3 == "yes"),
+       mapping = aes(x = Species, y = RYe, group = group)) +
+  geom_line(alpha = 0.1) +
+  scale_x_discrete(expand = c(0.05, 0.05)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  xlab("Species") +
+  ylab(bquote("RY"[E])) +
+  theme_meta() +
+  theme(
+  panel.background = element_rect(fill='transparent'), #transparent panel bg
+  plot.background = element_rect(fill='transparent', color=NA), #transparent plot bg
+  panel.grid.major = element_blank(), #remove major gridlines
+  panel.grid.minor = element_blank(), #remove minor gridlines
+  legend.background = element_rect(fill='transparent'), #transparent legend bg
+  legend.box.background = element_rect(fill='transparent') #transparent legend panel
+)
+
+# export the figure for further modification
+ggsave(filename = "figures/def_fig_6.pdf", p2,
+       unit = "cm", width = 10, height = 8, bg = "transparent")
+
+
+
 
 ### END

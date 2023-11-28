@@ -252,7 +252,7 @@ p123 <-
             rel_heights = c(1.5, 1, 2)) 
 plot(p123)
 
-ggsave(filename = "figures/MAIN_fig_4.svg", 
+ggsave(filename = "figures/MAIN_fig_4.pdf", 
        p123, units = "cm", width = 13, height = 18)
 
 # add a plot for the defence
@@ -346,6 +346,21 @@ p1 <-
   xlab("Spatial environmental heterogeneity") +
   theme_meta()
 plot(p1)
+
+# export a plot for the defence
+p4_def <-
+  p1 +
+  theme(
+    panel.background = element_rect(fill='transparent'), #transparent panel bg
+    plot.background = element_rect(fill='transparent', color=NA), #transparent plot bg
+    panel.grid.major = element_blank(), #remove major gridlines
+    panel.grid.minor = element_blank(), #remove minor gridlines
+    legend.background = element_rect(fill='transparent'), #transparent legend bg
+    legend.box.background = element_rect(fill='transparent') #transparent legend panel
+  )
+
+ggsave(filename = "figures/def_fig_2.pdf", p4_def,
+       unit = "cm", width = 10, height = 8, bg = "transparent")
 
 slope_sum <- 
   lm_df %>%
