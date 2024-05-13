@@ -1,6 +1,6 @@
 ## BEF_quant_scale
 
-This repository contains code to reproduce the analysis reported in the following manuscript (currently unpublished):
+This repository contains code to reproduce the analysis reported in the following manuscript (currently under consideration at PNAS and published as a preprint: https://www.researchsquare.com/article/rs-3249429/v1):
 
 + Hagan JG, Schrofner-Brunner B, Gamfeldt L. (in prep.). Quantifying the effects of biodiversity on ecosystem functioning across space and time in natural and semi-natural ecosystems.
 
