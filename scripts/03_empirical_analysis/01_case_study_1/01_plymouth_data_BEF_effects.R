@@ -313,7 +313,7 @@ p123 <-
   )
 plot(p123)
 
-ggsave(filename = "figures/MAIN_fig_3.svg", p123,
+ggsave(filename = "figures/main_fig_3.png", p123, dpi = 600,
        units = "cm", width = 13, height = 15)
 
 
@@ -468,8 +468,9 @@ p1234 <-
 
 # add the legend
 p1234 <- ggarrange(p1234, legend2, widths = c(6, 1))
+p1234
 
-ggsave(filename = "figures/ED_fig_1.svg", p1234,
+ggsave(filename = "manuscript/figures/app_1_fig_s1.png", p1234, dpi = 600,
        unit = "cm", width = 21, height = 14)
 
 ### END

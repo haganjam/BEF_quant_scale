@@ -92,7 +92,7 @@ col_pal <- wesanderson::wes_palette(name = "Darjeeling1", n = 6, type = "continu
 legend <- dat_sum[1:6, ]
 
 legend <- 
-  get_legend( 
+  get_legend(
     ggplot(data = legend,
            mapping = aes(x = SR, y = biomass_mu, colour = species, shape = species)) +
       geom_point(size = 3) +

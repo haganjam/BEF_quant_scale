@@ -50,7 +50,7 @@ p1 <-
         legend.key = element_rect(fill = NA))
 plot(p1)
 
-ggsave(filename = "figures/SI2_fig_S4.svg", p1,
+ggsave(filename = "manuscript/figures/app_3_fig_s9.png", p1, dpi = 600,
        unit = "cm", width = 20, height = 15)
 
 # plot the monocultures
@@ -72,7 +72,7 @@ p2 <-
         legend.key = element_rect(fill = NA))
 plot(p2)
 
-ggsave(filename = "figures/SI2_fig_S5.svg", p2,
+ggsave(filename = "figures/app_3_fig_s10.png", p2, dpi = 600,
        unit = "cm", width = 20, height = 15)
 
 

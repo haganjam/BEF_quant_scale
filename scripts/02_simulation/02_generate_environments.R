@@ -211,8 +211,8 @@ p123 <-
                     nrow = 1
                     )
 
-ggsave("figures/SI2_fig_S3.svg", p123, units = "cm",
-       width = 20, height = 8)
+ggsave("manuscript/figures/app_3_fig_s8.png", p123, dpi = 600,
+       units = "cm", width = 20, height = 8)
 
 # export these data for use in the simulations
 saveRDS(env_SI, "scripts/02_simulation/02_generated_environment_SI.rds")

@@ -341,7 +341,7 @@ ploo <- bind_rows(ploo, .id = "model")
 names(ploo) <- c("model", "ploo", "ploo_se")
 
 # bind these two data.frames
-ED_table_2 <- full_join(looic, ploo, by = "model")
+mod_table <- full_join(looic, ploo, by = "model")
 
 # calcualate the percentage of points with k > 0.5
 kvals <- 
@@ -352,11 +352,11 @@ kvals <-
   
 })
 
-# add the percentage high k-values to table_s1
-ED_table_2$kvals <- unlist(kvals)
+# add the percentage high k-values to a table
+mod_table$kvals <- unlist(kvals)
 
 # output the table as a .csv file
-write_csv(x = ED_table_2, file = "figures/ED_table_2.csv")
+saveRDS(mod_table, "manuscript/figures/app_1_table_3.rds")
 
 # which model is the best fit?
 # ln1
@@ -462,7 +462,7 @@ p1 <-
         strip.background = element_blank())
 plot(p1)
 
-ggsave(filename = "figures/SI3_fig_S12.svg", p1,
+ggsave(filename = "manuscript/figures/app_4_fig_s17.png", p1, dpi = 600,
        units = "cm", width = 20, height = 24)
 
 # check the overlap between the predicted values and the observed values
@@ -516,7 +516,7 @@ p2 <-
   theme(strip.background = element_blank())
 plot(p2)
 
-ggsave(filename = "figures/SI3_fig_S13.svg", p2,
+ggsave(filename = "manuscript/figures/app_4_fig_s18.png", p2, dpi = 600,
        units = "cm", width = 12, height = 16)
 
 # calculate how many zeros are predicted on the observed data
@@ -544,9 +544,19 @@ df_test <-
   filter(Obs_pred == "Predicted") %>%
   dplyr::select(Y, PC1)
 
-# calculate the MESS index: Zurell et al. (2012)
+# calculate the MESS index: Zurell et al. (2012): 20 bins
 MESS <- eo.mask(traindata = df_ref, 
                 newdata = df_test, nbin = 20, type="EO")
+
+# add the MESS index to the test data
+df_test$MESS <- MESS
+
+# check how many data point are predicting out of the range
+(sum(df_test$MESS)/nrow(df_test))*100
+
+# calculate the MESS index: Zurell et al. (2012): 10 bins
+MESS <- eo.mask(traindata = df_ref, 
+                newdata = df_test, nbin = 10, type="EO")
 
 # add the MESS index to the test data
 df_test$MESS <- MESS

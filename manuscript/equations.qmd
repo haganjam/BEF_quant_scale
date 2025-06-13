@@ -1,0 +1,574 @@
+---
+title: "Untitled"
+format: html
+editor: visual
+---
+
+Equation S1
+
+$$
+\mathrm{NBE}_{\alpha} = \sum_{i=1}^{S} \Delta RY_i M_i
+$$
+
+Equation S2
+
+$$
+\mathrm{NBE}_{\alpha} = S \, \overline{\Delta RY} \, \overline{M} + S \, \mathrm{cov}(\Delta RY_i, M_i)
+$$
+
+Equation S3
+
+$$
+\mathrm{NBE}_{\gamma} = \sum_{k=1}^{P} \sum_{j=1}^{T} \sum_{i=1}^{S} \Delta RY_{ijk} M_{ijk}
+$$
+
+Equation S4:
+
+$$
+\mathrm{NBE}_{\gamma} = PTS \, \overline{\overline{\overline{\Delta RY}}} \, \overline{\overline{\overline{M}}} + PTS \, \mathrm{cov}(\Delta RY_{ijk}, M_{ijk})
+$$
+
+Equation S5
+
+$$
+\mathrm{NBE}_{\gamma} = PTS \, \overline{\overline{\overline{\Delta RY_{O}}}} \, \overline{\overline{\overline{M}}} + PTS \, \mathrm{cov}(\Delta RY_{O,ijk}, M_{ijk}) + PTS \, \mathrm{cov}(\Delta p_{ijk}, M_{ijk})
+$$
+
+Equation S6
+
+$$
+TC = S \, \overline{\Delta RY} \, \overline{M}
+$$
+
+Equation S7
+
+$$
+\Delta RY_i = RY_{O,i} - RY_{E,i}
+$$
+
+$$
+RY_{O,i} = \frac{Y_i}{M_i}
+$$
+
+Equation S8
+
+$$
+\overline{\overline{\Delta RY}} = \frac{(RY_{O,1} - RY_{E,1}) + (RY_{O,2} - RY_{E,2})}{2}
+$$
+
+Equation S9
+
+$$
+\overline{\overline{\Delta RY}} = \frac{(RY_{O,1} + RY_{O,2}) - (RY_{E,1} + RY_{E,2})}{2}
+$$
+
+Equation S10
+
+$$
+r_{ip}(t) = r_{\text{max}} \, e^{\left(\frac{z_i - E_p(t)}{2\sigma_i}\right)^2}
+$$
+
+Equation S11 (1)
+
+$$
+\dot{N}_{ip}(t + 1) = \max\left(N_{ip}(t) \, \frac{r_{ip}(t)}{1 + \sum_{j=1}^{S} \alpha_{ij} N_{jp}(t)}, \, 0\right)
+$$
+
+
+Equation S11 (2)
+
+$$
+N_{ip}(t + 1) = \dot{N}_{ip}(t + 1) - E_{mip}(t) + I_{ip}(t)
+$$
+
+Equation S12
+
+$$
+I_{ip}(t) = \frac{\sum_{q \ne p}^{P} E_{iy}(t) e^{-L d_{pq}}}{\sum_{p=1}^{P} E_{ip}(t)}
+$$
+
+Equation S13
+
+$$
+\textit{corrected dry biomass (g)} = \frac{\textit{dry biomass (g)}}{\textit{proportion monoculture cover}}
+$$
+
+
+Models
+
+Model 1
+
+$$
+w_i \sim \mathrm{Bernoulli}(p_i)
+$$
+
+$$
+\text{logit}(p_i) = \theta_{S[i]} + \delta_{1[S[i]}} Y_i
+$$
+
+$$
+\theta_j = \bar{\theta} + \nu_{.1}
+$$
+
+$$
+\delta_{1j} = \bar{\delta} + \nu_{.2}
+$$
+
+$$
+\nu = (\mathrm{diag}(\tau) \times \mathrm{cholesky}(R) \times V)^\top
+$$
+
+$$
+V_{k,j} \sim \mathcal{N}(0,1)
+$$
+
+$$
+\bar{\theta}, \bar{\delta} \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+\tau_\theta, \tau_\delta \sim \mathrm{Exponential}(3)
+$$
+
+$$
+R_{k,k} \sim \mathrm{LKJcorr}(2)
+$$
+
+$$
+(M_i \mid w_i = 1) \sim \mathrm{LogNormal}(u_i, \epsilon)
+$$
+
+$$
+u_i = \alpha_{S[i]} + \beta_{1[S[i]}} Y_i + \beta_{2[S[i]}} \mathrm{PC1}_i
+$$
+
+$$
+\alpha_j = \bar{\alpha} + z_{.1}
+$$
+
+$$
+\beta_{1j} = \bar{\beta}_1 + z_{.2}
+$$
+
+$$
+\beta_{2j} = \bar{\beta}_2 + z_{.3}
+$$
+
+$$
+z = (\mathrm{diag}(\sigma) \times \mathrm{cholesky}(L) \times Z)^\top
+$$
+
+$$
+\epsilon \sim \mathrm{Exponential}(5)
+$$
+
+$$
+Z_{l,j} \sim \mathcal{N}(0,1)
+$$
+
+$$
+\bar{\alpha}, \bar{\beta}_1, \bar{\beta}_2 \sim \mathcal{N}(0,1.5)
+$$
+
+$$
+\sigma_\alpha, \sigma_{\beta_1}, \sigma_{\beta_2} \sim \mathrm{Exponential}(3)
+$$
+
+$$
+L_{l,l} \sim \mathrm{LKJcorr}(2)
+$$
+
+$$
+w_i = 
+\begin{cases}
+0 & \leftrightarrow (M_i = 0) \\
+1 & \leftrightarrow (M_i > 0)
+\end{cases}
+$$
+
+Model 2
+
+$$
+w_i \sim \mathrm{Bernoulli}(p_i)
+$$
+
+$$
+\text{logit}(p_i) = \theta + \delta_1 Y_i
+$$
+
+$$
+\theta, \delta_1 \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+(M_i \mid w_i = 1) \sim \mathrm{LogNormal}(u_i, \epsilon)
+$$
+
+$$
+u_i = \alpha_{S[i]} + \beta_{1[S[i]}} Y_i + \beta_{2[S[i]}} \mathrm{PC1}_i
+$$
+
+$$
+\alpha_j = \bar{\alpha} + z_{.1}
+$$
+
+$$
+\beta_{1j} = \bar{\beta}_1 + z_{.2}
+$$
+
+$$
+\beta_{2j} = \bar{\beta}_2 + z_{.3}
+$$
+
+$$
+z = (\mathrm{diag}(\sigma) \times \mathrm{cholesky}(L) \times Z)^\top
+$$
+
+$$
+\epsilon \sim \mathrm{Exponential}(5)
+$$
+
+$$
+Z_{l,j} \sim \mathcal{N}(0,1)
+$$
+
+$$
+\bar{\alpha}, \bar{\beta}_1, \bar{\beta}_2 \sim \mathcal{N}(0,1.5)
+$$
+
+$$
+\sigma_\alpha, \sigma_{\beta_1}, \sigma_{\beta_2} \sim \mathrm{Exponential}(3)
+$$
+
+$$
+L_{l,l} \sim \mathrm{LKJcorr}(2)
+$$
+
+$$
+w_i = 
+\begin{cases}
+0 & \leftrightarrow (M_i = 0) \\
+1 & \leftrightarrow (M_i > 0)
+\end{cases}
+$$
+
+Model 3
+
+$$
+w_i \sim \mathrm{Bernoulli}(p_i)
+$$
+
+$$
+\text{logit}(p_i) = \theta + \delta_1 Y_i
+$$
+
+$$
+\theta, \delta_1 \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+(M_i \mid w_i = 1) \sim \mathrm{LogNormal}(u_i, \epsilon)
+$$
+
+$$
+u_i = \alpha_{S[i]} + \beta_{1[S[i]}} Y_i
+$$
+
+$$
+\alpha_j = \bar{\alpha} + z_{.1}
+$$
+
+$$
+\beta_{1j} = \bar{\beta}_1 + z_{.2}
+$$
+
+$$
+z = (\mathrm{diag}(\sigma) \times \mathrm{cholesky}(L) \times Z)^\top
+$$
+
+$$
+\epsilon \sim \mathrm{Exponential}(5)
+$$
+
+$$
+Z_{l,j} \sim \mathcal{N}(0,1)
+$$
+
+$$
+\bar{\alpha}, \bar{\beta}_1 \sim \mathcal{N}(0,1.5)
+$$
+
+$$
+\sigma_{\alpha}, \sigma_{\beta_1} \sim \mathrm{Exponential}(3)
+$$
+
+$$
+L_{l,l} \sim \mathrm{LKJcorr}(2)
+$$
+
+$$
+w_i = 
+\begin{cases}
+0 & \leftrightarrow (M_i = 0) \\
+1 & \leftrightarrow (M_i > 0)
+\end{cases}
+$$
+
+Model 4
+
+$$
+w_i \sim \mathrm{Bernoulli}(p_i)
+$$
+
+$$
+\text{logit}(p_i) = \theta + \delta_1 Y_i
+$$
+
+$$
+\theta, \delta_1 \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+(M_i \mid w_i = 1) \sim \mathrm{LogNormal}(u_i, \epsilon)
+$$
+
+$$
+u_i = \alpha_{S[i]} + \beta_{1[S[i]}} Y_i
+$$
+
+$$
+\alpha_j = \bar{\alpha} + (z \times \sigma_\alpha)
+$$
+
+$$
+\beta_{1j} = \bar{\beta}_1 + (v \times \sigma_{\beta_1})
+$$
+
+$$
+z, v \sim \mathcal{N}(0, 1)
+$$
+
+$$
+\epsilon \sim \mathrm{Exponential}(5)
+$$
+
+$$
+\bar{\alpha}, \bar{\beta}_1 \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+\sigma_\alpha, \sigma_{\beta_1} \sim \mathrm{Exponential}(3)
+$$
+
+$$
+w_i = 
+\begin{cases}
+0 & \leftrightarrow (M_i = 0) \\
+1 & \leftrightarrow (M_i > 0)
+\end{cases}
+$$
+
+Model 5
+
+$$
+w_i \sim \mathrm{Bernoulli}(p_i)
+$$
+
+$$
+\text{logit}(p_i) = \theta + \delta_1 Y_i + \delta_2 \mathrm{PC1}_i
+$$
+
+$$
+\theta, \delta_1, \delta_2 \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+(M_i \mid w_i = 1) \sim \mathrm{LogNormal}(u_i, \epsilon)
+$$
+
+$$
+u_i = \alpha_{S[i]} + \beta_1 Y_i + \beta_2 \mathrm{PC1}_i + \beta_3 \mathrm{PC2}_i
+$$
+
+$$
+\alpha_j = \bar{\alpha} + (z \times \sigma_\alpha)
+$$
+
+$$
+z \sim \mathcal{N}(0, 1)
+$$
+
+$$
+\epsilon \sim \mathrm{Exponential}(5)
+$$
+
+$$
+\bar{\alpha} \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+\sigma_\alpha \sim \mathrm{Exponential}(3)
+$$
+
+$$
+\beta_1, \beta_2, \beta_3 \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+w_i = 
+\begin{cases}
+0 & \leftrightarrow (M_i = 0) \\
+1 & \leftrightarrow (M_i > 0)
+\end{cases}
+$$
+
+Model 6
+
+$$
+w_i \sim \mathrm{Bernoulli}(p_i)
+$$
+
+$$
+\text{logit}(p_i) = \theta + \delta_1 Y_i
+$$
+
+$$
+\theta, \delta_1 \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+(M_i \mid w_i = 1) \sim \mathrm{LogNormal}(u_i, \epsilon)
+$$
+
+$$
+u_i = \alpha_{S[i]} + \beta_1 Y_i + \beta_2 \mathrm{PC1}_i
+$$
+
+$$
+\alpha_j = \bar{\alpha} + (z \times \sigma_\alpha)
+$$
+
+$$
+z \sim \mathcal{N}(0, 1)
+$$
+
+$$
+\epsilon \sim \mathrm{Exponential}(5)
+$$
+
+$$
+\bar{\alpha} \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+\sigma_\alpha \sim \mathrm{Exponential}(3)
+$$
+
+$$
+\beta_1, \beta_2 \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+w_i = 
+\begin{cases}
+0 & \leftrightarrow (M_i = 0) \\
+1 & \leftrightarrow (M_i > 0)
+\end{cases}
+$$
+
+Model 7
+
+$$
+w_i \sim \mathrm{Bernoulli}(p_i)
+$$
+
+$$
+\text{logit}(p_i) = \theta + \delta_1 Y_i
+$$
+
+$$
+\theta, \delta_1 \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+(M_i \mid w_i = 1) \sim \mathrm{LogNormal}(u_i, \epsilon)
+$$
+
+$$
+u_i = \alpha_{S[i]} + \beta_1 Y_i
+$$
+
+$$
+\alpha_j = \bar{\alpha} + (z \times \sigma_\alpha)
+$$
+
+$$
+z \sim \mathcal{N}(0, 1)
+$$
+
+$$
+\epsilon \sim \mathrm{Exponential}(5)
+$$
+
+$$
+\bar{\alpha} \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+\sigma_\alpha \sim \mathrm{Exponential}(3)
+$$
+
+$$
+\beta_1 \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+w_i = 
+\begin{cases}
+0 & \leftrightarrow (M_i = 0) \\
+1 & \leftrightarrow (M_i > 0)
+\end{cases}
+$$
+
+Model 8
+
+$$
+w_i \sim \mathrm{Bernoulli}(p_i)
+$$
+
+$$
+\text{logit}(p_i) = \theta
+$$
+
+$$
+\theta \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+(M_i \mid w_i = 1) \sim \mathrm{LogNormal}(u_i, \epsilon)
+$$
+
+$$
+u_i = \alpha
+$$
+
+$$
+\alpha \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+\epsilon \sim \mathrm{Exponential}(5)
+$$
+
+$$
+w_i = 
+\begin{cases}
+0 & \leftrightarrow (M_i = 0) \\
+1 & \leftrightarrow (M_i > 0)
+\end{cases}
+$$
+
+
+
+
+

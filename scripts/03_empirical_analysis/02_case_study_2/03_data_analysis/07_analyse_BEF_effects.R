@@ -122,11 +122,40 @@ BEF_grand$Beff <- factor(BEF_grand$Beff,
                          levels = c("NBE", "TC", "TS", "NO", "IT", "AS", "SI", "TI", "ST"))
 
 # rearrange the effects into the correct order
-ED_table_2 <- arrange(BEF_grand, Beff)
-print(ED_table_2)
+meta_table <- arrange(BEF_grand, Beff)
+print(meta_table)
+
+# round these values
+meta_table$grand_mean <- round(meta_table$grand_mean, 1)
+meta_table$SE <- round(meta_table$SE, 1)
+meta_table$tval <- round(meta_table$tval, 1)
+
+# round the p-values
+meta_table$pval <- round(meta_table$pval, 4)
+
+# check the table with the rounded values
+print(meta_table)
+
+# extract the relevant columnbs
+meta_table <- meta_table[, c("Beff", "grand_mean", "SE", "tval", "df", "pval")]
+
+# rename the columns
+names(meta_table) <- c("", "Pooled mean (Int.)", "SE", "t-value", "df", "P-value")
+
+# re-level
+levels(meta_table[[1]]) <-
+  c("Net biodiversity effect",
+    "  Total complementarity",
+    "  Total selection", 
+    "    Non-random overyielding",
+    "    Insurance total",
+    "      Average selection",
+    "      Spatial insurance",
+    "      Temporal insurance",
+    "      Spatio-temporal insurance")
 
 # output the table as a .csv file
-write_csv(x = ED_table_2, file = "figures/ED_table_2.csv")
+saveRDS(meta_table, "manuscript/figures/app_1_table_s2.rds")
 
 # get 100 samples for each biodiversity effect
 id <- dplyr::distinct(BEF_dat[,c("mono_rep", "RYE")])
@@ -162,7 +191,7 @@ BEF_fullnames <- list(p1 = c("Total selection", "Total complementarity", "Net bi
 
 # set-up significance annotations
 BEF_sig <- 
-  list(p1 = tibble(Beff = c("TS", "TC", "NBE"), Value = c(80, 80, 80), sig = "*"),
+  list(p1 = tibble(Beff = c("TS", "TC", "NBE"), Value = c(105, 105, 105), sig = "*"),
        p2 = tibble(Beff = c("IT", "NO"), Value = c(85, 85), sig = "*"),
        p3 = tibble(Beff = c("ST", "TI", "SI",  "AS"), Value = c(95, 95, 95, 95), sig = c("", "", "*", "*")))
 
@@ -252,31 +281,8 @@ p123 <-
             rel_heights = c(1.5, 1, 2)) 
 plot(p123)
 
-ggsave(filename = "figures/MAIN_fig_4.pdf", 
+ggsave(filename = "manuscript/figures/main_fig_4.png", dpi = 600, 
        p123, units = "cm", width = 13, height = 18)
-
-# add a plot for the defence
-plot_list_def <- lapply(plot_list, function(x) {
-  y <- 
-    x + 
-    theme(
-      panel.background = element_rect(fill='transparent'), #transparent panel bg
-      plot.background = element_rect(fill='transparent', color=NA), #transparent plot bg
-      panel.grid.major = element_blank(), #remove major gridlines
-      panel.grid.minor = element_blank(), #remove minor gridlines
-      legend.background = element_rect(fill='transparent'), #transparent legend bg
-      legend.box.background = element_rect(fill='transparent') #transparent legend panel
-    )
-  return(y)
-})
-
-p123_def <- 
-  plot_grid(plotlist=plot_list_def, 
-            nrow = 3, ncol = 1, align = "v",
-            rel_heights = c(1.5, 1, 2))
-
-ggsave(filename = "figures/def_fig_1.pdf", p123_def,
-       unit = "cm", width = 12, height = 14, bg = "transparent")
 
 # do insurance effects depend on environmental heterogeneity?
 
@@ -347,21 +353,6 @@ p1 <-
   theme_meta()
 plot(p1)
 
-# export a plot for the defence
-p4_def <-
-  p1 +
-  theme(
-    panel.background = element_rect(fill='transparent'), #transparent panel bg
-    plot.background = element_rect(fill='transparent', color=NA), #transparent plot bg
-    panel.grid.major = element_blank(), #remove major gridlines
-    panel.grid.minor = element_blank(), #remove minor gridlines
-    legend.background = element_rect(fill='transparent'), #transparent legend bg
-    legend.box.background = element_rect(fill='transparent') #transparent legend panel
-  )
-
-ggsave(filename = "figures/def_fig_2.pdf", p4_def,
-       unit = "cm", width = 10, height = 8, bg = "transparent")
-
 slope_sum <- 
   lm_df %>%
   summarise(slope_m = mean(slope),
@@ -391,7 +382,7 @@ p12 <- ggarrange(p1, p2, labels = c("a", "b"),
                  nrow = 1, ncol = 2, widths = c(1,0.7))
 plot(p12)
 
-ggsave(filename = "figures/MAIN_fig_5.svg", p12,
+ggsave(filename = "manuscript/figures/main_fig_5.png", p12, dpi = 600,
        unit = "cm", width = 15, height = 8)
 
 
@@ -492,7 +483,7 @@ p34 <- ggarrange(p3, p4, labels = c("a", "b"),
                  nrow = 1, ncol = 2, widths = c(1,0.7))
 plot(p34)
 
-ggsave(filename = "figures/ED_fig_3.svg", p34,
+ggsave(filename = "manuscript/figures/app_1_fig_s3.png", p34, dpi = 600,
        unit = "cm", width = 15, height = 8)
 
 ### END

@@ -1,0 +1,46 @@
+
+References
+
+1.	Isbell, F. et al. Quantifying effects of biodiversity on ecosystem functioning across times and places. Ecol. Lett. 21, 763–778 (2018).
+
+2.	Vellend, M. The Theory of Ecological Communities (MPB-57). in The Theory of Ecological Communities (MPB-57) (Princeton University Press, 2016). doi:10.1515/9781400883790.
+
+3.	Loreau, M. & Hector, A. Partitioning selection and complementarity in biodiversity experiments. Nature 412, 72–76 (2001).
+
+4.	Yachi, S. & Loreau, M. Biodiversity and ecosystem productivity in a fluctuating environment: The insurance hypothesis. Proc. Natl. Acad. Sci. 96, 1463–1468 (1999).
+
+5.	Loreau, M., Mouquet, N. & Gonzalez, A. Biodiversity as spatial insurance in heterogeneous landscapes. Proc. Natl. Acad. Sci. 100, 12765–12770 (2003).
+
+6.	Fox, J. W. Interpreting the ‘selection effect’ of biodiversity on ecosystem function. Ecol. Lett. 8, 846–856 (2005).
+
+7.	Loreau, M., Naeem, S. & Inchausti, P. Biodiversity and Ecosystem Functioning: Synthesis and Perspectives. (Oxford University Press, 2002).
+
+8.	Thompson, P. L. et al. A process‐based metacommunity framework linking local and regional scale community ecology. Ecol. Lett. 23, 1314–1329 (2020).
+
+9.	Thompson, P. L. mcomsimr: A package for simulating metacommunity dynamics in R. (2023).
+
+10. Johannesson, K. The Bare Zone of Swedish Rocky Shores: Why Is It There? Oikos 54, 77–86 (1989).
+
+11. Berntsson, K. M. & Jonsson, P. R. Temporal and spatial patterns in recruitment and succession of a temperate marine fouling assemblage: A comparison of static panels and boat hulls during the boating season. Biofouling 19, 187–195 (2003).
+
+12. Greeve, Y., Bergström, P., Strand, Å. & Lindegarth, M. Estimating and scaling-up biomass and abundance of epi- and infaunal bivalves in a Swedish archipelago region: Implications for ecological functions and ecosystem services. Front. Mar. Sci. 10, (2023).
+
+13. Oksanen, J. et al. vegan: Community Ecology Package. (2022).
+
+14. R: The R Project for Statistical Computing. R Core Team https://www.r-project.org/ (2021).
+
+15. Porter, E. T., Sanford, L. P. & Suttles, S. E. Gypsum dissolution is not a universal integrator of ‘water motion’. Limnol. Oceanogr. 45, 145–158 (2000).
+
+16. Rueden, C. T. et al. ImageJ2: ImageJ for the next generation of scientific image data. BMC Bioinformatics 18, 529 (2017).
+
+17. Muukkonen, P. et al. Relationship between biomass and percentage cover in understorey vegetation of boreal coniferous forests. Silva Fenn. 40, (2006).
+
+18. McElreath, R. Statistical Rethinking: A Bayesian Course with Examples in R and Stan. (Chapman and Hall/CRC, 2016). doi:10.1201/9781315372495.
+
+19. Stan. Stan Development Team //mc-stan.org/ (2021).
+
+20. Guo, J. et al. rstan: R Interface to Stan. (2023).
+
+21. Vehtari, A. et al. loo: Efficient Leave-One-Out Cross-Validation and WAIC for Bayesian Models. (2023).
+
+22. Zurell, D., Elith, J. & Schröder, B. Predicting to new environments: tools for visualizing model behaviour and impacts on mapped distributions: Predicting to new environments. Divers. Distrib. 18, 628–634 (2012).

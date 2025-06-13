@@ -29,7 +29,7 @@ output_rye <-
 # add a variable describing the different levels of variation
 output_rye$env_var <- rep(c("Spatial env. variation", "Temporal env. variation", "Combination"), each = 500*7)
 
-# table S2
+# Appendix 3, table S5
 
 # get a table of the range of the different BEF effects
 tab_s2 <- 
@@ -49,14 +49,14 @@ tab_s2$env_var <- factor(tab_s2$env_var,
 tab_s2$Beff <- factor(tab_s2$Beff, c("NBE", "TS", "IT", "AS", "SI", "TI", "ST"))
 
 # reorder the table according to the factor levels
-tab_s2 <- arrange(tab_s2, env_var, Beff)
+tab_s5 <- arrange(tab_s2, env_var, Beff)
 
 # rename the variable
-names(tab_s2) <- c("Abiotic environment", "Effect", "Mean", "Min", "Max")
+names(tab_s5) <- c("Abiotic environment", "Effect", "Mean", "Min", "Max")
 
 # export as a .csv file
-write_csv(tab_s2, file = "figures/SI2_table_S2.csv")
-
+saveRDS(tab_s5,
+        file = "manuscript/figures/app_3_table_s5.rds")
 
 # does the observed value lie in the 90% percentile interval
 output_rye <- 
@@ -99,8 +99,26 @@ RYE_df$pooled_mean <-
 # rename the columns
 names(RYE_df) <- c("BEF effect", "Prop. within", "Med. abs. prediction error", "PI low", "PI high", "Pooled mean effect")
 
+# reorder the BEF effects
+RYE_df$`BEF effect` <- factor(RYE_df$`BEF effect`,
+                              levels = c("NBE", "TS", "IT", "AS", "SI", "TI", "ST"))
+
+# rename the levels
+levels(RYE_df$`BEF effect`) <-
+  c("Net biodiversity effect",
+    "Total selection",
+    "Total insurance",
+    "Average selection",
+    "Spatial insurance",
+    "Temporal insurance", 
+    "Spatio-temporal insurance")
+  
+# arrange by the BEF effect
+RYE_df <- dplyr::arrange(RYE_df, `BEF effect`)
+  
 # export the table
-write_csv(x = RYE_df, file = "figures/SI2_table_S3.csv")
+saveRDS(RYE_df,
+        file = "manuscript/figures/app_3_table_s6.rds")
 
 # how often do we get the correct relative magnitude of the effects
 sp <- 
@@ -171,7 +189,7 @@ p1 <-
         strip.text = element_text(size = 10))
 plot(p1)
 
-ggsave(filename = "figures/SI2_fig_S6.svg", p1,
+ggsave(filename = "manuscript/figures/app_3_fig_s11.png", p1, dpi = 600,
        unit = "cm", width = 21, height = 21)
 
 ### END

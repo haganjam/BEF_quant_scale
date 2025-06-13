@@ -74,7 +74,7 @@ p1 <-
 plot(p1)
 
 # export as a .svg file
-ggsave(filename = "figures/SI2_fig_S2.pdf", p1,
+ggsave(filename = "manuscript/figures/app_3_fig_s7.png", p1, dpi = 600,
        unit = "cm", width = 20, height = 14)
 
 # check the range of RYEs for alpha = 3
@@ -103,10 +103,7 @@ p2 <-
 )
 
 # export the figure for further modification
-ggsave(filename = "figures/def_fig_6.pdf", p2,
+ggsave(filename = "manuscript/figures/app_3_fig_s6_part.png", p2, dpi = 600,
        unit = "cm", width = 10, height = 8, bg = "transparent")
-
-
-
 
 ### END

@@ -1,1 +1,0 @@
-sftp james@albiorix.bioenv.gu.se:BEF_quant_scale/results/BEF_effects_case_study_2.rds Documents\github\BEF_quant_scale\results

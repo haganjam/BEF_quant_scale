@@ -1,0 +1,708 @@
+---
+bibliography: references.bib
+format:
+  pdf:
+    keep-tex: true
+    number-sections: true
+    include-in-header: latex-header.tex
+execute:
+  warning: false
+editor: source
+crossref:
+  fig-title: "Figure S"
+  title-delim: ":"
+---
+
+# Supplementary material
+
+**Manuscript type:** Article
+
+**Title:** Quantifying how biodiversity affects ecosystem functioning across space and time in natural marine ecosystems
+
+**Authors:** James G. Hagan$^{1, 2, 3}$\*, Benedikt Schrofner-Brunner$^{2, 3}$ and Lars Gamfeldt$^{2, 3, 4}$
+
+1.  Community Ecology Lab, Department of Biology, Vrije Universiteit Brussel (VUB), Pleinlaan 2, 1050 Brussels, Belgium\
+2.  Department of Marine Sciences, University of Gothenburg, Box 461, SE-40530, Gothenburg, Sweden\
+3.  Gothenburg Global Biodiversity Centre, Box 461, SE-40530, Gothenburg, Sweden\
+4.  Centre for Sea and Society, Box 260, SE-40530, Gothenburg, Sweden
+
+**Corresponding author:** James G. Hagan (james_hagan\@outlook.com)
+
+**Data availability:** Raw data for case study 1 are available on Github (https://github.com/haganjam/BEF_quant_scale) and will be archived upon publication. Raw data for case study 2 are archived on ResearchBox and will be public upon publication: (https://researchbox.org/843&PEER_REVIEW_passcode=GLGJFF).
+
+**Code availability:** All code used to perform the analysis can be found on Github: (https://github.com/haganjam/BEF_quant_scale) and will be archived on Zenodo upon publication.
+
+**Key words:** biodiversity, ecosystem function, scale, semi-natural ecosystem, statistical partition
+
+## Appendix 1: Supplementary results
+
+::: {#fig-s1}
+
+![](figures/app_1_fig_s1.png)
+
+The change in % cover of mixtures (blue stars) and monocultures of the four macroalgal species (filled circles) over time at the two shores: (a) Challaborough and (b) Kingsand. Solid lines connect the data points. The relationship between % cover in monoculture and relative abundance in the mixture across (c) places and (d) times for the four study species. Solid lines in (c) and (d) are linear regression lines to aid visualisation.
+
+:::
+
+
+::: {#fig-s2}
+
+![](figures/app_1_fig_s2.png)
+
+Dry biomass (g) of the five OTUs in monoculture and in mixture (blue star symbol) across all places (different panels, number in the top left) and times for all 39 sites in the nine clusters (A, B, C, D, E, G, H, I and J). Lines connect the points. Points and error bars represent the mean and 95% highest posterior density interval of the imputed monocultures. When no error bar is present, the observed value is presented.
+
+:::
+
+
+::: {#fig-s3}
+
+![](figures/app_1_fig_s3.png)
+
+(a) The relationship between spatial environmental heterogeneity as quantified using multivariate dispersion of 14 environmental variables (e.g. wave exposure, mean and average temperature variability etc.) and the magnitude of the spatial insurance effect (mean and 95% highest density posterior interval) across eight of the nine clusters. For this analysis, we excluded cluster H because it behaved considerably differently from the other clusters. Light grey circles are 100 random samples from the distribution of 100 000 spatial insurance effect estimates for each cluster. The red lines are a sample of the 200 simple linear regression lines from a total of 100 000 regression lines (one for each of the 100 000 spatial insurance effect estimates). (b) Density plot of the distribution of slope estimates from the 100 000 simple linear regressions of multivariate dispersion on the spatial insurance effect. Red circle with the error bar is the mean and 95% highest density posterior interval.
+
+:::
+
+
+::: {#fig-s4}
+
+![](figures/app_1_fig_s4.png)
+
+(a) Multivariate dispersion between clusters originally classified as heterogeneous and homogeneous based on a priori geographic data. Clusters originally classified as heterogeneous had significantly higher multivariate dispersion than those originally classified as homogeneous (Welch’s t-test: $t_{5.5} = 3.4$, $P = 0.017$). Shapes and error bars indicate the mean ± SD. (b) The first two principal components, which account for 70% of the variation in the data, of the different clusters (colours) that were originally designated as heterogeneous (circles) or homogeneous (triangles) based on 14 z-score standardised environmental variables. Points with white letters are the centroids of each cluster and represent the cluster identity (main text, Fig. 2).
+
+:::
+
+::: {#fig-s5}
+
+![](figures/app_1_fig_s5.png)
+
+(a) The first two principal components, which account for 74% of the variation in the data, of the different places and times within the different clusters (colours) based on nine environmental variables that were available for all places and times: panel to the seabed (m), panel depth (m), the average, coefficient of variation, maximum and minimum temperature over the course of the experiment (ºC) and the average, coefficient of variation and maximum light level over the course of the experiment (lux). The loadings of the nine variables are presented for PC1 (b) and PC2 (c). 
+
+:::
+
+
+Table S1: Ecological interpretation of the different biodiversity effects quantified. A visual interpretation of these different effects can be found in Main Fig. 1.
+
+Table S2: Results of the random effects meta-analysis model that we used to test whether the different biodiversity effects differed significantly from zero in the marine fouling community case study.
+
+
+
+Table S3: Comparison of the seven models (Appendix 4.6) along with an intercept-only null model (Model 8) used to impute the missing monoculture data in the marine fouling communities. Model comparison was conducted using leave-one-out cross validation (LOO) estimated using Pareto Smoothed Importance Sampling (PSIS). In addition to the LOO estimates and standard errors, we also report the effective number of parameters (p-LOO) with standard error, the number of unconstrained parameters (Pars.) and the percentage of data points with k-diagnostic values for PSIS greater than 0.5. Bold model is the best model.
+
+## Appendix 2: Description of the statistical partition
+
+A full description of the statistical partition is beyond the scope of this article. But, in brief, Isbell and colleagues’1 statistical partition was developed for a dataset comprising mixtures of competing species from a single trophic level (i.e. horizontal communities sensu2) in different spatial locations (places) that were measured at different time points (times). In addition, the dataset had to contain corresponding monoculture functioning data for all species in mixture for each place-time combination. With such data we can calculate a net biodiversity effect (NBE) for a given mixture as the difference in the observed functioning of a mixture relative to a null expectation generated from each species’ functioning in monoculture and their initial relative abundances (i.e. expected relative yields RYEs). For a single mixture with S species at some place and time, the NBE (denoted NBEα to denote that it is calculated for a single place and time) is (from3):
+
+Where ΔRYi is the change in relative yield of species i (RYO,i – RYE,i). RYO,i is the observed relative yield (Yi/Mi) calculated as the observed functioning in mixture of species i (Yi) divided by the observed monoculture functioning of species i (Mi), and RYE,i is the expected relative yield of species i in mixture. The NBEα can then be partitioned into the local complementary effect (term 1 below) and the local selection effect (term 2 below):
+
+Isbell and colleagues1 showed that this equation can be generalised to calculate an NBE across P places and T times which we denote NBEγ (following1) as follows:
+
+Therefore, NBEγ is the sum of the NBEα across all times and places. We can also calculate the total local complementarity and total local selection effects by simply summing these terms across all times and places1. Similarly, this NBEγ can be partitioned into a total complementarity (term 1) and a total selection effect (term 2):
+
+To quantify the insurance effects of biodiversity, Isbell and colleagues1 took this a step further. Specifically, they rewrote the NBEγ not only in terms of RYO (relative yield observed in the mixture) and RYE (expected relative yield in respect of the initial proportions), but also in terms of the observed relative proportion of species in mixture p. Doing this gives the following expression for the NBEγ (see1 for details of the derivation):
+
+Where ΔRYO,ijk is the difference between the observed relative yield and observed relative proportion (RYO,ijk – pO,ijk). The Δpijk is the difference between the observed relative proportion and the expected relative yield (RYE,ijk – pO,ijk) and describes the change in dominance in a mixture of species i in a given place at a given time. Because , the first term is equal to the total complementarity effect. The second term is called non-random overyielding. The third term, which is made up of the covariance between the change in dominance (Δpijk) and the monoculture functioning (Mijk) of species i in a given place (j) at a given time (k) quantifies the total insurance effect. The total insurance effect quantifies the extent to which species that are high functioning in monoculture tend to dominate mixtures, a common assumption in many models of the insurance effect4,5. 
+
+Dominance of species in mixture that are high functioning in monoculture (the signature of insurance effects) can manifest in several different ways. Isbell and colleagues1 showed that the total insurance effect can be partitioned into four different effects that describe how covariance between dominance in mixture and high functioning in monoculture manifests: average selection, spatial insurance, temporal insurance and spatio-temporal insurance effects (see Main Fig. 1 and Table S1). For example, the spatial insurance effect quantifies the part of the NBEγ that is due to species dominating mixtures in places where they are high functioning in monoculture. Thus, by quantifying these insurance effects, we can directly quantify the contribution of species partitioning their niches in space and time to ecosystem functioning at large spatial and temporal scales.
+
+## Appendix 3: Testing the assumption of unknown expected relative yield values (RYEs)
+
+As discussed in the previous section, Isbell and colleagues’1 statistical partition requires knowing the initial relative abundance of species in mixture (i.e. expected relative yields, RYEs), because the RYEs (along with the functioning of the monocultures) determine the null expectation of mixture functioning. Specifically, average selection, spatial insurance, temporal insurance and spatio-temporal insurance are sensitive to the RYEs. Thus, by definition, total insurance, total selection and the net biodiversity effect are also affected by RYEs because the partition is additive (see Main Fig. 1, Table S1). In contrast, neither total complementarity nor non-random overyielding are affected by RYEs. In the case of total complementarity, we can show mathematically that it cannot be affected by only changing RYEs. Consider the case of two species at a single time and single place. The formula for total complementarity is then:
+
+Where  is the number of species,   is the average change in relative yield across the two species and  is the average monoculture functioning across the two species. The change in relative yield for species, , is calculated as:
+
+Where  and  are the functioning values (or yields as it is commonly referred to in these partitions) of species i in mixture and monoculture respectively,  is the observed relative yield of species i and  is the expected relative yield of species i. Given these equations and this specific case with two species, we calculate the average change in relative yield  across the species as follows:
+
+Doing a simple algebraic rearrangement, we get the following:
+
+Given that the RYE values sum to one3,6, the average change in relative yield  cannot change by only changing the RYEs. Because calculating total complementarity is simply the average across all times and places, this proof holds in the more general case of many species, many times and many places. In the case of non-random overyielding, it is simply the case that the RYEs never enter the calculation (see Main Fig. 1, Table S1) and therefore do not affect it.
+
+In classic biodiversity-ecosystem functioning experiments, mixtures are typically inoculated with equal proportions of all species (i.e. mixtures are initially inoculated with a 1/S proportion of each species where S is the inoculated number of species in the mixture). This is referred to as a replacement design7. With such an experimental design, the RYEs are simply assumed to be 1/S and it is straightforward to calculate the net biodiversity effect, the selection effect and the complementarity effect for a given time and place3. 
+
+With this partition1 that considers multiple times and places, choosing the RYEs is not as straightforward. In the examples presented by Isbell and colleagues1 in their Table 2 which have two species, two places and two times, the RYEs for the two species are assumed to be 0.5 at both places and both times (Table S4a). The implication of this is not trivial. It means that even if the observed relative abundances of species 1 and 2 in place 1 and at time 1 are 0.9 and 0.1 respectively, the assumed RYEs for the two species in place 1 and at time 2 would still be 0.5. This could affect the null expectation of mixture functioning. Thus, whether to allow the RYEs to vary through time and how to do that (e.g. should it be based on the relative abundances of species at previous time points?) has not been resolved. Moreover, in natural systems, there is an additional layer of complexity because we cannot simply assume that a given place will be colonised by species in equal proportions as we can with replacement design experiments. Rather, it is likely that different places will be initially colonised by species in different proportions. These issues do not, in our opinion, have a straightforward solution.
+
+Here, we take the following approach to deal with the issues surrounding the choice of RYEs. First, we assume that all species are initially present at all times and in all places but that the exact RYEs of each species are unknown. Therefore, we assume a set of random RYEs to use when calculating the different biodiversity effects (Table S4b). Second, we do this 100 times and recalculate the different biodiversity effects with different sets of RYEs. This provides a distribution of possible biodiversity effects which includes the uncertainty from not knowing the true RYEs in each place and at each time. Thus, we follow Isbell and colleagues1 in not basing the RYEs on the relative abundances of species at previous time points. But importantly, we deviate from Isbell and colleagues1 by allowing RYEs to vary and incorporating that uncertainty into the estimates of the different biodiversity effects.
+
+Table S4: (a) The RYEs assumed by Isbell and colleagues1 in their examples presented in Table 2. (b) One possible sample of RYEs using our method for choosing RYEs for a dataset with the same structure as Table 2 in the original paper1.
+
+Fig. S6: (a) A dataset with the functioning of each of three species in mixture and in monoculture at two times and two places. Given unknown RYEs, (b) we draw three RYEs from a Dirichlet distribution and calculate the biodiversity effects that are sensitive to RYEs, namely: net biodiversity effect, total selection, total insurance, average selection, spatial insurance, temporal insurance, spatio-temporal insurance. (c) The result is a distribution of these effects which reflects the uncertainty in the biodiversity effects due to not knowing the RYEs.
+
+To do this, we generate a set of random RYEs for each place and time, by drawing a simplex (i.e. a set of numbers that sum to one) from a Dirichlet distribution. The Dirichlet distribution is parameterised using a vector of α-values that determine how even the numbers are. In the case of RYEs, the number of α-values must be equal to the number of species. Then, using a set of RYEs for all places and times (which constitutes one sample, see example of one sample in Table S4b for the case of two species, two places and two times), we can calculate the different biodiversity effects that are sensitive to the RYEs (i.e. net biodiversity effect, total selection, total insurance, average selection, spatial insurance, temporal insurance, spatio-temporal insurance) (Fig. S6 for a graphical overview of the procedure). 
+
+We tested if this procedure leads to reliable estimates of the different biodiversity effects in two different ways. First, we calculated the different biodiversity effects from the six examples in Table 2 from Isbell and colleagues1 assuming that all species were initially present but with a range of different RYEs at different places and times drawn from a Dirichlet distribution. These examples have two species, two times and two places and the RYEs were set at 0.5 for both species. We drew 100 samples for each place-time combination from a Dirichlet distribution with both α-values (one α-value for each species) equal to three. Preliminary analyses showed that alpha values of three provide a wide distribution of possible RYEs (Fig. S7). The variation in RYE across the three species decreases with increasing α, so if we would have reason to assume little variation between species in their initial relative abundances, we could have chosen a higher alpha. We then calculated the biodiversity effects using these 100 samples and compared the distribution of 100 estimates of each biodiversity effect to the biodiversity effects presented in Table 2 by Isbell and colleagues1. In these six examples, the 95% percentile interval of the distribution of the biodiversity effects that are sensitive to RYEs (net biodiversity effect, total insurance effect, average selection, spatial insurance, temporal insurance and spatio-temporal insurance) contained the true biodiversity effect reported by Isbell and colleagues1 100% of the time. Moreover, the absolute deviation of the mean of the distribution of each biodiversity effect from the true biodiversity effect was a maximum of 2.1 units. This is very low considering the net biodiversity effect was 100 in their six examples. Therefore, in the simple examples where the true biodiversity effect is known (Table 2 in1), our method of using random RYEs was able to provide an accurate estimate of the different biodiversity effects. 
+
+Fig. S7: Spread of 200 samples of initial relative abundances (i.e. relative expected yields, RYEs) for three species drawn from a Dirichlet distribution when assuming alpha values of 1, 2, 3, 4, 5 and 6 (different panels). We chose alpha values of 3 to parameterise the distribution of RYEs for our calculations (red lines) as this provided, in our view, a reasonable spread (Range: 0.02 – 0.90).
+
+However, these examples are very simple. To see if our method of assuming random RYEs from the Dirichlet distribution works with more complex data, we used simulations. For this, we simulated metacommunities composed of populations of competing species using Thompson and colleagues’8 framework implemented in the corresponding R package mcomsimr9. We used the population size (i.e. the number of individuals, N) as the measure of functioning as per the original paper8. This model incorporates density-independent species responses to the abiotic environment, inter and intra-specific competition (we do not include facilitation) and dispersal. A full explanation of the model assumptions can be found in Thompson and colleagues8. But, in brief, the model considers P spatially explicit patches inhabited by S interacting species. The abiotic environment varies in space and time and is defined by one variable that varies between 0 and 1, E. The per capita growth rate of species i in patch p, at time t (rip(t)) varies with the environment via the following Gaussian function:
+
+Where rmax is the maximum per capita growth rate of the species. How close the rip(t) gets to the rmax is determined by zi (range 0-1) which is species i’s abiotic optimum (i.e. where its growth rate is maximised), σi (range 0-1) which is the abiotic niche breadth and Ep(t), (range 0-1) which is the value of the environment in patch p, at time t. Species abundances within a patch at a given time (Nip(t)) are modelled with these growth rates (rip(t)) as inputs into the following logistic population growth model where species compete according to Lotka-Volterra dynamics (specifically, the Beverton-Holt formulation8):
+
+In this model, Nip(t), the population size of species i, in patch p, at time t is determined by a combination of the growth rate (rip(t)) along with intra- and inter-specific competition which is modelled using per capita competition coefficients αij. Finally, dispersal is added to the model via two additional terms:
+
+Where Emip(t) is the individuals of species i in patch p that leave the patch. Emip(t) is determined via the number of successes in the binomial distribution: Binomial(, a), where a is the probability of success. Thus, the number of dispersing individuals is a stochastic process. The Iip(t) term describes the number of individuals of species i arriving in patch p, at time t. These individuals come from the surrounding patches via the following function where the probability of dispersal of species i to patch p depends on the geographic distance between patches:
+
+Here, dpq is the distance between patches p and q whilst L describes the strength by which the dispersal probability decreases with distance. Individuals of species i leaving patch p at time t (Emip(t)) are then randomly allocated to other patches based on these probabilities that vary with dpq and L which gives us the  term in equation three above. Finally, following the addition of the extinction and immigration terms, all species have a non-zero probability of going locally extinct which is governed by a binomial distribution with a probability of success: pe.
+
+Using this model, we simulated 1500 different metacommunities with three species and five patches (i.e. places in the Isbell and colleagues’1 terminology) for 300 time-steps. Samples were taken at three time-points (100, 200 and 300). These simulations were designed to roughly match up with the data from the two case studies (case study 1: four species, two places, three times; case study 2: five species, five places per cluster, three times). Each landscape was initiated as a row of five patches separated by 25 units and initialised as a torus to avoid edge effects8.  
+
+Fig. S8: Variation in the abiotic environment of the simulated metacommunities with (a) high spatial environmental variation and low temporal environmental variation, (b) low spatial environmental variation but high temporal environmental variation and (c) a combination of both spatial and temporal environmental variation. Plotted is one of 500 samples for each of these three different kinds of simulated environmental variation.
+
+To simulate a continuously varying abiotic environment between 0 and 1, we used an exponential covariance model (as per8). However, unlike Thompson and colleagues8 we used this model to simulate three different types of continuously fluctuating abiotic environments (500 replicates simulations of each type). First, we aimed to maximise only spatial environmental variation (Fig. S8a). To do this, we used the exponential covariance model to simulate a different fluctuating environment for each of the five places (mu = 0.5, sd = 0.25, autocorrelation parameter = 5). We then standardised the fluctuating environments for each place between 0-0.2, 0.2-0.4, 0.4-0.6, 0.6-0.8 and 0.8-1 respectively. This meant that the value of the abiotic environment never overlapped between the five places and allowed some minor temporal environmental variation (Fig. S8a). 
+
+Second, we aimed to maximise temporal, but not spatial, variation. For this, we used the exponential covariance model to simulate a single fluctuating environment (mu = 0.5, sd = 0.25, autocorrelation parameter = 5) which we applied to all five places. Then, for each place, we translated the abiotic environment variable by an amount drawn from a normal distribution: Normal(0, 0.02). Across all places, we standardised the abiotic environment variable between 0 and 1 (Fig. S8b). 
+
+Third, we aimed to simulate places that had a combination of spatial and temporal environmental variation. Again, we used the exponential covariance model to simulate a fluctuating environment for each place but we drew the mu parameter from a uniform distribution (mu = Uniform(0,1), sd = 0.25, autocorrelation parameter = 5). We standardised the abiotic environment between 0 and 1 across all places (Fig. S8c).
+
+Fig. S9: Population size as a measure of functioning of species 1-3 in mixture in a single 5-patch metacommunity simulated for 300 time points and with three time points plotted (100, 200 and 300). 
+
+The rest of the model parameters were chosen as follows. Places were seeded with three species with starting abundances that summed to 150 individuals and with a minimum starting abundance of 10 individuals. The probability of extirpation (pe) was set at 0.00001. The dispersal rate term (a) was drawn from a uniform distribution: Uniform(0.01, 0.1). Species’ abiotic optima (zi) were evenly spaced between 0.3 and 0.7 and species’ abiotic niche breadths (σi) were drawn from a uniform distribution: Uniform(0.15, 0.3). The competition coefficients (αij) were drawn from a uniform distribution: Uniform(αmin, αmax) where αmin ~ Uniform(0, 0.5) and αmax ~ Uniform(0.5, 1.5) and assumed to be symmetric (i.e. αij = αji). Intraspecific competition (i.e. αi=j) was set at one and all competition coefficients were scaled by multiplying by 0.05 to allow higher equilibrium abundances (as per Thompson and colleagues’8 recommendation). Finally, for each simulation, we simulated identical metacommunities with each species in monoculture seeded into each patch. Thus, each of the 1500 simulated metacommunities had complete mixture and monoculture data for all places and time points (see Fig. S9 and S10 for example simulations).
+
+Fig. S10: Population size as a measure of functioning of species 1-3 in monoculture in a single 5-patch metacommunity simulated for 300 time points and with three time points plotted (100, 200 and 300).
+
+Table S5: The mean and range (minimum and maximum) of the estimated biodiversity effects that are sensitive to varying RYEs across the 500 simulations of each of three different types of abiotically varying environment: spatial environmental variation (Fig. S8a), temporal environmental variation (Fig. S8b) and a combination of spatial and temporal environmental variation (Fig. S8c).
+
+Using these simulations, we were able to generate metacommunities with different levels of intra- and inter-specific competition, dispersal rates and environmental heterogeneity in space and time which led to a wide variety of different magnitudes of the different biodiversity effects (Table S5). This was sufficient for our purposes as we aimed to test our workflow against simulated data with known biodiversity effects rather than test specific hypotheses regarding how different parameter combinations may affect the different biodiversity effects.
+
+We recorded the initial relative abundance of the different species in each place. Using this information, we defined the true, simulated biodiversity effects (for the effects that are sensitive to changing RYEs, namely: net biodiversity effect, total insurance effect, average selection, spatial insurance, temporal insurance and spatio-temporal insurance) as the biodiversity effect assuming that, for each patch at all three time points, the RYEs were the initial relative abundance of the different species (consistent with the replacement series design7). We note that this does not fully resolve the issue of whether the RYEs should change through time and rather follows the methodology in the original paper1 of assuming the same RYE values for all places through time. Then, as described previously (see also Fig. S6), we drew 100 samples for each place-time combination from a Dirichlet distribution with all three α-values equal to three. We then calculated the biodiversity effects using these 100 samples and compared them with 100 samples of the true, simulated biodiversity effects. Finally, we correlated (i) the biodiversity effects based on RYEs from the Dirichlet distribution and (ii) the true, simulated biodiversity effects. For this correlation, we pooled the three different environmental variation scenarios. We pooled the scenarios to see if our method of assuming random RYEs from a Dirichlet distribution works when we do not know a priori the kind of environmental variation that is present in any given dataset (i.e. whether the environmental variation is mainly spatial, temporal or a combination of both).
+
+For all nine biodiversity effects and pooled across the three scenarios, the Pearson correlation coefficient between the mean estimated biodiversity effect and the true, simulated biodiversity effect was between 0.94 and 1 (Fig. S11). Moreover, across all 1500 simulated metacommunities, the 95% percentile interval of the estimated distribution of biodiversity effects contained the true, simulated biodiversity effect in more than 80% of the simulations for the net biodiversity effect, total selection, total insurance, temporal insurance and spatio-temporal insurance barring average selection and spatial insurance (Fig. S11). For average selection and spatial insurance, the 95% percentile interval contained the true, simulated biodiversity effect in 62% and 68% of the 1500 simulations respectively. However, despite the lower percentage than the other effects, the absolute error of the estimated mean average selection and mean spatial insurance effect from the true simulated biodiversity effects was low (Median: 10.1 and 9.5 respectively, Table S6) considering that the true simulated effects were relatively high in comparison (Table S6). Finally, despite these relatively minor precision issues, the method of assuming random RYEs consistently estimated the correct relative magnitude of the different effects (i.e. which effects were greater or less than others within a given simulation). Specifically, the median Spearman rank correlation between the biodiversity effects within each individual simulation was 1 (PI95%: 0.79 – 1).
+
+Fig. S11: The relationship between the true, simulated biodiversity effects and the mean and 95% percentile interval (PI95%) of the estimated biodiversity effects assuming 100 different samples from the Dirichlet distribution for each of the five patches and time points in the 1500 simulated metacommunities. Colours indicate whether the true, simulated biodiversity effect is within the 95% percentile interval for a given metacommunity simulation. The black, dashed line is the 1:1 line. Also reported is the Pearson’s correlation coefficient for each biodiversity effect (r).
+
+Table S6: The proportion of the 1500 simulations where the true, simulated biodiversity was within the 95% percentile interval of the distribution of biodiversity effects from assuming 100 different RYEs for each place drawn from a Dirichlet distribution. Also reported is the absolute deviation of the mean of the distribution of biodiversity effects from the true, simulated biodiversity effect across the 1500 simulations along with the pooled mean of each effect across the 1500 simulations for comparison with the error values.
+
+
+## Appendix 4: Extended methods for case study 2
+
+### Appendix 4.1: Overview and map of the study area and experimental design
+
+The marine environment around Tjärnö on the Swedish West Coast (Fig. S12) is subject to various natural and anthropogenic influences and hosts a mixture of shallow and deep-water habitats, including rocky reefs, macroalgae forests, seagrass meadows, and sandy bottoms characterise this area. The tidal range is about 0.3 m, but due to wind and changes in atmospheric pressure, the water level can fluctuate by up to 2 m10. Many marine sessile organisms (e.g., barnacles, bryozoans, hydrozoans, ascidians) settle opportunistically on available surfaces of bare rock, macroalgae, and artificial surfaces such as boat hulls. Previous studies, especially focused on the mitigation of the biofouling problem, successfully used PMMA (Polymethyl methacrylate) panels as settling substrate for fouling species11.
+
+Fig. S12: (a) Map of the study area with the initial 50 sites (points) coloured by cluster. Clusters B, F, H, I and J were classified as homogenous and were, therefore, at the same depth level within. Clusters A, C, D, E and G were classified as heterogenous and had alternating depths within clusters (see Fig. S4). (b) At each site 12 PMMA panels were mounted on a wire frame in either 3 or 6 m depth. At each site, three panels were randomly assigned to be mixtures at different time points (t1-3). After settlement on the monoculture (mono) panels, the panel was assigned to a species (S1-5) and all other species besides the target species were removed.
+
+### Appendix 4.2: Choosing sites and clusters
+
+When choosing the sites, we aimed to create five environmentally heterogeneous and five environmentally homogeneous clusters with five sites each. We did this using a priori geographical data of three variables: water depth from nautical charts (1:50 000; Sjöfartsverket 2022), turbidity (depth of visibility (m), 15 m resolution) and relative wave exposure (unitless, 15 m resolution)12. We set the minimum distance between sites within a cluster to 40 m and the maximum distance to approximately 1000 m. Water depth had to be between 7 m and 20 m. Moreover, the clusters were not allowed to overlap and had to be relatively equally spaced around the experimental area (Fig. S12). With these constraints, we randomly sampled clusters of sites and calculated environmental heterogeneity. Environmental heterogeneity was based on z-score standardised water depth, turbidity and wave exposure and calculated as multivariate dispersion based on Euclidean distance using the betadisper() function from the vegan package13 in R v4.1.214. We chose clusters that varied in their multivariate dispersion. The sites within the five clusters with the lowest multivariate dispersion were kept at a constant depth of 3 m or 6 m and the sites within the five clusters with the highest multivariate dispersion had alternating depths (e.g. two sites with 3 m depth and three sites with 6 m depth).
+
+### Appendix 4.3: In-situ environmental variable measurements
+
+During the experiment, we measured salinity using a probe (YSI 30 Conductivity Salinity Temperature) and Secchi depth using a Secchi disk at each site on two separate occasions. The frame depth and distance from the frame to the seabed at each site was measured on three occasions which corresponded to the days when mixtures and monocultures were collected (days 34, 47 and 60 of the experiment). In addition, we measured relative water movement approximated by gypsum dissolution15 on two occasions during the experiment at all sites. For this, we installed a gypsum cylinder (mean = 57.4 g, SD = 1.9 g) at each site at approximately the same time (± 2 h) for 24 h. Since the gypsum dissolution is sensitive to various variables (surface area, temperature, salinity, type of water motion), it cannot be used to directly derive water movement15. However, it is a relative indicator of water movement. Therefore, we can use the raw value (mass reduction g hour-1) to compare sites in terms of water movement. These two measurements were averaged across the two time points for each site. 
+
+In addition to these measurements, we installed a light-temperature logger (Onset UA-002-64 HOBO Pendant® Temperature/Light 64K Data and Onset MX2202 HOBO Pendant® MX Temperature/Light Data Logger) on each frame with an hourly logging interval during the time of the experiment. We used these data to calculate the average, coefficient of variation, maximum and minimum temperature (ºC) and the average, coefficient of variation and maximum light level (lux) for three separate intervals: start of the experiment to the first measurements on day 34 (t1), between day 34 and day 47 (t2) and between day 47 (t3) and the end of the experiment on day 60.
+
+### Appendix 4.4: Correcting monocultures for the effects of removal
+
+On the monoculture panels, the OTUs did not always completely cover the settling panel (Fig. S13b versus almost full coverage observed in Fig. S13a). This is because we had to scrape off other OTUs to make sure we could obtain a monoculture (see Materials and methods). To correct for this, we calculated the dry biomass of a monoculture tile assuming that it covered the total area of the tile. To do this, we divided monoculture biomass by the proportional cover of the monoculture on the panel (Equation S13):
+
+Fig. S13: (a) A mixture panel with almost 100 % cover. (b) A monoculture panel with 65% cover of the Bryo OTU. The margin of 1 cm around the organisms was removed before measurement and is ignored for the cover calculation.
+
+### Appendix 4.5: Similarity of replicate tiles at the same time point
+
+In the marine fouling community experiment, tiles were destructively sampled at different time points that were meant to represent the same community (Fig. S14). For example, we had three tiles for the mixture at each site (i.e. each buoy). These tiles were destructively sampled at different time points and were thus meant to represent the same mixture (Fig. S14). Therefore, we assumed that, at all three time points, the three different tiles would contain similar or identical marine fouling communities (see Fig. S15 for a graphical representation of the problem). 
+
+Fig. S14: (a) Layout of marine fouling tiles at a single buoy. Tiles are assigned to be mixtures (mix) or monocultures of different OTUs (mono s1, mono s2 etc.). Moreover, there are three separate tiles for the mixture and for each monoculture. These tiles are destructively sampled for biomass measurements at three different time points (t1, t2 and t3). Before destructive sampling, photographs are taken of all tiles from which percentage cover of different OTUs (s1-5) is extracted. (b) At the given time point, the relevant tiles are destructively sampled for dry biomass (g).
+
+We cannot test this assumption with the biomass data obtained from the destructive samples because we only have one destructive sample for each time point (Fig. S14). However, we photographed all tiles at all time points. Thus, we can compare the percentage cover of different OTUs on different tiles at the same time point. Given that cover and biomass tend to be strongly correlated, we can compare the cover of OTUs on different tiles at the same time point. This allows us to test the assumption that the three different tiles that we sampled at three different time points contain similar or almost identical fouling communities (Fig. S15).
+
+Fig. S15: (a) We assumed that, for a given tile category (e.g. mixture, monoculture s1 etc.), the three replicates that were destructively sampled at the three different times point (t1-3, Fig. S14) have similar community structure. Therefore, we assumed that the dry biomass of different species correlates well across time points. But we only have biomass data for t1 tiles at t1 (Fig. S15). (b) Thus, we tested this assumption using the percentage cover values as we have cover data for tiles at all time-points (Fig. S15).
+
+To test whether tiles that were destructively sampled at different time points had similar community structure at the same time points, we chose 20 buoys randomly and extracted the percentage cover of different OTUs from photographs using ImageJ16. This was done for tiles that were destructively sampled at different time points but where the photographs were taken on the same day. Thus, we had OTU cover (%) data taken at the same time from two different tiles from 20 buoys (40 data points in total).
+
+Fig. S16: (a) Relationship between cover on mixture tiles photographed at the same time point for all tiles and all OTUs (different colours). (b) Relationship between total cover of all OTUs on mixture tiles photographed at the same time point. The dashed line is the 1:1 line. The rho is Spearman’s correlation coefficient.
+
+Across all OTUs and buoys, there was a strong positive correlation between percentage cover on the different tiles (Spearman’s r = 0.82, S = 30119, P < 0.001). Most values were close to the 1:1 line, but there were several outliers (Fig. S16). In addition, the total cover of all OTUs (i.e. sum of cover of all species on a tile) on the different tiles was also strongly correlated (Spearman’s r = 0.80, S = 264, P < 0.001) and the values were close to the 1:1 line (Fig. S16). These strong, positive correlations indicate that the community structure on different tile replicates measured at the same time was similar. In line with this, the absolute deviation of OTU cover between the different tile replicates across OTUs was relatively low (mean ± SD: 5.3 ± 11 %). Given that percentage cover values are well known to contain considerable error compared to more direct abundance metrics like biomass17, these results indicate that tiles that were destructively sampled at different time points do have similar community structure when measured at the same time in terms of percentage cover. All correlation analyses presented were performed using the cor() function in R v4.1.214.
+
+### Appendix 4.6: Multilevel regression models for monoculture imputation
+
+A complete mixture-monoculture dataset for this experiment would consist of monocultures of all five OTUs for the 39 mixtures at all three time points (i.e. 39 places × 3 time points × 5 species = 585 monoculture datapoints). We imputed this missing data using a generalised linear model (GLM) fit in a Bayesian framework. To do this, we first used a Principal Components Analysis (PCA) to decompose nine environmental variables into their major axes of variation, namely: panel depth (m), distance from the panel to the seabed (m), the average, coefficient of variation, maximum and minimum temperature over the course of the experiment (ºC) and the average, coefficient of variation and maximum light level over the course of the experiment (lux). All nine variables were z-score standardised, and the PCA was fit using the prcomp() function in R v4.1.214. The first two PC axes (PC1 and PC2) explained 74% of the variation in these nine environmental variables (Fig. S5).
+
+We then fit seven multilevel GLMs with monoculture biomass (M) as the response variable and different combinations of PC1, PC2 and the OTU’s biomass in mixture (Y) as predictor variables along with an intercept only null model. All predictor variables were standardized between 0 and 1. The observed monoculture biomasses were strictly positive, right skewed and contained zeros (ca. 8% of the observed monoculture biomass values were zero). Thus, we modelled monoculture biomass using a Log-Normal hurdle model. A hurdle model is a mixture model where the response variable is modelled as zero or non-zero (0-1) using a Bernoulli process. Then, if the response variable is non-zero, it is modelled using a different distribution, in this case, the Log-Normal distribution. This allowed us to explicitly model zeros and the positive, right-skew in the non-zero data. 
+
+The seven models and the null model (Model 8) with priors are presented below. We used weakly informative priors that we chose using a prior predictive simulation. All models were written using a non-centered parameterisation18. For each model, we estimated the posterior distribution using Stan’s No-U-Turn Sampler Hamiltonian Monte Carlo algorithm19 with four separate chains. We implemented this in R v4.1.214 using the rstan package20. We assessed model convergence by inspecting trace plots, R-hat values (Gelman-Rubin statistic) and effective sample sizes.
+
+#### Model 1
+
+$$
+w_i \sim \mathrm{Bernoulli}(p_i)
+$$
+
+$$
+\text{logit}(p_i) = \theta_{S[i]} + \delta_{1[S[i]}} Y_i
+$$
+
+$$
+\theta_j = \bar{\theta} + \nu_{.1}
+$$
+
+$$
+\delta_{1j} = \bar{\delta} + \nu_{.2}
+$$
+
+$$
+\nu = (\mathrm{diag}(\tau) \times \mathrm{cholesky}(R) \times V)^\top
+$$
+
+$$
+V_{k,j} \sim \mathcal{N}(0,1)
+$$
+
+$$
+\bar{\theta}, \bar{\delta} \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+\tau_\theta, \tau_\delta \sim \mathrm{Exponential}(3)
+$$
+
+$$
+R_{k,k} \sim \mathrm{LKJcorr}(2)
+$$
+
+$$
+(M_i \mid w_i = 1) \sim \mathrm{LogNormal}(u_i, \epsilon)
+$$
+
+$$
+u_i = \alpha_{S[i]} + \beta_{1[S[i]}} Y_i + \beta_{2[S[i]}} \mathrm{PC1}_i
+$$
+
+$$
+\alpha_j = \bar{\alpha} + z_{.1}
+$$
+
+$$
+\beta_{1j} = \bar{\beta}_1 + z_{.2}
+$$
+
+$$
+\beta_{2j} = \bar{\beta}_2 + z_{.3}
+$$
+
+$$
+z = (\mathrm{diag}(\sigma) \times \mathrm{cholesky}(L) \times Z)^\top
+$$
+
+$$
+\epsilon \sim \mathrm{Exponential}(5)
+$$
+
+$$
+Z_{l,j} \sim \mathcal{N}(0,1)
+$$
+
+$$
+\bar{\alpha}, \bar{\beta}_1, \bar{\beta}_2 \sim \mathcal{N}(0,1.5)
+$$
+
+$$
+\sigma_\alpha, \sigma_{\beta_1}, \sigma_{\beta_2} \sim \mathrm{Exponential}(3)
+$$
+
+$$
+L_{l,l} \sim \mathrm{LKJcorr}(2)
+$$
+
+$$
+w_i = 
+\begin{cases}
+0 & \leftrightarrow (M_i = 0) \\
+1 & \leftrightarrow (M_i > 0)
+\end{cases}
+$$
+
+#### Model 2
+
+$$
+w_i \sim \mathrm{Bernoulli}(p_i)
+$$
+
+$$
+\text{logit}(p_i) = \theta + \delta_1 Y_i
+$$
+
+$$
+\theta, \delta_1 \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+(M_i \mid w_i = 1) \sim \mathrm{LogNormal}(u_i, \epsilon)
+$$
+
+$$
+u_i = \alpha_{S[i]} + \beta_{1[S[i]}} Y_i + \beta_{2[S[i]}} \mathrm{PC1}_i
+$$
+
+$$
+\alpha_j = \bar{\alpha} + z_{.1}
+$$
+
+$$
+\beta_{1j} = \bar{\beta}_1 + z_{.2}
+$$
+
+$$
+\beta_{2j} = \bar{\beta}_2 + z_{.3}
+$$
+
+$$
+z = (\mathrm{diag}(\sigma) \times \mathrm{cholesky}(L) \times Z)^\top
+$$
+
+$$
+\epsilon \sim \mathrm{Exponential}(5)
+$$
+
+$$
+Z_{l,j} \sim \mathcal{N}(0,1)
+$$
+
+$$
+\bar{\alpha}, \bar{\beta}_1, \bar{\beta}_2 \sim \mathcal{N}(0,1.5)
+$$
+
+$$
+\sigma_\alpha, \sigma_{\beta_1}, \sigma_{\beta_2} \sim \mathrm{Exponential}(3)
+$$
+
+$$
+L_{l,l} \sim \mathrm{LKJcorr}(2)
+$$
+
+$$
+w_i = 
+\begin{cases}
+0 & \leftrightarrow (M_i = 0) \\
+1 & \leftrightarrow (M_i > 0)
+\end{cases}
+$$
+
+#### Model 3
+
+$$
+w_i \sim \mathrm{Bernoulli}(p_i)
+$$
+
+$$
+\text{logit}(p_i) = \theta + \delta_1 Y_i
+$$
+
+$$
+\theta, \delta_1 \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+(M_i \mid w_i = 1) \sim \mathrm{LogNormal}(u_i, \epsilon)
+$$
+
+$$
+u_i = \alpha_{S[i]} + \beta_{1[S[i]}} Y_i
+$$
+
+$$
+\alpha_j = \bar{\alpha} + z_{.1}
+$$
+
+$$
+\beta_{1j} = \bar{\beta}_1 + z_{.2}
+$$
+
+$$
+z = (\mathrm{diag}(\sigma) \times \mathrm{cholesky}(L) \times Z)^\top
+$$
+
+$$
+\epsilon \sim \mathrm{Exponential}(5)
+$$
+
+$$
+Z_{l,j} \sim \mathcal{N}(0,1)
+$$
+
+$$
+\bar{\alpha}, \bar{\beta}_1 \sim \mathcal{N}(0,1.5)
+$$
+
+$$
+\sigma_{\alpha}, \sigma_{\beta_1} \sim \mathrm{Exponential}(3)
+$$
+
+$$
+L_{l,l} \sim \mathrm{LKJcorr}(2)
+$$
+
+$$
+w_i = 
+\begin{cases}
+0 & \leftrightarrow (M_i = 0) \\
+1 & \leftrightarrow (M_i > 0)
+\end{cases}
+$$
+
+#### Model 4
+
+$$
+w_i \sim \mathrm{Bernoulli}(p_i)
+$$
+
+$$
+\text{logit}(p_i) = \theta + \delta_1 Y_i
+$$
+
+$$
+\theta, \delta_1 \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+(M_i \mid w_i = 1) \sim \mathrm{LogNormal}(u_i, \epsilon)
+$$
+
+$$
+u_i = \alpha_{S[i]} + \beta_{1[S[i]}} Y_i
+$$
+
+$$
+\alpha_j = \bar{\alpha} + (z \times \sigma_\alpha)
+$$
+
+$$
+\beta_{1j} = \bar{\beta}_1 + (v \times \sigma_{\beta_1})
+$$
+
+$$
+z, v \sim \mathcal{N}(0, 1)
+$$
+
+$$
+\epsilon \sim \mathrm{Exponential}(5)
+$$
+
+$$
+\bar{\alpha}, \bar{\beta}_1 \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+\sigma_\alpha, \sigma_{\beta_1} \sim \mathrm{Exponential}(3)
+$$
+
+$$
+w_i = 
+\begin{cases}
+0 & \leftrightarrow (M_i = 0) \\
+1 & \leftrightarrow (M_i > 0)
+\end{cases}
+$$
+
+#### Model 5
+
+$$
+w_i \sim \mathrm{Bernoulli}(p_i)
+$$
+
+$$
+\text{logit}(p_i) = \theta + \delta_1 Y_i + \delta_2 \mathrm{PC1}_i
+$$
+
+$$
+\theta, \delta_1, \delta_2 \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+(M_i \mid w_i = 1) \sim \mathrm{LogNormal}(u_i, \epsilon)
+$$
+
+$$
+u_i = \alpha_{S[i]} + \beta_1 Y_i + \beta_2 \mathrm{PC1}_i + \beta_3 \mathrm{PC2}_i
+$$
+
+$$
+\alpha_j = \bar{\alpha} + (z \times \sigma_\alpha)
+$$
+
+$$
+z \sim \mathcal{N}(0, 1)
+$$
+
+$$
+\epsilon \sim \mathrm{Exponential}(5)
+$$
+
+$$
+\bar{\alpha} \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+\sigma_\alpha \sim \mathrm{Exponential}(3)
+$$
+
+$$
+\beta_1, \beta_2, \beta_3 \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+w_i = 
+\begin{cases}
+0 & \leftrightarrow (M_i = 0) \\
+1 & \leftrightarrow (M_i > 0)
+\end{cases}
+$$
+
+#### Model 6
+
+$$
+w_i \sim \mathrm{Bernoulli}(p_i)
+$$
+
+$$
+\text{logit}(p_i) = \theta + \delta_1 Y_i
+$$
+
+$$
+\theta, \delta_1 \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+(M_i \mid w_i = 1) \sim \mathrm{LogNormal}(u_i, \epsilon)
+$$
+
+$$
+u_i = \alpha_{S[i]} + \beta_1 Y_i + \beta_2 \mathrm{PC1}_i
+$$
+
+$$
+\alpha_j = \bar{\alpha} + (z \times \sigma_\alpha)
+$$
+
+$$
+z \sim \mathcal{N}(0, 1)
+$$
+
+$$
+\epsilon \sim \mathrm{Exponential}(5)
+$$
+
+$$
+\bar{\alpha} \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+\sigma_\alpha \sim \mathrm{Exponential}(3)
+$$
+
+$$
+\beta_1, \beta_2 \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+w_i = 
+\begin{cases}
+0 & \leftrightarrow (M_i = 0) \\
+1 & \leftrightarrow (M_i > 0)
+\end{cases}
+$$
+
+#### Model 7
+
+$$
+w_i \sim \mathrm{Bernoulli}(p_i)
+$$
+
+$$
+\text{logit}(p_i) = \theta + \delta_1 Y_i
+$$
+
+$$
+\theta, \delta_1 \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+(M_i \mid w_i = 1) \sim \mathrm{LogNormal}(u_i, \epsilon)
+$$
+
+$$
+u_i = \alpha_{S[i]} + \beta_1 Y_i
+$$
+
+$$
+\alpha_j = \bar{\alpha} + (z \times \sigma_\alpha)
+$$
+
+$$
+z \sim \mathcal{N}(0, 1)
+$$
+
+$$
+\epsilon \sim \mathrm{Exponential}(5)
+$$
+
+$$
+\bar{\alpha} \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+\sigma_\alpha \sim \mathrm{Exponential}(3)
+$$
+
+$$
+\beta_1 \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+w_i = 
+\begin{cases}
+0 & \leftrightarrow (M_i = 0) \\
+1 & \leftrightarrow (M_i > 0)
+\end{cases}
+$$
+
+#### Model 8
+
+$$
+w_i \sim \mathrm{Bernoulli}(p_i)
+$$
+
+$$
+\text{logit}(p_i) = \theta
+$$
+
+$$
+\theta \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+(M_i \mid w_i = 1) \sim \mathrm{LogNormal}(u_i, \epsilon)
+$$
+
+$$
+u_i = \alpha
+$$
+
+$$
+\alpha \sim \mathcal{N}(0, 1.5)
+$$
+
+$$
+\epsilon \sim \mathrm{Exponential}(5)
+$$
+
+$$
+w_i = 
+\begin{cases}
+0 & \leftrightarrow (M_i = 0) \\
+1 & \leftrightarrow (M_i > 0)
+\end{cases}
+$$
+
+The seven models along with the intercept-only null model (Model 8) were ranked using the leave-one-out cross validation score which we estimated using Pareto Smoothed Importance Sampling (PSIS) implemented using the loo() function from the loo package21 in R v4.1.214. Model 1 had the best leave-one-out cross validation score (Table S3). Using 1000 samples from the posterior distribution of Model 1, we imputed the dry biomass of missing monoculture values, leaving us with 1000 separate estimates of the dry biomass for each missing monoculture.
+
+We assessed the quality of these imputations obtained from the model with the lowest PSIS-LOO score by examining the observed versus imputed monoculture biomass values using the data that the model was fit to. This showed that the model generally fit the data well and that most of the observations were close to the 1:1 line (Fig. S17). In line with this, on average, a draw from the posterior distribution predicted 8.7% of the data to be zero whilst 8.4% of the data was zero in the observed monoculture dry biomass data. In addition, we compared the distribution of the observed monoculture dry biomass values with the distribution of imputed monoculture biomass values from the models for each OTU. We found that the predictions overlapped considerably with the observed dry biomass values (Fig. S18). This gave us further confidence in our imputations.
+
+We also tested whether the values of the predictor variables (Y, PC1 and PC2 of the monocultures that we imputed) were substantially beyond the ranges of the predictor variables Y, PC1 and PC2 in the data used to fit the model (i.e. whether we were extrapolating beyond the range of data used to fit the model when performing the imputations). To do this we used the multivariate environmental similarity surface (MESS) index22. The MESS index splits each variable from the observed data (in this case, Y, PC1 and PC2) into N bins. This means that each observed data point has a combination of bin values (e.g. data point 1 for Y, PC1 and PC2: bin 1, bin 3 and bin 8). Any bin combination (e.g. 1, 3, 8) that is not in the response variable data for which predictions are made is an extrapolation (rather than an interpolation). Using 20 bins, only 5.2% of imputed monocultures had values of Y, PC1 and PC2 that were outside the observed data bin combinations. Using 10 bins, this dropped to 1.5%. Thus, in between 94.8% and 98.5% of cases (depending on the number of bins chosen), the predicted imputed monocultures were based on interpolating from our model and not extrapolating.
+
+Fig. S17: Observed monoculture biomass and the predicted monoculture biomass (mean within PI90%) based on the model fit to the data with the lowest leave-one-out cross validation score for the five different OTUs (colours) in the nine different clusters (plots). The red, dashed line is the 1:1 line. 
+
+Fig. S18: Distribution of the observed monoculture dry biomass (g) data (red) for the five OTUs: Barn (N = 87), Bryo (N = 81), Asci (N = 6), Hydro (N = 93) and Ciona (N = 20) compared to the imputed monoculture dry biomass (g) for 25 random samples from the posterior distribution (each grey line is a separate sample from the posterior distribution).
+
+
+
+
+
+

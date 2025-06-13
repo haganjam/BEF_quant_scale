@@ -125,7 +125,7 @@ p12 <-
             labels =c("a", "b"), font.label = list(face = "plain", size = 11))
 plot(p12)
 
-ggsave(filename = "figures/SI3_fig_S11.svg", p12,
+ggsave(filename = "manuscript/figures/app_4_fig_s16.png", p12, dpi = 600,
        unit = "cm", width = 20, height = 10)
 
 # correlation within each buoy
