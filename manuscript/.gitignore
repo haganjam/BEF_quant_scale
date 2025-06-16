@@ -1,0 +1,38 @@
+# History files
+.Rhistory
+.Rapp.history
+
+# Session Data files
+.RData
+.DS_Store
+
+# User-specific files
+.Ruserdata
+
+# RDS files and other data files
+*.xlsx
+*.png
+*.docx
+*.tif
+*.pdf
+*.rds
+
+# Example code in package build process
+*-Ex.R
+
+# Output files from R CMD build
+/*.tar.gz
+
+# Output files from R CMD check
+/*.Rcheck/
+
+manuscript.pdf
+manuscript.tex
+references.bib
+refs
+supplement.pdf
+supplement.tex
+figures/
+
+
+
