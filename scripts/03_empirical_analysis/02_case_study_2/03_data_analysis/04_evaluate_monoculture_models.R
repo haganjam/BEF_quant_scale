@@ -356,7 +356,7 @@ kvals <-
 mod_table$kvals <- unlist(kvals)
 
 # output the table as a .csv file
-saveRDS(mod_table, "manuscript/figures/app_1_table_3.rds")
+saveRDS(mod_table, "manuscript/figures/app_1_table_s3.rds")
 
 # which model is the best fit?
 # ln1

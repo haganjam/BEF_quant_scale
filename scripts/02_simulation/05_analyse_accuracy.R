@@ -49,14 +49,14 @@ tab_s2$env_var <- factor(tab_s2$env_var,
 tab_s2$Beff <- factor(tab_s2$Beff, c("NBE", "TS", "IT", "AS", "SI", "TI", "ST"))
 
 # reorder the table according to the factor levels
-tab_s5 <- arrange(tab_s2, env_var, Beff)
+tab_s6 <- arrange(tab_s2, env_var, Beff)
 
 # rename the variable
-names(tab_s5) <- c("Abiotic environment", "Effect", "Mean", "Min", "Max")
+names(tab_s6) <- c("Abiotic environment", "Effect", "Mean", "Min", "Max")
 
 # export as a .csv file
-saveRDS(tab_s5,
-        file = "manuscript/figures/app_3_table_s5.rds")
+saveRDS(tab_s6,
+        file = "manuscript/figures/app_3_table_s6.rds")
 
 # does the observed value lie in the 90% percentile interval
 output_rye <- 
@@ -118,7 +118,7 @@ RYE_df <- dplyr::arrange(RYE_df, `BEF effect`)
   
 # export the table
 saveRDS(RYE_df,
-        file = "manuscript/figures/app_3_table_s6.rds")
+        file = "manuscript/figures/app_3_table_s7.rds")
 
 # how often do we get the correct relative magnitude of the effects
 sp <- 

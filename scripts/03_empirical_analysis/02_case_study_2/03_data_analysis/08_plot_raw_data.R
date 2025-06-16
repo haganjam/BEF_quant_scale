@@ -92,7 +92,7 @@ col_pal <- wesanderson::wes_palette(name = "Darjeeling1", n = 6, type = "continu
 legend <- dat_sum[1:6, ]
 
 legend <- 
-  get_legend(
+  ggpubr::get_legend(
     ggplot(data = legend,
            mapping = aes(x = SR, y = biomass_mu, colour = species, shape = species)) +
       geom_point(size = 3) +
@@ -169,14 +169,20 @@ plot_list[[1]]
 p1 <- 
   cowplot::plot_grid(plotlist = plot_list,
                      ncol = 5,
-                     nrow = 9,
+                     nrow = 8,
                      axis = "l",
                      align = "hv")
 
-p1 <- ggarrange(legend,p1, ncol = 1, nrow = 2,
-                heights = c(1, 12))
+p1 <- 
+  ggarrange(legend, p1, ncol = 1, nrow = 2,
+            heights = c(1, 12)) |>
+  annotate_figure(
+    left = text_grob("Dry biomass (g)", rot = 90, vjust = 1, size = 10),
+    bottom = text_grob("Time (2 weeks)", size = 10)
+    )
+p1
 
-ggsave(filename = "figures/ED_fig_2.svg", p1,
-       unit = "cm", width = 22, height = 30)
+ggsave(filename = "manuscript/figures/app_1_fig_s2.pdf", p1,
+       unit = "cm", width = 22, height = 28)
 
 ### END

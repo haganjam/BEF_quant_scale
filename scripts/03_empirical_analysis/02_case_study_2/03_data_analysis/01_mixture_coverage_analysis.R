@@ -89,7 +89,8 @@ p1 <-
   theme(legend.position = "top",
         legend.key = element_rect(fill = NA),
         legend.text = element_text(size = 10),
-        legend.spacing.x = unit(0.05, 'cm'))
+        legend.spacing.x = unit(0.05, 'cm'),
+        legend.title = element_blank())
 plot(p1)
 
 # what about total cover?
@@ -126,7 +127,7 @@ p12 <-
 plot(p12)
 
 ggsave(filename = "manuscript/figures/app_4_fig_s16.png", p12, dpi = 600,
-       unit = "cm", width = 20, height = 10)
+       unit = "cm", width = 21, height = 10)
 
 # correlation within each buoy
 cor_dist <- 
