@@ -141,7 +141,7 @@ Where $\Delta RY_{O, ijk}$ is the difference between the observed relative yield
 
 Dominance of species in mixture that are high functioning in monoculture (the signature of insurance effects) can manifest in several different ways. Isbell and colleagues showed that the total insurance effect can be partitioned into four different effects that describe how covariance between dominance in mixture and high functioning in monoculture manifests: average selection, spatial insurance, temporal insurance and spatio-temporal insurance effects (see Figure 1 in the main text and @tbl-s1) [@isbell2018]. For example, the spatial insurance effect quantifies the part of the $NBE_{\gamma}$ that is due to species dominating mixtures in places where they are high functioning in monoculture. Thus, by quantifying these insurance effects, we can directly quantify the contribution of species partitioning their niches in space and time to ecosystem functioning at large spatial and temporal scales.
 
-## Appendix 3: Testing the assumption of unknown expected relative yield values (RYEs)
+## Appendix 3: Testing the assumption of unknown expected relative yield values ($RY_E$ values)
 
 As discussed in the previous section, Isbell and colleagues' statistical partition requires knowing the initial relative abundance of species in mixture (i.e. expected relative yields, $RY_{E}$), because the $RY_{E}$ (along with the functioning of the monocultures) determine the null expectation of mixture functioning [@isbell2018]. Specifically, average selection, spatial insurance, temporal insurance and spatio-temporal insurance are sensitive to the $RY_{E}$. Thus, by definition, total insurance, total selection and the net biodiversity effect are also affected by $RY_{E}$ because the partition is additive (see main text Figure 1 and @tbl-s1). In contrast, neither total complementarity nor non-random overyielding are affected by $RY_{E}$. In the case of total complementarity, we can show mathematically that it cannot be affected by only changing $RY_{E}$. Consider the case of two species at a single time and single place. The formula for total complementarity is then:
 
@@ -153,7 +153,8 @@ Where $S$ is the number of species, $\overline{\Delta RY}$ is the average change
 
 $$
 \Delta RY_i = RY_{O,i} - RY_{E,i}  
-$$ $$
+$$ 
+$$
 RY_{O,i} = \frac{Y_i}{M_i} \tag{Equation S7}
 $$
 
@@ -365,7 +366,6 @@ The seven models and the null model (Model 8) with priors are presented below. W
 
 #### Model 1
 
-::: text-left
 $$
 \begin{aligned}
 w_i &\sim \mathrm{Bernoulli}(p_i) \\
@@ -395,11 +395,10 @@ w_i &=
 \end{cases}
 \end{aligned}
 $$
-:::
+
 
 #### Model 2
 
-::: text-left
 $$
 \begin{aligned}
 w_i &\sim \mathrm{Bernoulli}(p_i) \\
@@ -423,11 +422,11 @@ w_i &=
 \end{cases}
 \end{aligned}
 $$
-:::
+
 
 #### Model 3
 
-::: text-left
+
 $$
 \begin{aligned}
 w_i &\sim \mathrm{Bernoulli}(p_i) \\
@@ -450,11 +449,10 @@ w_i &=
 \end{cases}
 \end{aligned}
 $$
-:::
+
 
 #### Model 4
 
-::: text-left
 $$
 \begin{aligned}
 w_i &\sim \mathrm{Bernoulli}(p_i) \\
@@ -475,11 +473,9 @@ w_i &=
 \end{cases}
 \end{aligned}
 $$
-:::
 
 #### Model 5
 
-::: text-left
 $$
 \begin{aligned}
 w_i &\sim \mathrm{Bernoulli}(p_i) \\
@@ -500,11 +496,9 @@ w_i &=
 \end{cases}
 \end{aligned}
 $$
-:::
 
 #### Model 6
 
-::: text-left
 $$
 \begin{aligned}
 w_i &\sim \mathrm{Bernoulli}(p_i) \\
@@ -525,11 +519,9 @@ w_i &=
 \end{cases}
 \end{aligned}
 $$
-:::
 
 #### Model 7
 
-::: text-left
 $$
 \begin{aligned}
 w_i &\sim \mathrm{Bernoulli}(p_i) \\
@@ -550,11 +542,9 @@ w_i &=
 \end{cases}
 \end{aligned}
 $$
-:::
 
 #### Model 8
 
-::: text-left
 $$
 \begin{aligned}
 w_i &\sim \mathrm{Bernoulli}(p_i) \\
@@ -571,13 +561,8 @@ w_i &=
 \end{cases}
 \end{aligned}
 $$
-:::
 
 The seven models along with the intercept-only null model (Model 8) were ranked using the leave-one-out cross validation score which we estimated using Pareto Smoothed Importance Sampling (PSIS) implemented using the loo() function from the loo package [@loo] in R v4.1.214. Model 1 had the best leave-one-out cross validation score (@tbl-s3). Using 1000 samples from the posterior distribution of Model 1, we imputed the dry biomass of missing monoculture values, leaving us with 1000 separate estimates of the dry biomass for each missing monoculture.
-
-We assessed the quality of these imputations obtained from the model with the lowest PSIS-LOO score by examining the observed versus imputed monoculture biomass values using the data that the model was fit to. This showed that the model generally fit the data well and that most of the observations were close to the 1:1 line (@fig-s17). In line with this, on average, a draw from the posterior distribution predicted 8.7% of the data to be zero whilst 8.4% of the data was zero in the observed monoculture dry biomass data. In addition, we compared the distribution of the observed monoculture dry biomass values with the distribution of imputed monoculture biomass values from the models for each OTU. We found that the predictions overlapped considerably with the observed dry biomass values (@fig-s18). This gave us further confidence in our imputations.
-
-We also tested whether the values of the predictor variables (Y, PC1 and PC2 of the monocultures that we imputed) were substantially beyond the ranges of the predictor variables Y, PC1 and PC2 in the data used to fit the model (i.e. whether we were extrapolating beyond the range of data used to fit the model when performing the imputations). To do this we used the multivariate environmental similarity surface (MESS) index [@zurell2012]. The MESS index splits each variable from the observed data (in this case, Y, PC1 and PC2) into N bins. This means that each observed data point has a combination of bin values (e.g. data point 1 for Y, PC1 and PC2: bin 1, bin 3 and bin 8). Any bin combination (e.g. 1, 3, 8) that is not in the response variable data for which predictions are made is an extrapolation (rather than an interpolation). Using 20 bins, only 5.2% of imputed monocultures had values of Y, PC1 and PC2 that were outside the observed data bin combinations. Using 10 bins, this dropped to 1.5%. Thus, in between 94.8% and 98.5% of cases (depending on the number of bins chosen), the predicted imputed monocultures were based on interpolating from our model and not extrapolating.
 
 ::: {#fig-s17}
 ![](figures/app_4_fig_s17.png)
@@ -585,8 +570,20 @@ We also tested whether the values of the predictor variables (Y, PC1 and PC2 of 
 Observed monoculture biomass and the predicted monoculture biomass (mean within $PI_{90\%}$) based on the model fit to the data with the lowest leave-one-out cross validation score for the five different OTUs (colours) in the nine different clusters (plots). The red, dashed line is the 1:1 line.
 :::
 
+We assessed the quality of these imputations obtained from the model with the lowest PSIS-LOO score by examining the observed versus imputed monoculture biomass values using the data that the model was fit to. This showed that the model generally fit the data well and that most of the observations were close to the 1:1 line (@fig-s17). In line with this, on average, a draw from the posterior distribution predicted 8.7% of the data to be zero whilst 8.4% of the data was zero in the observed monoculture dry biomass data. In addition, we compared the distribution of the observed monoculture dry biomass values with the distribution of imputed monoculture biomass values from the models for each OTU. We found that the predictions overlapped considerably with the observed dry biomass values (@fig-s18). This gave us further confidence in our imputations.
+
+We also tested whether the values of the predictor variables (Y, PC1 and PC2 of the monocultures that we imputed) were substantially beyond the ranges of the predictor variables Y, PC1 and PC2 in the data used to fit the model (i.e. whether we were extrapolating beyond the range of data used to fit the model when performing the imputations). To do this we used the multivariate environmental similarity surface (MESS) index [@zurell2012]. The MESS index splits each variable from the observed data (in this case, Y, PC1 and PC2) into N bins. This means that each observed data point has a combination of bin values (e.g. data point 1 for Y, PC1 and PC2: bin 1, bin 3 and bin 8). Any bin combination (e.g. 1, 3, 8) that is not in the response variable data for which predictions are made is an extrapolation (rather than an interpolation). Using 20 bins, only 5.2% of imputed monocultures had values of Y, PC1 and PC2 that were outside the observed data bin combinations. Using 10 bins, this dropped to 1.5%. Thus, in between 94.8% and 98.5% of cases (depending on the number of bins chosen), the predicted imputed monocultures were based on interpolating from our model and not extrapolating.
+
 ::: {#fig-s18}
 ![](figures/app_4_fig_s18.png)
 
 Distribution of the observed monoculture dry biomass (g) data (red) for the five OTUs: Barn (N = 87), Bryo (N = 81), Asci (N = 6), Hydro (N = 93) and Ciona (N = 20) compared to the imputed monoculture dry biomass (g) for 25 random samples from the posterior distribution (each grey line is a separate sample from the posterior distribution).
+
+:::
+
+{{< pagebreak >}}
+
+## Reference list
+
+::: {#refs} 
 :::
