@@ -153,8 +153,7 @@ Where $S$ is the number of species, $\overline{\Delta RY}$ is the average change
 
 $$
 \Delta RY_i = RY_{O,i} - RY_{E,i}  
-$$ 
-$$
+$$ $$
 RY_{O,i} = \frac{Y_i}{M_i} \tag{Equation S7}
 $$
 
@@ -167,7 +166,7 @@ $$
 Doing a simple algebraic rearrangement, we get the following:
 
 $$
-\overline{\Delta RY} = \frac{(RY_{O,1} + RY_{O,2}) - (RY_{E,1} + RY_{E,2})}{2} \tag{Equation S8}
+\overline{\Delta RY} = \frac{(RY_{O,1} + RY_{O,2}) - (RY_{E,1} + RY_{E,2})}{2} \tag{Equation S9}
 $$
 
 Given that the $RY_E$ values sum to one [@loreau2001; @fox2005], the average change in relative yield ($\overline{\Delta RY}$) cannot change by only changing the $RY_E$. Because calculating total complementarity is simply the average across all times and places, this proof holds in the more general case of many species, many times and many places. In the case of non-random overyielding, it is simply the case that the $RY_E$ never enter the calculation (see main text Figure 1 and @tbl-s1) and therefore do not affect it.
@@ -306,7 +305,7 @@ Map of the study area with the initial 50 sites (points) coloured by cluster. Cl
 
 ### Appendix 4.2: Choosing sites and clusters
 
-When choosing the sites, we aimed to create five environmentally heterogeneous and five environmentally homogeneous clusters with five sites each. We did this using a priori geographical data of three variables: water depth from nautical charts (1:50 000; Sjöfartsverket 2022), turbidity (depth of visibility (m), 15 m resolution) and relative wave exposure (unitless, 15 m resolution) [@greeve2025]. We set the minimum distance between sites within a cluster to 40 m and the maximum distance to approximately 1000 m. Water depth had to be between 7 m and 20 m. Moreover, the clusters were not allowed to overlap and had to be relatively equally spaced around the experimental area (@fig-s12). With these constraints, we randomly sampled clusters of sites and calculated environmental heterogeneity. Environmental heterogeneity was based on z-score standardised water depth, turbidity and wave exposure and calculated as multivariate dispersion based on Euclidean distance using the betadisper() function from the vegan package [@vegan] in R v4.1.214. We chose clusters that varied in their multivariate dispersion. The sites within the five clusters with the lowest multivariate dispersion were kept at a constant depth of 3 m or 6 m and the sites within the five clusters with the highest multivariate dispersion had alternating depths (e.g. two sites with 3 m depth and three sites with 6 m depth).
+When choosing the sites, we aimed to create five environmentally heterogeneous and five environmentally homogeneous clusters with five sites each. We did this using a priori geographical data of three variables: water depth from nautical charts (1:50 000; Sjöfartsverket 2022), turbidity (depth of visibility (m), 15 m resolution) and relative wave exposure (unitless, 15 m resolution) [@greeve2023]. We set the minimum distance between sites within a cluster to 40 m and the maximum distance to approximately 1000 m. Water depth had to be between 7 m and 20 m. Moreover, the clusters were not allowed to overlap and had to be relatively equally spaced around the experimental area (@fig-s12). With these constraints, we randomly sampled clusters of sites and calculated environmental heterogeneity. Environmental heterogeneity was based on z-score standardised water depth, turbidity and wave exposure and calculated as multivariate dispersion based on Euclidean distance using the betadisper() function from the vegan package [@vegan] in R v4.1.214. We chose clusters that varied in their multivariate dispersion. The sites within the five clusters with the lowest multivariate dispersion were kept at a constant depth of 3 m or 6 m and the sites within the five clusters with the highest multivariate dispersion had alternating depths (e.g. two sites with 3 m depth and three sites with 6 m depth).
 
 ### Appendix 4.3: In-situ environmental variable measurements
 
@@ -396,7 +395,6 @@ w_i &=
 \end{aligned}
 $$
 
-
 #### Model 2
 
 $$
@@ -423,9 +421,7 @@ w_i &=
 \end{aligned}
 $$
 
-
 #### Model 3
-
 
 $$
 \begin{aligned}
@@ -449,7 +445,6 @@ w_i &=
 \end{cases}
 \end{aligned}
 $$
-
 
 #### Model 4
 
@@ -578,12 +573,11 @@ We also tested whether the values of the predictor variables (Y, PC1 and PC2 of 
 ![](figures/app_4_fig_s18.png)
 
 Distribution of the observed monoculture dry biomass (g) data (red) for the five OTUs: Barn (N = 87), Bryo (N = 81), Asci (N = 6), Hydro (N = 93) and Ciona (N = 20) compared to the imputed monoculture dry biomass (g) for 25 random samples from the posterior distribution (each grey line is a separate sample from the posterior distribution).
-
 :::
 
 {{< pagebreak >}}
 
 ## Reference list
 
-::: {#refs} 
+::: {#refs}
 :::
